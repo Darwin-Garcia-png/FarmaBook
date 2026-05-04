@@ -4,6 +4,7 @@ import '../controllers/config_controller.dart';
 import '../providers/theme_provider.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_header.dart';
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -77,64 +78,55 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      appBar: PremiumHeader(
+        title: 'Ajustes del Sistema',
+        subtitle: 'Configuración general de la farmacia',
+        icon: Icons.settings_rounded,
+        baseColor: AppTheme.ayanamiBlue,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded,
-              color: Theme.of(context).textTheme.titleLarge?.color),
-          tooltip: 'Volver al Dashboard',
+          icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).textTheme.titleLarge?.color),
+          tooltip: 'Volver',
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Ajustes del Sistema',
-            style: TextStyle(
-                color: Theme.of(context).textTheme.titleLarge?.color,
-                fontWeight: FontWeight.bold)),
-        centerTitle: true,
       ),
       body: _controller.isLoading
           ? const Center(child: CircularProgressIndicator())
           : Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
+                constraints: const BoxConstraints(maxWidth: 900),
                 child: SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildProfileCard(),
-                      const SizedBox(height: 32),
-
-                      // ADMINISTRACIÓN DE PERSONAL
+                      const SizedBox(height: 40),
                       _buildSettingsGroup(
-                        title: 'Gestión de Equipo',
+                        title: 'GESTIÓN DE EQUIPO',
                         children: [
                           ListTile(
+                            contentPadding: const EdgeInsets.all(24),
                             leading: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.1),
-                                    shape: BoxShape.circle),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
                                 child: const Icon(Icons.people_alt_rounded, color: Colors.orange, size: 24)),
-                            title: const Text('Personal y Roles', style: TextStyle(fontWeight: FontWeight.bold)),
+                            title: const Text('Personal y Roles', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                             subtitle: const Text('Gestiona usuarios, permisos y accesos al sistema'),
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: () {
-                                dashController.onItemTapped(10); // UsuariosScreen
+                                dashController.onItemTapped(10); 
                                 Navigator.pop(context);
                             },
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
-
+                      const SizedBox(height: 40),
                       _buildSettingsGroup(
-                        title: 'Experiencia y Preferencias',
+                        title: 'EXPERIENCIA Y PREFERENCIAS',
                         children: [
                           _buildSwitchTile(
-                              'Modo Oscuro (Dark Mode)',
-                              'Adaptación visual premium estilo consola Rei (Black Plugsuit)',
+                              'Modo Oscuro',
+                              'Adaptación visual premium estilo consola Rei',
                               Icons.dark_mode_rounded,
                               isDark,
                               _handleThemeToggle),
@@ -153,22 +145,22 @@ class _ConfigScreenState extends State<ConfigScreen> {
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 8))
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10))
         ],
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 46,
-            backgroundColor: AppTheme.ayanamiBlue.withOpacity(0.15),
-            child: const Icon(Icons.storefront_rounded,
-                size: 46, color: AppTheme.ayanamiBlue),
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: AppTheme.ayanamiBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(32),
+            ),
+            child: const Icon(Icons.storefront_rounded, size: 40, color: AppTheme.ayanamiBlue),
           ),
           const SizedBox(width: 32),
           Expanded(
@@ -177,28 +169,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
               children: [
                 Row(
                   children: [
-                    Text(_controller.pharmacyName,
-                        style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).textTheme.titleLarge?.color)),
-                    const SizedBox(width: 8),
-                    IconButton(
-                        icon: const Icon(Icons.edit_outlined,
-                            size: 22, color: Colors.grey),
-                        tooltip: 'Cambiar Nombre',
-                        onPressed: _showEditNameDialog),
+                    Text(_controller.pharmacyName, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                    const SizedBox(width: 12),
+                    IconButton(icon: const Icon(Icons.edit_rounded, size: 20, color: Colors.grey), onPressed: _showEditNameDialog),
                   ],
                 ),
                 Text('Administrador de Sistema · ${_controller.userEmail}',
-                    style: TextStyle(
-                        color: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.color
-                            ?.withOpacity(0.6),
-                        fontSize: 15)),
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 14, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -207,42 +184,23 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
-  Widget _buildSettingsGroup(
-      {required String title, required List<Widget> children}) {
+  Widget _buildSettingsGroup({required String title, required List<Widget> children}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.ayanamiBlue.withOpacity(0.8),
-                letterSpacing: 1.2)),
-        const SizedBox(height: 16),
+        Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
+        const SizedBox(height: 20),
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Theme.of(context).dividerColor),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4))
+              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 30, offset: const Offset(0, 10))
             ],
           ),
           child: Column(
-            children: [
-              for (int i = 0; i < children.length; i++) ...[
-                children[i],
-                if (i < children.length - 1)
-                  Divider(
-                      height: 1,
-                      indent: 64,
-                      endIndent: 24,
-                      color: Theme.of(context).dividerColor.withOpacity(0.5)),
-              ]
-            ],
+            children: children,
           ),
         ),
       ],
@@ -269,7 +227,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   .textTheme
                   .bodyMedium
                   ?.color
-                  ?.withOpacity(0.6))),
+                  ?.withOpacity(0.6) ?? Colors.grey)),
         ),
         value: value,
         activeColor: AppTheme.ayanamiBlue,

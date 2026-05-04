@@ -59,6 +59,33 @@ class CategoriasController extends ChangeNotifier {
     }
   }
 
+  Future<bool> actualizarCategoria(dynamic id) async {
+    try {
+      final token = await _storage.read(key: 'jwt_token');
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.put('/inventory/categories/$id', data: {
+        'nombre': nombreCtrl.text.trim(),
+        'descripcion': descripcionCtrl.text.trim(),
+      });
+      await cargarCategorias();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> eliminarCategoria(dynamic id) async {
+    try {
+      final token = await _storage.read(key: 'jwt_token');
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.delete('/inventory/categories/$id');
+      await cargarCategorias();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   @override
   void dispose() {
     nombreCtrl.dispose();

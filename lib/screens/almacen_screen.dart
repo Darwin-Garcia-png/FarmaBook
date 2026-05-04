@@ -5,6 +5,7 @@ import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
 import '../utils/inventory_dialogs.dart';
 import '../widgets/almacen/product_card.dart';
+import '../widgets/premium_header.dart';
 
 class AlmacenScreen extends StatefulWidget {
   const AlmacenScreen({super.key});
@@ -22,6 +23,12 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Column(
             children: [
+              const PremiumHeader(
+                title: 'Almacén Central', 
+                subtitle: 'Inventario general de medicamentos', 
+                icon: Icons.inventory_2_rounded, 
+                baseColor: AppTheme.ayanamiBlue
+              ),
               _buildHeader(context, controller),
               _buildMainContent(context, controller, lotesCtrl),
             ],

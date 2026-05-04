@@ -78,85 +78,125 @@ class BatchDetailsModal extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (itemCtx, i) {
                 final l = lotes[i];
-                final expDate = DateTime.tryParse(
-                    l['fechaDeVencimiento']?.toString() ??
-                        l['fechaVencimiento']?.toString() ??
-                        '');
-                final isNear = expDate != null &&
-                    expDate.isBefore(
-                        DateTime.now().add(const Duration(days: 60)));
+                final expDate = DateTime.tryParse(l['fechaDeVencimiento']?.toString() ?? l['fechaVencimiento']?.toString() ?? '');
+                final stock = int.tryParse(l['cantidadDisponible'].toString()) ?? 0;
+
+                int daysLeft = 9999;
+                if (expDate != null) {
+                  daysLeft = expDate.difference(DateTime.now()).inDays;
+                }
+
+                Color statusColor = AppTheme.greenMetal;
+                IconData statusIcon = Icons.check_circle_outline;
+
+                if (daysLeft < 0) {
+                  statusColor = AppTheme.reiOrangeRed;
+                  statusIcon = Icons.error_outline_rounded;
+                } else if (daysLeft <= 60) {
+                  statusColor = Colors.orange;
+                  statusIcon = Icons.warning_amber_rounded;
+                } else if (stock < 30) {
+                  statusColor = AppTheme.reiPurple;
+                  statusIcon = Icons.trending_down_rounded;
+                }
 
                 return Container(
-                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardTheme.color,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                        color: isNear
-                            ? Colors.orange.withOpacity(0.3)
-                            : Theme.of(context).dividerColor),
+                    border: Border.all(color: statusColor.withOpacity(0.3), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
                   ),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                        ),
+                        child: Row(
                           children: [
-                            Text(l['nombreLote'] ?? 'Sin Nombre',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14)),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(Icons.event_available,
-                                    size: 12,
-                                    color:
-                                        isNear ? Colors.orange : Colors.grey),
-                                const SizedBox(width: 4),
-                                Text(
-                                    expDate != null
-                                        ? '${expDate.day}/${expDate.month}/${expDate.year}'
-                                        : 'Sin fecha',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: isNear
-                                            ? Colors.orange
-                                            : Colors.grey)),
-                              ],
+                            Icon(statusIcon, color: statusColor, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l['nombreLote'] ?? 'Sin Nombre',
+                                style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('${l['cantidadDisponible']} uds',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.ayanamiBlue)),
-                          Text(
-                              '\$${(double.tryParse((l['costoCompra'] ?? l['costoDeCompra'] ?? '0').toString()) ?? 0.0).toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  fontSize: 11, color: Colors.grey)),
-                        ],
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.edit_note,
-                            color: AppTheme.ayanamiBlue),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          InventoryDialogs.showAddEditProduct(
-                              context, controller, lotesCtrl,
-                              prod: p, prefillBatch: l);
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_sweep_outlined,
-                            color: AppTheme.reiOrangeRed),
-                        onPressed: () => _confirmarBorradoLote(
-                            context, l, lotesCtrl, controller),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.event_available, size: 14, color: Colors.grey),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        expDate != null ? 'Vence: ${expDate.day}/${expDate.month}/${expDate.year}' : 'Sin fecha',
+                                        style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '\$${(double.tryParse((l['costoCompra'] ?? l['costoDeCompra'] ?? '0').toString()) ?? 0.0).toStringAsFixed(2)} / ud',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).scaffoldBackgroundColor,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '$stock',
+                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: stock < 30 ? AppTheme.reiPurple : AppTheme.ayanamiBlue, height: 1),
+                                  ),
+                                  const Text(
+                                    'Uds',
+                                    style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_note, color: AppTheme.ayanamiBlue, size: 20),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    InventoryDialogs.showAddEditProduct(context, controller, lotesCtrl, prod: p, prefillBatch: l);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_sweep_outlined, color: AppTheme.reiOrangeRed, size: 20),
+                                  onPressed: () => _confirmarBorradoLote(context, l, lotesCtrl, controller),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

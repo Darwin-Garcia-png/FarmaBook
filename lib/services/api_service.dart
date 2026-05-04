@@ -1,17 +1,32 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../utils/global_error_handler.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://farmabook.onrender.com';
+  static const String baseUrl = 'https://farmabook-0vh1.onrender.com';
   static final Dio _dio = Dio(BaseOptions(
     baseUrl: baseUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
+    connectTimeout: const Duration(seconds: 60),
+    receiveTimeout: const Duration(seconds: 60),
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
-  ));
+  ))..interceptors.add(
+      InterceptorsWrapper(
+        onError: (DioException e, handler) {
+          final statusCode = e.response?.statusCode;
+          final msg = e.response?.data?['message'] ?? 
+                      e.response?.data?['error'] ?? 
+                      e.message ?? 
+                      'Ha ocurrido un problema de red inusual.';
+          
+          GlobalErrorHandler.showError(msg.toString(), statusCode: statusCode);
+          
+          return handler.next(e); // Continue yielding the error downwards
+        },
+      ),
+    );
   static const _storage = FlutterSecureStorage();
 
   static Dio get dio => _dio;

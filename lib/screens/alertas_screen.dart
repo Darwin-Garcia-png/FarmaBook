@@ -4,6 +4,7 @@ import '../controllers/notificaciones_controller.dart';
 import '../controllers/lotes_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_header.dart';
 
 class AlertasScreen extends StatelessWidget {
   const AlertasScreen({super.key});
@@ -14,19 +15,16 @@ class AlertasScreen extends StatelessWidget {
       builder: (context, notifCtrl, lotesCtrl, dashCtrl, child) {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            title: Text('Centro de Alertas', 
-              style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color)),
-            actions: [
-              TextButton.icon(
-                icon: const Icon(Icons.done_all_rounded, size: 20),
-                label: const Text('Marcar Todo como Leído'),
-                onPressed: notifCtrl.markAllAsRead,
-              ),
-              const SizedBox(width: 8),
-            ],
+          appBar: PremiumHeader(
+            title: 'Centro de Monitoreo',
+            subtitle: 'Alertas críticas de stock y vencimientos',
+            icon: Icons.notifications_active_rounded,
+            baseColor: AppTheme.ayanamiBlue,
+            trailing: TextButton.icon(
+              icon: const Icon(Icons.done_all_rounded, color: AppTheme.ayanamiBlue),
+              label: const Text('Marcar Todo', style: TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold)),
+              onPressed: notifCtrl.markAllAsRead,
+            ),
           ),
           body: Column(
             children: [
@@ -105,51 +103,58 @@ class AlertasScreen extends StatelessWidget {
     final fecha = n['fecha'] ?? '';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10))
+        ],
         border: Border.all(color: color.withOpacity(0.1)),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(32),
         onTap: () {
             final match = RegExp(r'lote: (\w+)').firstMatch(msg);
             if (match != null) {
                 final loteNombre = match.group(1);
                 lotesCtrl.setExternalSearch(loteNombre!);
                 dashCtrl.onItemTapped(3); // Gestión de Lotes
-                // We keep the stack for now or just navigate
             }
         },
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(isUrgent ? Icons.inventory_2_rounded : Icons.event_busy_rounded, color: color),
+                child: Icon(isUrgent ? Icons.inventory_2_rounded : Icons.event_busy_rounded, color: color, size: 28),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 24),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(isUrgent ? '¡ALERTA DE STOCK!' : 'AVISO DE VENCIMIENTO',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: color, letterSpacing: 1.2)),
-                    const SizedBox(height: 6),
-                    Text(msg, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text(isUrgent ? 'STOCK CRÍTICO' : 'VENCIMIENTO PRÓXIMO',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: color, letterSpacing: 1.5)),
                     const SizedBox(height: 8),
-                    Text(fecha, style: TextStyle(fontSize: 10, color: AppTheme.darkSlate.withOpacity(0.8), fontWeight: FontWeight.w600)),
+                    Text(msg, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_rounded, size: 12, color: Colors.grey.shade400),
+                        const SizedBox(width: 6),
+                        Text(fecha, style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade300, size: 24),
             ],
           ),
         ),

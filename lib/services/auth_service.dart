@@ -5,7 +5,7 @@ class AuthService {
   final Dio _dio = Dio();
   final _storage = const FlutterSecureStorage();
 
-  static const String baseUrl = 'https://farmabook.onrender.com';
+  static const String baseUrl = 'https://farmabook-0vh1.onrender.com';
   static const String tokenKey = 'jwt_token';
 
   AuthService() {

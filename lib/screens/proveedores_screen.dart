@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controllers/proveedores_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_header.dart';
 
 class ProveedoresScreen extends StatefulWidget {
   const ProveedoresScreen({super.key});
@@ -105,14 +106,15 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                             Navigator.pop(diaCtx);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(success ? (isEdit ? 'Actualizado' : 'Agregado') : 'Error'),
+                                content: Text(success ? (isEdit ? 'Proveedor actualizado' : 'Proveedor registrado') : 'Error en la operación'),
                                 backgroundColor: success ? AppTheme.greenMetal : AppTheme.reiOrangeRed,
                                 behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                             );
                           }
                         },
-                        child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Proveedor', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Proveedor', style: const TextStyle(fontWeight: FontWeight.w900)),
                       ),
                     ],
                   )
@@ -131,14 +133,12 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
       child: TextFormField(
         controller: ctrl,
         keyboardType: keyboard,
-        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.grey),
-          prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue.withOpacity(0.7)),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           filled: true,
-          fillColor: Theme.of(context).scaffoldBackgroundColor,
+          fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
         ),
         validator: req ? (v) => v!.trim().isEmpty ? 'Requerido' : null : null,
       ),
@@ -149,65 +149,49 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        toolbarHeight: 150,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: _buildHeader(),
+      appBar: PremiumHeader(
+        title: 'Proveedores',
+        subtitle: 'Gestiona tus fuentes de suministro',
+        icon: Icons.local_shipping_rounded,
+        baseColor: AppTheme.reiPurple,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 250,
+              child: TextField(
+                controller: _controller.searchCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Buscar...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                  filled: true,
+                  fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add_business_rounded),
+              label: const Text('Nuevo', style: TextStyle(fontWeight: FontWeight.w900)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.reiPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 8,
+                shadowColor: AppTheme.reiPurple.withOpacity(0.4),
+              ),
+              onPressed: () => _showAddEditDialog(),
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
           Expanded(child: _buildSupplierGrid()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 8))],
-      ),
-      child: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Proveedores', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.displaySmall?.color)),
-              const Text('Gestiona tus fuentes de suministro', style: TextStyle(fontSize: 14, color: Colors.grey)),
-            ],
-          ),
-          const Spacer(),
-          SizedBox(
-            width: 400,
-            child: TextField(
-              controller: _controller.searchCtrl,
-              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
-              decoration: InputDecoration(
-                hintText: 'Buscar por nombre o correo...',
-                hintStyle: const TextStyle(color: Colors.grey),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                filled: true,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
-            ),
-          ),
-          const SizedBox(width: 24),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.add_business_rounded),
-            label: const Text('Nuevo Proveedor', style: TextStyle(fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.ayanamiBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            ),
-            onPressed: () => _showAddEditDialog(),
-          ),
         ],
       ),
     );
@@ -237,13 +221,13 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -256,28 +240,35 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.business_rounded, color: AppTheme.ayanamiBlue),
+                  decoration: BoxDecoration(
+                    color: AppTheme.ayanamiBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.business_rounded, color: AppTheme.ayanamiBlue, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(p['nombre'] ?? 'Sin nombre',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleMedium?.color),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
-                ),
-                IconButton(icon: Icon(Icons.edit_note, color: Theme.of(context).textTheme.bodyLarge?.color), onPressed: () => _showAddEditDialog(supplier: p)),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: AppTheme.reiOrangeRed),
-                  onPressed: () => _confirmDelete(p),
                 ),
               ],
             ),
-            Divider(height: 32, color: Theme.of(context).dividerColor),
-            _iconText(Icons.email_outlined, p['email'] ?? 'No especificado'),
+            const SizedBox(height: 16),
+            _iconText(Icons.email_rounded, p['email'] ?? 'No especificado'),
             const SizedBox(height: 8),
-            _iconText(Icons.phone_outlined, p['telefono'] ?? 'No especificado'),
+            _iconText(Icons.phone_rounded, p['telefono'] ?? 'No especificado'),
             const SizedBox(height: 8),
-            _iconText(Icons.location_on_outlined, p['direccion'] ?? 'No especificado', maxLines: 1),
+            _iconText(Icons.location_on_rounded, p['direccion'] ?? 'No especificado', maxLines: 1),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _actionButton(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showAddEditDialog(supplier: p)),
+                const SizedBox(width: 8),
+                _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(p)),
+              ],
+            )
           ],
         ),
       ),
@@ -287,14 +278,29 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
   Widget _iconText(IconData icon, String text, {int maxLines = 1}) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
+        Icon(icon, size: 14, color: Colors.grey.shade400),
         const SizedBox(width: 8),
         Expanded(
           child: Text(text, 
-            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w600),
             maxLines: maxLines, overflow: TextOverflow.ellipsis),
         ),
       ],
+    );
+  }
+
+  Widget _actionButton(IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, size: 18, color: color),
+      ),
     );
   }
 

@@ -59,6 +59,33 @@ class PresentacionesController extends ChangeNotifier {
     }
   }
 
+  Future<bool> actualizarPresentacion(dynamic id) async {
+    try {
+      final token = await _storage.read(key: 'jwt_token');
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.put('/inventory/presentations/$id', data: {
+        'nombre': nombreCtrl.text.trim(),
+        'descripcion': descripcionCtrl.text.trim(),
+      });
+      await cargarPresentaciones();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> eliminarPresentacion(dynamic id) async {
+    try {
+      final token = await _storage.read(key: 'jwt_token');
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.delete('/inventory/presentations/$id');
+      await cargarPresentaciones();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   @override
   void dispose() {
     nombreCtrl.dispose();

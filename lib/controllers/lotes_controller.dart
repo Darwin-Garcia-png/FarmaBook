@@ -1,14 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
+import '../utils/global_error_handler.dart';
 
 class LotesController extends ChangeNotifier {
   final _dio = ApiService.dio;
 
   List<Map<String, dynamic>> allBatches = [];
   bool isLoading = false;
-  bool sortByExpiry = false; // Near-expiry filter toggle
-  bool sortByLowStock = false; // Low stock filter toggle
+  
+  // Categorization
+  List<Map<String, dynamic>> get vencidos => allBatches.where((b) {
+    final d = DateTime.tryParse(b['fechaDeVencimiento'] ?? b['fechaVencimiento'] ?? '');
+    return d != null && d.isBefore(DateTime.now());
+  }).toList();
+  
+  List<Map<String, dynamic>> get porVencer => allBatches.where((b) {
+    final d = DateTime.tryParse(b['fechaDeVencimiento'] ?? b['fechaVencimiento'] ?? '');
+    return d != null && d.isAfter(DateTime.now()) && d.isBefore(DateTime.now().add(const Duration(days: 60)));
+  }).toList();
+  
+  List<Map<String, dynamic>> get bajoStock => allBatches.where((b) {
+    final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
+    return stock > 0 && stock < 30;
+  }).toList();
+  
+  List<Map<String, dynamic>> get saludables => allBatches.where((b) {
+    final d = DateTime.tryParse(b['fechaDeVencimiento'] ?? b['fechaVencimiento'] ?? '');
+    final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
+    final isNotExpiredOrNear = d == null || d.isAfter(DateTime.now().add(const Duration(days: 60)));
+    return isNotExpiredOrNear && stock >= 30;
+  }).toList();
+  
+  List<Map<String, dynamic>> get agotados => allBatches.where((b) {
+    final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
+    return stock <= 0;
+  }).toList();
+
   String? error;
   String externalSearchQuery = '';
 
@@ -34,57 +62,45 @@ class LotesController extends ChangeNotifier {
     try {
       await ApiService.setAuthHeader();
 
-      final response = await _dio.get('/inventory/products?page=1&limit=1000');
-      final products = response.data['data'] as List? ?? [];
-      List<Map<String, dynamic>> tempBatches = [];
-      const int chunkSize = 20;
+      // Peticiones paralelas para máxima velocidad
+      final results = await Future.wait([
+        _dio.get('/inventory/products?page=1&limit=10000'),
+        _dio.get('/inventory/batches'),
+      ]);
 
-      for (int i = 0; i < products.length; i += chunkSize) {
-        final end = (i + chunkSize < products.length) ? i + chunkSize : products.length;
-        final chunkProducts = products.sublist(i, end);
+      final productsList = results[0].data['data'] as List? ?? [];
+      final batchesList = results[1].data['data'] as List? ?? [];
 
-        final chunkResults = await Future.wait(chunkProducts.map((p) async {
-          final pId = p['productoId']?.toString();
-          if (pId == null) return [];
-          try {
-            final bRes = await _dio.get('/inventory/products/$pId/batches');
-            final bList = bRes.data['data'] as List? ?? [];
-            return bList.map((b) => {
-              ...Map<String, dynamic>.from(b),
-              'productoNombre': p['nombre'],
-              'productoCodigo': p['codigoBarras'],
-              'originalProduct': p,
-            }).toList();
-          } catch (_) {
-            return [];
-          }
-        }));
+      // Mapeo O(1) de productos
+      final productMap = {
+        for (var p in productsList) p['productoId'].toString(): p
+      };
 
-        for (var r in chunkResults) {
-          tempBatches.addAll(r as List<Map<String, dynamic>>);
-        }
-      }
+      allBatches = batchesList.map((b) {
+        final pId = b['productoId']?.toString();
+        final p = productMap[pId] ?? {};
+        return {
+          ...Map<String, dynamic>.from(b),
+          'productoNombre': p['nombre'] ?? 'Producto Desconocido',
+          'productoCodigo': p['codigoBarras'] ?? 'N/A',
+          'originalProduct': p,
+        };
+      }).toList();
+      
+      // Ordenar por defecto por fecha de vencimiento más cercana
+      allBatches.sort((a, b) {
+        final dateA = DateTime.tryParse(a['fechaDeVencimiento'] ?? a['fechaVencimiento'] ?? '9999-12-31');
+        final dateB = DateTime.tryParse(b['fechaDeVencimiento'] ?? b['fechaVencimiento'] ?? '9999-12-31');
+        return dateA?.compareTo(dateB ?? DateTime(9999)) ?? 0;
+      });
 
-      allBatches = tempBatches;
     } catch (e) {
-      error = "Error al cargar lotes: $e";
-      debugPrint(error);
+      error = "Error al cargar lotes";
+      GlobalErrorHandler.showError('No se pudieron cargar los lotes. Verifica tu conexión.');
     } finally {
       isLoading = false;
       notifyListeners();
     }
-  }
-
-  void toggleExpiryFilter() {
-    sortByExpiry = !sortByExpiry;
-    sortByLowStock = false; // Disable other filter
-    notifyListeners();
-  }
-
-  void toggleLowStockFilter() {
-    sortByLowStock = !sortByLowStock;
-    sortByExpiry = false; // Disable other filter
-    notifyListeners();
   }
 
   Future<Response> createBatch(Map<String, dynamic> data) async {
@@ -94,7 +110,7 @@ class LotesController extends ChangeNotifier {
       await fetchAllBatches();
       return res;
     } catch (e) {
-      debugPrint("Error creating batch: $e");
+      GlobalErrorHandler.showError('No se pudo crear el lote.');
       rethrow;
     }
   }
@@ -106,7 +122,7 @@ class LotesController extends ChangeNotifier {
       await fetchAllBatches();
       return res;
     } catch (e) {
-      debugPrint("Error updating batch: $e");
+      GlobalErrorHandler.showError('No se pudo actualizar el lote.');
       rethrow;
     }
   }
@@ -117,7 +133,7 @@ class LotesController extends ChangeNotifier {
       await _dio.delete('/inventory/batches/$id');
       await fetchAllBatches();
     } catch (e) {
-      debugPrint("Error deleting batch: $e");
+      GlobalErrorHandler.showError('No se pudo eliminar el lote.');
       rethrow;
     }
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
+import '../controllers/almacen_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_header.dart';
 import '../utils/inventory_dialogs.dart';
 
 class LotesScreen extends StatefulWidget {
@@ -12,255 +12,305 @@ class LotesScreen extends StatefulWidget {
   State<LotesScreen> createState() => _LotesScreenState();
 }
 
-class _LotesScreenState extends State<LotesScreen> {
+class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStateMixin {
+  final LotesController _lotesCtrl = LotesController();
+  final AlmacenController _almacenCtrl = AlmacenController();
+  late TabController _tabController;
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final lotesCtrl = Provider.of<LotesController>(context, listen: false);
-      if (lotesCtrl.externalSearchQuery.isNotEmpty) {
-        setState(() {
-          _searchQuery = lotesCtrl.externalSearchQuery;
-          _searchCtrl.text = _searchQuery;
-        });
-        lotesCtrl.clearExternalSearch();
-      }
-    });
+    _tabController = TabController(length: 4, vsync: this);
+    _lotesCtrl.addListener(_onControllerChanged);
+    _lotesCtrl.init();
+    _almacenCtrl.init();
   }
 
   @override
   void dispose() {
+    _lotesCtrl.removeListener(_onControllerChanged);
+    _tabController.dispose();
     _searchCtrl.dispose();
+    _lotesCtrl.dispose();
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<AlmacenController, LotesController>(
-      builder: (context, almacenCtrl, lotesCtrl, child) {
-        final filteredBySearch = lotesCtrl.allBatches.where((b) {
-          final query = _searchQuery.toLowerCase();
-          final prodNom = (b['productoNombre'] ?? '').toString().toLowerCase();
-          final batchNom = (b['nombreLote'] ?? '').toString().toLowerCase();
-          return prodNom.contains(query) || batchNom.contains(query);
-        }).toList();
-
-        List<Map<String, dynamic>> finalDisplayBatches = filteredBySearch;
-        
-        if (lotesCtrl.sortByExpiry) {
-           finalDisplayBatches = filteredBySearch.where((b) {
-             final d = DateTime.tryParse(b['fechaDeVencimiento'] ?? b['fechaVencimiento'] ?? '');
-             if (d == null) return false;
-             return d.isBefore(DateTime.now().add(const Duration(days: 60)));
-           }).toList();
-
-           finalDisplayBatches.sort((a, b) {
-            final dateA = DateTime.tryParse(a['fechaDeVencimiento'] ?? a['fechaVencimiento'] ?? '9999-12-31');
-            final dateB = DateTime.tryParse(b['fechaDeVencimiento'] ?? b['fechaVencimiento'] ?? '9999-12-31');
-            return dateA?.compareTo(dateB ?? DateTime(9999)) ?? 0;
-          });
-        } else if (lotesCtrl.sortByLowStock) {
-           finalDisplayBatches = filteredBySearch.where((b) {
-             final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
-             return stock < 30;
-           }).toList();
-           
-           finalDisplayBatches.sort((a, b) {
-             final stockA = int.tryParse(a['cantidadDisponible'].toString()) ?? 0;
-             final stockB = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
-             return stockA.compareTo(stockB);
-           });
-        }
-
-        return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            title: Text('Gestión Global de Lotes', 
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.titleLarge?.color ?? AppTheme.darkSlate
-              )
-            ),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: PremiumHeader(
+        title: 'Gestión de Lotes',
+        subtitle: 'Control de caducidad y trazabilidad',
+        icon: Icons.layers_outlined,
+        baseColor: AppTheme.ayanamiBlue,
+        trailing: ElevatedButton.icon(
+          onPressed: () => InventoryDialogs.showAddEditProduct(context, _almacenCtrl, _lotesCtrl),
+          icon: const Icon(Icons.add_box_rounded),
+          label: const Text('Entrada de Lote', style: TextStyle(fontWeight: FontWeight.w900)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.ayanamiBlue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            elevation: 8,
+            shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4),
           ),
-          body: Column(
-            children: [
-              _buildSearchBar(context),
-              _buildFilterRow(lotesCtrl),
-              Expanded(
-                child: lotesCtrl.isLoading 
-                  ? const Center(child: CircularProgressIndicator())
-                  : finalDisplayBatches.isEmpty
-                    ? _buildEmptyState(lotesCtrl.sortByExpiry || lotesCtrl.sortByLowStock)
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                        itemCount: finalDisplayBatches.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
-                        itemBuilder: (ctx, i) => _buildBatchCard(finalDisplayBatches[i], almacenCtrl, lotesCtrl),
-                      ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSearchBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      child: TextField(
-        controller: _searchCtrl,
-        onChanged: (v) => setState(() => _searchQuery = v),
-        decoration: InputDecoration(
-          hintText: 'Buscar por producto o lote...',
-          prefixIcon: const Icon(Icons.search, color: AppTheme.ayanamiBlue),
-          filled: true,
-          fillColor: Theme.of(context).cardTheme.color,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         ),
       ),
+      body: _lotesCtrl.isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue))
+          : Column(
+              children: [
+                _buildMetricsRow(_lotesCtrl),
+                _buildSearchBar(context),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+                  ),
+                  child: _buildTabs(context, _lotesCtrl),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildBatchList(_lotesCtrl.allBatches, _almacenCtrl, _lotesCtrl),
+                      _buildBatchList(_lotesCtrl.porVencer, _almacenCtrl, _lotesCtrl),
+                      _buildBatchList(_lotesCtrl.vencidos, _almacenCtrl, _lotesCtrl),
+                      _buildBatchList(_lotesCtrl.bajoStock, _almacenCtrl, _lotesCtrl),
+                    ],
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
-  Widget _buildFilterRow(LotesController lotesCtrl) {
-    final int nearCount = lotesCtrl.allBatches.where((l) {
-      final d = DateTime.tryParse(l['fechaDeVencimiento'] ?? l['fechaVencimiento'] ?? '');
-      return d != null && d.isBefore(DateTime.now().add(const Duration(days: 60)));
-    }).length;
-
-    final int lowStockCount = lotesCtrl.allBatches.where((l) {
-      final stock = int.tryParse(l['cantidadDisponible'].toString()) ?? 0;
-      return stock < 30;
-    }).length;
-
+  Widget _buildMetricsRow(LotesController lotesCtrl) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
       child: Row(
         children: [
-          _buildFilterChip(
-            icon: Icons.timer_outlined, 
-            label: 'Vencimiento ($nearCount)', 
-            selected: lotesCtrl.sortByExpiry, 
-            color: AppTheme.ayanamiBlue,
-            onTap: () => lotesCtrl.toggleExpiryFilter(),
-          ),
-          const SizedBox(width: 12),
-          _buildFilterChip(
-            icon: Icons.inventory_2_outlined, 
-            label: 'Bajo Stock ($lowStockCount)', 
-            selected: lotesCtrl.sortByLowStock, 
-            color: AppTheme.reiPurple,
-            onTap: () => lotesCtrl.toggleLowStockFilter(),
-          ),
-          const Spacer(),
-          Text('${lotesCtrl.allBatches.length} lotes', style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w800)),
+          Expanded(child: _buildMetricCard(title: 'TOTAL LOTES', value: lotesCtrl.allBatches.length.toString(), icon: Icons.inventory_2_rounded, color: AppTheme.ayanamiBlue)),
+          const SizedBox(width: 20),
+          Expanded(child: _buildMetricCard(title: 'EN RIESGO', value: lotesCtrl.porVencer.length.toString(), icon: Icons.warning_amber_rounded, color: Colors.orange)),
+          const SizedBox(width: 20),
+          Expanded(child: _buildMetricCard(title: 'VENCIDOS', value: lotesCtrl.vencidos.length.toString(), icon: Icons.error_outline_rounded, color: AppTheme.reiOrangeRed)),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip({
-    required IconData icon, 
-    required String label, 
-    required bool selected, 
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return ElevatedButton.icon(
-      icon: Icon(icon, size: 16, color: selected ? Colors.white : color),
-      label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: selected ? Colors.white : color)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: selected ? color : color.withOpacity(0.1),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: color.withOpacity(0.3))),
-        elevation: 0,
+  Widget _buildMetricCard({required String title, required String value, required IconData icon, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: color.withOpacity(0.1)),
+        boxShadow: [BoxShadow(color: color.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10))],
       ),
-      onPressed: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 20)),
+              Text(title, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, height: 1, letterSpacing: -1)),
+        ],
+      ),
     );
   }
 
-  Widget _buildBatchCard(Map<String, dynamic> b, AlmacenController almacenCtrl, LotesController lotesCtrl) {
-    final expDate = DateTime.tryParse(b['fechaDeVencimiento']?.toString() ?? b['fechaVencimiento']?.toString() ?? '');
-    final isNear = expDate != null && expDate.isBefore(DateTime.now().add(const Duration(days: 60)));
-    final isExpired = expDate != null && expDate.isBefore(DateTime.now());
-    final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
-    final isLow = stock < 30;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-        border: Border.all(color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.3) : (isLow ? AppTheme.reiPurple.withOpacity(0.3) : (isNear ? Colors.orange.withOpacity(0.3) : Colors.transparent)), width: 1.5),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: (isLow ? AppTheme.reiPurple : AppTheme.ayanamiBlue).withOpacity(0.05),
-              child: Row(
-                children: [
-                  Icon(Icons.medication_outlined, size: 16, color: isLow ? AppTheme.reiPurple : AppTheme.ayanamiBlue),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(b['productoNombre'] ?? 'Desconocido', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isLow ? AppTheme.reiPurple : AppTheme.ayanamiBlue), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  Text('#${(b['loteId']?.toString() ?? 'N/A').substring(0, 6)}', style: const TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'monospace')),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(b['nombreLote'] ?? 'Lote Principal', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(isExpired ? Icons.error_outline : Icons.event_available, size: 14, color: isExpired ? AppTheme.reiOrangeRed : isNear ? Colors.orange : Colors.grey),
-                            const SizedBox(width: 6),
-                            Text(expDate == null ? 'Sin fecha' : 'Vence: ${expDate.day}/${expDate.month}/${expDate.year}', style: TextStyle(fontSize: 12, fontWeight: (isNear || isExpired) ? FontWeight.bold : FontWeight.normal, color: isExpired ? AppTheme.reiOrangeRed : isNear ? Colors.orange : Colors.grey)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text('$stock uds', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isLow ? AppTheme.reiPurple : AppTheme.greenMetal)),
-                      Text('\$${(double.tryParse((b['costoCompra'] ?? b['costoDeCompra'] ?? '0').toString()) ?? 0.0).toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  _buildActions(b, almacenCtrl, lotesCtrl),
-                ],
-              ),
-            ),
-          ],
+  Widget _buildSearchBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
+      child: TextField(
+        controller: _searchCtrl,
+        onChanged: (v) => setState(() => _searchQuery = v),
+        decoration: InputDecoration(
+          hintText: 'Buscar por producto o nombre de lote...',
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.ayanamiBlue),
+          filled: true,
+          fillColor: Theme.of(context).cardTheme.color,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         ),
       ),
     );
   }
 
-  Widget _buildActions(Map<String, dynamic> b, AlmacenController almacenCtrl, LotesController lotesCtrl) {
+  Widget _buildTabs(BuildContext context, LotesController lotesCtrl) {
+    return TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      indicatorWeight: 4,
+      indicatorSize: TabBarIndicatorSize.label,
+      indicatorColor: AppTheme.ayanamiBlue,
+      labelColor: AppTheme.ayanamiBlue,
+      unselectedLabelColor: Colors.grey,
+      labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+      tabs: [
+        Tab(text: 'Todos (${lotesCtrl.allBatches.length})'),
+        Tab(text: 'Por Vencer (${lotesCtrl.porVencer.length})'),
+        Tab(text: 'Vencidos (${lotesCtrl.vencidos.length})'),
+        Tab(text: 'Bajo Stock (${lotesCtrl.bajoStock.length})'),
+      ],
+    );
+  }
+
+  Widget _buildBatchList(List<Map<String, dynamic>> batches, AlmacenController almacenCtrl, LotesController lotesCtrl) {
+    final query = _searchQuery.toLowerCase();
+    final filtered = batches.where((b) {
+      final name = b['nombreLote']?.toString().toLowerCase() ?? '';
+      final prod = b['productoNombre']?.toString().toLowerCase() ?? '';
+      return name.contains(query) || prod.contains(query);
+    }).toList();
+
+    if (filtered.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.withOpacity(0.3)),
+            const SizedBox(height: 16),
+            const Text('No se encontraron registros', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(32),
+      itemCount: filtered.length,
+      itemBuilder: (ctx, i) => _buildBatchCard(filtered[i], almacenCtrl, lotesCtrl),
+    );
+  }
+
+  Widget _buildBatchCard(Map<String, dynamic> b, AlmacenController almacenCtrl, LotesController lotesCtrl) {
+    final expDate = DateTime.tryParse(b['fechaDeVencimiento']?.toString() ?? b['fechaVencimiento']?.toString() ?? '');
+    final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
+    
+    int daysLeft = 9999;
+    if (expDate != null) daysLeft = expDate.difference(DateTime.now()).inDays;
+
+    Color statusColor = AppTheme.greenMetal;
+    String statusText = 'SALUDABLE';
+    IconData statusIcon = Icons.verified_rounded;
+
+    if (daysLeft < 0) {
+      statusColor = AppTheme.reiOrangeRed;
+      statusText = 'VENCIDO';
+      statusIcon = Icons.error_rounded;
+    } else if (daysLeft <= 60) {
+      statusColor = Colors.orange;
+      statusText = 'POR VENCER';
+      statusIcon = Icons.warning_rounded;
+    } else if (stock < 30) {
+      statusColor = AppTheme.reiPurple;
+      statusText = 'BAJO STOCK';
+      statusIcon = Icons.trending_down_rounded;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(color: statusColor.withOpacity(0.05), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
+            child: Row(
+              children: [
+                Icon(statusIcon, color: statusColor, size: 14),
+                const SizedBox(width: 8),
+                Text(statusText, style: TextStyle(color: statusColor, fontWeight: FontWeight.w900, fontSize: 9, letterSpacing: 1)),
+                const Spacer(),
+                Text('${b['productoNombre']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Colors.grey), maxLines: 1),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(b['nombreLote'] ?? 'Lote', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _badge(Icons.event_rounded, expDate == null ? 'N/A' : '${expDate.day}/${expDate.month}/${expDate.year}'),
+                          const SizedBox(width: 12),
+                          _badge(Icons.qr_code_rounded, 'SKU: ${b['productoCodigo'] ?? 'N/A'}'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.05), borderRadius: BorderRadius.circular(16)),
+                  child: Column(
+                    children: [
+                      Text('$stock', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: stock < 30 ? AppTheme.reiPurple : AppTheme.ayanamiBlue, height: 1)),
+                      const Text('UNDS', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  children: [
+                    _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl, prod: b['originalProduct'], prefillBatch: b)),
+                    const SizedBox(height: 6),
+                    _actionIcon(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(b, lotesCtrl, almacenCtrl)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _badge(IconData icon, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(icon: const Icon(Icons.edit_note, color: AppTheme.ayanamiBlue), onPressed: () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl, prod: b['originalProduct'], prefillBatch: b)),
-        IconButton(icon: const Icon(Icons.delete_sweep_outlined, color: AppTheme.reiOrangeRed), onPressed: () => _confirmDelete(b, lotesCtrl, almacenCtrl)),
+        Icon(icon, size: 12, color: Colors.grey.shade400),
+        const SizedBox(width: 4),
+        Text(text, style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
       ],
+    );
+  }
+
+  Widget _actionIcon(IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color, size: 18)),
     );
   }
 
@@ -268,30 +318,18 @@ class _LotesScreenState extends State<LotesScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Eliminar Lote'),
-        content: Text('¿Deseas eliminar el lote "${b['nombreLote']}"?'),
+        content: const Text('¿Estás seguro? Esta acción no se puede deshacer.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed), onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar', style: TextStyle(color: Colors.white))),
+          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed, foregroundColor: Colors.white), onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar')),
         ],
       ),
     );
     if (confirm == true) {
-      await lotesCtrl.deleteBatch(b['loteId'].toString());
-      almacenCtrl.fetchProducts(isRefresh: true);
+      await lotesCtrl.deleteBatch(b['loteId']);
+      almacenCtrl.init(); 
     }
-  }
-
-  Widget _buildEmptyState(bool isFiltered) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(isFiltered ? Icons.filter_alt_off_outlined : Icons.layers_clear_outlined, size: 80, color: Colors.grey.withOpacity(0.3)),
-          const SizedBox(height: 16),
-          Text(isFiltered ? 'No se encontraron lotes con ese filtro' : 'No se encontraron lotes', style: const TextStyle(color: Colors.grey, fontSize: 16)),
-        ],
-      ),
-    );
   }
 }

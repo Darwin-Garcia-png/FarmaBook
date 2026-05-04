@@ -12,53 +12,70 @@ class CartSection extends StatelessWidget {
     final controller = context.watch<VentasController>();
     
     return Container(
-      width: 420,
+      width: 450,
+      margin: const EdgeInsets.fromLTRB(0, 24, 24, 24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        border: Border(left: BorderSide(color: Theme.of(context).dividerColor)),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 15,
-              offset: const Offset(-5, 0))
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 30,
+              offset: const Offset(-10, 0))
         ],
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
-      child: Column(
-        children: [
-          _buildHeader(context, controller),
-          Expanded(child: _buildItemsList(context, controller)),
-          _buildSummarySection(context, controller),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: Column(
+          children: [
+            _buildHeader(context, controller),
+            Expanded(child: _buildItemsList(context, controller)),
+            _buildSummarySection(context, controller),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context, VentasController controller) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-            colors: [AppTheme.ayanamiBlue, Color(0xFF5A9BD5)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+      decoration: BoxDecoration(
+        color: AppTheme.ayanamiBlue.withOpacity(0.05),
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
       ),
       child: Row(
         children: [
-          const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 28),
-          const SizedBox(width: 12),
-          const Text('Pedido Actual',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900)),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.ayanamiBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.shopping_bag_rounded, color: AppTheme.ayanamiBlue, size: 24),
+          ),
+          const SizedBox(width: 16),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Pedido Actual',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+              Text('Detalles del consumo', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600)),
+            ],
+          ),
           const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12)),
+                color: AppTheme.ayanamiBlue,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(color: AppTheme.ayanamiBlue.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))
+                ]
+            ),
             child: Text('${controller.carrito.length} Items',
-                style: const TextStyle(color: Colors.white, fontSize: 12)),
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -82,7 +99,7 @@ class CartSection extends StatelessWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       itemCount: controller.carrito.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
@@ -90,56 +107,65 @@ class CartSection extends StatelessWidget {
         final qty = controller.carrito[id]!;
         final prod = controller.cacheProductos[id]!;
         return Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            border: Border.all(color: Theme.of(context).dividerColor),
-            borderRadius: BorderRadius.circular(16),
+            color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
           ),
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(prod.nombre,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).textTheme.bodyLarge?.color),
-                        maxLines: 1),
-                    Text('\$${prod.precioPorUnidad?.toStringAsFixed(2)} c/u',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ),
-              ),
               Row(
                 children: [
-                  _qtyBtn(context, Icons.remove, () => controller.quitarDeCarrito(id)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text('$qty',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                            color: Theme.of(context).textTheme.titleLarge?.color)),
+                  Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.ayanamiBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.medication_rounded, color: AppTheme.ayanamiBlue, size: 20),
                   ),
-                  _qtyBtn(context, Icons.add, () => controller.agregarAlCarrito(prod)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(prod.nombre,
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text('\$${prod.precioPorUnidad?.toStringAsFixed(2)} x unidad',
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                  _actionButton(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => controller.eliminarDelCarrito(id)),
                 ],
               ),
-              const SizedBox(width: 12),
-              Text('\$${((prod.precioPorUnidad ?? 0) * qty).toStringAsFixed(2)}',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Theme.of(context).textTheme.bodyLarge?.color)),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                icon: const Icon(Icons.delete_outline,
-                    size: 18, color: AppTheme.reiOrangeRed),
-                label: const Text('Borrar',
-                    style: TextStyle(color: AppTheme.reiOrangeRed)),
-                onPressed: () => controller.eliminarDelCarrito(id),
-              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardTheme.color,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    ),
+                    child: Row(
+                      children: [
+                        _qtyBtn(context, Icons.remove_rounded, () => controller.quitarDeCarrito(id)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text('$qty', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                        ),
+                        _qtyBtn(context, Icons.add_rounded, () => controller.agregarAlCarrito(prod)),
+                      ],
+                    ),
+                  ),
+                  Text('\$${((prod.precioPorUnidad ?? 0) * qty).toStringAsFixed(2)}',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.ayanamiBlue)),
+                ],
+              )
             ],
           ),
         );
@@ -147,20 +173,27 @@ class CartSection extends StatelessWidget {
     );
   }
 
-  Widget _qtyBtn(BuildContext context, IconData icon, VoidCallback onPressed) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).dividerColor),
+  Widget _actionButton(IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, size: 20, color: color),
       ),
-      child: IconButton(
-          icon: Icon(icon,
-              size: 14, color: Theme.of(context).textTheme.bodyLarge?.color),
-          onPressed: onPressed,
-          padding: EdgeInsets.zero),
+    );
+  }
+
+  Widget _qtyBtn(BuildContext context, IconData icon, VoidCallback onPressed) {
+    return IconButton(
+      icon: Icon(icon, size: 18, color: AppTheme.ayanamiBlue),
+      onPressed: onPressed,
+      padding: const EdgeInsets.all(12),
+      constraints: const BoxConstraints(),
     );
   }
 
@@ -169,44 +202,46 @@ class CartSection extends StatelessWidget {
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5))
-        ],
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Total a Pagar',
-                  style: TextStyle(fontSize: 16, color: Colors.grey)),
-              Text('\$${controller.total.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.ayanamiBlue)),
+              const Text('Total Bruto', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
+              Text('\$${controller.total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w700)),
             ],
           ),
-          const SizedBox(height: 24),
-          if (controller.mensaje != null)
-            Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(12)),
-              child: Text(controller.mensaje!,
-                  textAlign: TextAlign.center,
+          const SizedBox(height: 12),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Impuestos (0%)', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
+              Text('\$0.00', style: TextStyle(fontWeight: FontWeight.w700)),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Divider(),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('TOTAL A COBRAR',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1)),
+              Text('\$${controller.total.toStringAsFixed(2)}',
                   style: const TextStyle(
-                      color: Color(0xFF166534), fontWeight: FontWeight.bold)),
-            ),
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.ayanamiBlue,
+                      letterSpacing: -1)),
+            ],
+          ),
+          const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
-            height: 70,
+            height: 75,
             child: ElevatedButton(
               onPressed: controller.carrito.isEmpty || controller.isLoading
                   ? null
@@ -222,15 +257,20 @@ class CartSection extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.greenMetal,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                elevation: 8,
+                shadowColor: AppTheme.greenMetal.withOpacity(0.4),
               ),
               child: controller.isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('FINALIZAR VENTA',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle_rounded),
+                        SizedBox(width: 12),
+                        Text('FINALIZAR VENTA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                      ],
+                    ),
             ),
           ),
         ],

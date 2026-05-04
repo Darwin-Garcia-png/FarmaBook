@@ -24,21 +24,45 @@ class ProductCard extends StatelessWidget {
     final List lotes = p['lotes'] is List ? p['lotes'] : [];
     final String? imageUrl = p['imagenUrl'] ?? p['imagen'] ?? p['secure_url'];
 
+    DateTime? nearestExpiry;
+    for (var lote in lotes) {
+      final dateStr = lote['fechaDeVencimiento'] ?? lote['fechaVencimiento'];
+      final d = DateTime.tryParse(dateStr?.toString() ?? '');
+      if (d != null) {
+        if (nearestExpiry == null || d.isBefore(nearestExpiry)) {
+          nearestExpiry = d;
+        }
+      }
+    }
+    
+    bool isExpired = false;
+    bool isNear = false;
+    if (nearestExpiry != null) {
+      isExpired = nearestExpiry.isBefore(DateTime.now());
+      isNear = !isExpired && nearestExpiry.isBefore(DateTime.now().add(const Duration(days: 60)));
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5)),
+              color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.08) : Colors.black.withOpacity(0.03),
+              blurRadius: 30,
+              offset: const Offset(0, 10)),
         ],
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+        border: Border.all(
+          color: isExpired 
+            ? AppTheme.reiOrangeRed.withOpacity(0.5) 
+            : Theme.of(context).dividerColor.withOpacity(0.2),
+          width: 1.5,
+        ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
+          borderRadius: BorderRadius.circular(32),
           onTap: () {
             if (lotes.length > 1) {
               showModalBottomSheet(
@@ -58,152 +82,175 @@ class ProductCard extends StatelessWidget {
                   prod: Map<String, dynamic>.from(p));
             }
           },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                flex: 5,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: lowStock
-                          ? [
-                              AppTheme.reiDarkRed.withOpacity(0.15),
-                              AppTheme.reiOrangeRed.withOpacity(0.05)
-                            ]
-                          : [
-                              AppTheme.ayanamiBlue.withOpacity(0.15),
-                              AppTheme.ayanamiBlue.withOpacity(0.05)
-                            ],
-                    ),
-                  ),
-                  child: Center(
-                    child: (imageUrl != null && imageUrl.isNotEmpty)
-                        ? Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                            errorBuilder: (context, error, stackTrace) =>
-                                _buildIconPlaceholder(lowStock),
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes !=
-                                          null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                  strokeWidth: 2,
-                                ),
-                              );
-                            },
-                          )
-                        : _buildIconPlaceholder(lowStock),
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 6,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
-                      Text(p['nombre'] ?? 'Sin nombre',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 4),
-                      Text('Ref: ${p['codigoBarras'] ?? 'N/A'}',
-                          style: TextStyle(
-                              fontSize: 11, color: Colors.grey.shade500)),
-                      const Spacer(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Stock',
-                                  style: TextStyle(
-                                      fontSize: 11, color: Colors.grey)),
-                              Text('$stock',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: lowStock
-                                          ? AppTheme.reiOrangeRed
-                                          : AppTheme.greenMetal)),
-                            ],
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(20),
+                          image: (imageUrl != null && imageUrl.isNotEmpty)
+                              ? DecorationImage(
+                                  image: NetworkImage(imageUrl),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: (imageUrl == null || imageUrl.isEmpty)
+                            ? _buildIconPlaceholder(lowStock)
+                            : null,
+                      ),
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: lowStock ? AppTheme.reiOrangeRed : AppTheme.greenMetal,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [BoxShadow(color: (lowStock ? AppTheme.reiOrangeRed : AppTheme.greenMetal).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                          child: Row(
                             children: [
-                              const Text('Precio',
-                                  style: TextStyle(
-                                      fontSize: 11, color: Colors.grey)),
+                              const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 12),
+                              const SizedBox(width: 4),
                               Text(
-                                '\$${_getSafePrice(p)}',
-                                style: const TextStyle(
-                                    color: AppTheme.ayanamiBlue,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
+                                '$stock',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900),
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              _buildProductActions(context),
-            ],
+                const SizedBox(height: 20),
+                Expanded(
+                  flex: 6,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(p['nombre'] ?? 'Sin nombre',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: -0.5),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 6),
+                      Text(p['descripcion'] ?? 'No hay descripción disponible para este producto.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500, height: 1.3),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                      const Spacer(),
+                      if (nearestExpiry != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.1) : (isNear ? Colors.orange.withOpacity(0.1) : Colors.grey.withOpacity(0.05)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(isExpired ? Icons.warning_rounded : Icons.calendar_month_rounded, 
+                                size: 12, 
+                                color: isExpired ? AppTheme.reiOrangeRed : (isNear ? Colors.orange : Colors.grey)
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isExpired 
+                                  ? 'Vencido el ${nearestExpiry.day}/${nearestExpiry.month}/${nearestExpiry.year}'
+                                  : 'Vence: ${nearestExpiry.day}/${nearestExpiry.month}/${nearestExpiry.year}',
+                                style: TextStyle(
+                                  fontSize: 11, 
+                                  fontWeight: FontWeight.w800,
+                                  color: isExpired ? AppTheme.reiOrangeRed : (isNear ? Colors.orange : Colors.grey)
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.only(top: 16),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.3), width: 1)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('PRECIO UNITARIO', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                          Text(
+                            '\$${_getSafePrice(p)}',
+                            style: const TextStyle(
+                                color: AppTheme.ayanamiBlue,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          _actionButton(context, Icons.edit_rounded, AppTheme.ayanamiBlue, () {
+                            InventoryDialogs.showAddEditProduct(context, controller, lotesCtrl, prod: Map<String, dynamic>.from(p));
+                          }),
+                          const SizedBox(width: 8),
+                          _actionButton(context, Icons.delete_rounded, AppTheme.reiOrangeRed, () {
+                            _confirmarBorrado(context);
+                          }),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _actionButton(BuildContext context, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, size: 18, color: color),
+      ),
+    );
+  }
+
   Widget _buildIconPlaceholder(bool lowStock) {
-    return Icon(
-      Icons.medication_liquid_rounded,
-      size: 60,
-      color: lowStock ? AppTheme.reiOrangeRed : AppTheme.ayanamiBlue,
+    return Center(
+      child: Icon(
+        Icons.medication_rounded,
+        size: 40,
+        color: lowStock ? AppTheme.reiOrangeRed.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+      ),
     );
   }
 
   Widget _buildProductActions(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          border:
-              Border(top: BorderSide(color: Theme.of(context).dividerColor))),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          TextButton.icon(
-              icon: Icon(Icons.edit,
-                  size: 18,
-                  color: Theme.of(context).textTheme.bodyLarge?.color),
-              label: Text('Editar',
-                  style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color)),
-              onPressed: () => InventoryDialogs.showAddEditProduct(
-                  context, controller, lotesCtrl,
-                  prod: p)),
-          TextButton.icon(
-              icon: const Icon(Icons.delete_outline,
-                  size: 18, color: AppTheme.reiOrangeRed),
-              label: const Text('Borrar',
-                  style: TextStyle(color: AppTheme.reiOrangeRed)),
-              onPressed: () => _confirmarBorrado(context)),
-        ],
-      ),
-    );
+    // Deprecated in favor of the new inline action buttons inside the row
+    return const SizedBox();
   }
 
   Future<void> _confirmarBorrado(BuildContext context) async {

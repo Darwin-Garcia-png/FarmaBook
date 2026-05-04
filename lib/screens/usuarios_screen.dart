@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controllers/usuarios_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_header.dart';
 
 class UsuariosScreen extends StatefulWidget {
   const UsuariosScreen({super.key});
@@ -33,101 +34,28 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Gestión de Personal',
-                style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 24,
-                    color: Theme.of(context).textTheme.titleLarge?.color)),
-            const Text('Administra usuarios, cajeros y permisos',
-                style: TextStyle(fontSize: 13, color: Colors.grey)),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 24),
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddEditUserDialog(),
-              icon: const Icon(Icons.person_add_rounded),
-              label: const Text('Nuevo Usuario'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.ayanamiBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          )
-        ],
-      ),
-      body: Stack(
-        children: [
-          _controller.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _buildUserList(),
-          
-          // Maintenance Overlay
-          Positioned.fill(
-            child: Container(
-              color: Colors.white.withOpacity(0.4),
-              child: BackdropFilter(
-                filter: ColorFilter.mode(Colors.black.withOpacity(0.05), BlendMode.softLight),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(40),
-                    margin: const EdgeInsets.symmetric(horizontal: 40),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(40),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 30)],
-                      border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.2), width: 2),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // The funny Rei Image
-                        Image.network(
-                          '/construccion.png',
-                          height: 250,
-                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.engineering_rounded, size: 100, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 32),
-                        const Text('ESTAMOS CONSTRUYENDO ESTO', 
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppTheme.darkSlate, letterSpacing: -1)),
-                        const SizedBox(height: 12),
-                        const Text('El servidor de roles tiene problemas técnicos para entenderse conmigo.', 
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
-                        const SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppTheme.reiOrangeRed.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.warning_amber_rounded, color: AppTheme.reiOrangeRed, size: 18),
-                              SizedBox(width: 8),
-                              Text('Mantenimiento en curso', style: TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.bold, fontSize: 12)),
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+      appBar: PremiumHeader(
+        title: 'Gestión de Personal',
+        subtitle: 'Administra usuarios, cajeros y permisos',
+        icon: Icons.engineering_rounded,
+        baseColor: AppTheme.ayanamiBlue,
+        trailing: ElevatedButton.icon(
+          onPressed: () => _showAddEditUserDialog(),
+          icon: const Icon(Icons.person_add_rounded),
+          label: const Text('Nuevo Usuario', style: TextStyle(fontWeight: FontWeight.w900)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.ayanamiBlue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            elevation: 8,
+            shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4),
           ),
-        ],
+        ),
       ),
+      body: _controller.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildUserList(),
     );
   }
 
@@ -157,97 +85,118 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          _buildQuickStats(),
-          const SizedBox(height: 32),
-          const Text('LISTADO DE STAFF', 
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.blueGrey, letterSpacing: 2)),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _controller.usuarios.length,
-              itemBuilder: (context, index) {
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(32),
+          sliver: SliverToBoxAdapter(
+            child: _buildQuickStats(),
+          ),
+        ),
+        const SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 32),
+          sliver: SliverToBoxAdapter(
+            child: Text('PERSONAL REGISTRADO', 
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(32),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 450,
+              mainAxisExtent: 200,
+              crossAxisSpacing: 24,
+              mainAxisSpacing: 24,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
                 final user = _controller.usuarios[index];
                 final bool activo = user['activo'] ?? true;
                 final String rolName = user['Rol']?['nombre'] ?? 'Personal';
                 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardTheme.color,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10))
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
                     ],
-                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: IntrinsicHeight(
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            color: activo ? Colors.greenAccent : Colors.redAccent,
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 30,
-                                    backgroundColor: AppTheme.ayanamiBlue.withOpacity(0.1),
-                                    child: Text((user['nombre'] ?? user['username'] ?? 'U')[0].toUpperCase(),
-                                      style: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w900, fontSize: 22)),
-                                  ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(user['nombre'] ?? user['username'] ?? 'Usuario',
-                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(Icons.shield_outlined, size: 14, color: Colors.grey[600]),
-                                            const SizedBox(width: 4),
-                                            Text(rolName, style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w600)),
-                                            const SizedBox(width: 12),
-                                            const Text('•', style: TextStyle(color: Colors.grey)),
-                                            const SizedBox(width: 12),
-                                            Text(activo ? 'Activo' : 'Inactivo', 
-                                              style: TextStyle(color: activo ? Colors.green : Colors.red, fontSize: 12, fontWeight: FontWeight.w800)),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  _buildUserActions(user),
-                                ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      children: [
+                        Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: AppTheme.ayanamiBlue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text((user['nombre'] ?? user['username'] ?? 'U')[0].toUpperCase(),
+                                style: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w900, fontSize: 32)),
+                            ),
+                            Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: activo ? AppTheme.greenMetal : AppTheme.reiOrangeRed,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Theme.of(context).cardTheme.color!, width: 4),
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(user['nombre'] ?? user['username'] ?? 'Usuario',
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5)),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.ayanamiBlue.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(rolName.toUpperCase(), 
+                                  style: const TextStyle(color: AppTheme.ayanamiBlue, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _actionButton(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showAddEditUserDialog(user: user)),
+                            const SizedBox(height: 12),
+                            _actionButton(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(user)),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 );
               },
+              childCount: _controller.usuarios.length,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -267,22 +216,25 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: color.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(32),
           border: Border.all(color: color.withOpacity(0.1)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-              child: Icon(icon, color: color),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color, size: 28),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 20),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-                Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600, fontSize: 12)),
+                Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                Text(label, style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
               ],
             )
           ],
@@ -291,21 +243,18 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     );
   }
 
-  Widget _buildUserActions(Map<String, dynamic> user) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.edit_rounded, color: AppTheme.ayanamiBlue),
-          onPressed: () => _showAddEditUserDialog(user: user),
-          tooltip: 'Editar información',
+  Widget _actionButton(IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
-        const SizedBox(width: 8),
-        IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.reiOrangeRed),
-          onPressed: () => _confirmDelete(user),
-          tooltip: 'Desactivar usuario',
-        ),
-      ],
+        child: Icon(icon, size: 20, color: color),
+      ),
     );
   }
 
@@ -315,11 +264,8 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     final realNameCtrl = TextEditingController(text: user?['nombreCompleto'] ?? user?['nombre']);
     final passCtrl = TextEditingController();
     bool showPass = false;
-    String? selectedRol = user?['rolId'] ?? user?['roleId'] ?? user?['rol']?.toString();
-    if (selectedRol == null && _controller.roles.isNotEmpty) {
-      selectedRol = _controller.roles.first['rolId']?.toString();
-    }
-
+    String? selectedRol = user?['rolId']?.toString() ?? user?['roleId']?.toString();
+    
     showDialog(
       context: context,
       barrierColor: Colors.black87.withOpacity(0.8),
@@ -331,7 +277,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             child: Container(
               width: 500,
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB), // Softer Gray instead of Pure White
+                color: Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 40)],
                 border: Border.all(color: Colors.black.withOpacity(0.05)),
@@ -356,7 +302,6 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                           const SizedBox(height: 20),
                           _premiumField('Username', 'Para el inicio de sesión', nombreCtrl, Icons.alternate_email_rounded),
                           
-                          // Password Field with Toggle
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -368,7 +313,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                                 decoration: InputDecoration(
                                   hintText: isEdit ? 'Dejar en blanco para no cambiar' : 'Mínimo 8 caracteres',
                                   hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                                  prefixIcon: Icon(Icons.lock_outline_rounded, size: 20, color: AppTheme.ayanamiBlue),
+                                  prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: AppTheme.ayanamiBlue),
                                   suffixIcon: IconButton(
                                     icon: Icon(showPass ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20, color: Colors.grey),
                                     onPressed: () => setDialogState(() => showPass = !showPass),
@@ -448,7 +393,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       spacing: 12,
       runSpacing: 12,
       children: _controller.roles.map((r) {
-        final isSelected = r['rolId'] == selected;
+        final isSelected = r['rolId']?.toString() == selected;
         final name = r['nombre'].toString().toLowerCase();
         IconData roleIcon = Icons.badge_outlined;
         if (name.contains('admin')) roleIcon = Icons.admin_panel_settings_rounded;
@@ -456,7 +401,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         if (name.contains('dueño')) roleIcon = Icons.stars_rounded;
 
         return GestureDetector(
-          onTap: () => onSelect(r['rolId']),
+          onTap: () => onSelect(r['rolId'].toString()),
           child: Container(
             width: 130,
             padding: const EdgeInsets.all(16),
@@ -508,13 +453,10 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Revisa los campos obligatorios')));
                   return;
                 }
-                // CLEAN PAYLOAD: Removing all keys that the server explicitly marked as 'not allowed'
-                // The server expects 'username' and 'password' as required.
-                // Based on previous logs, 'nombre' and 'rolId' are strictly FORBIDDEN in the POST body.
                 final data = {
                   'username': n.text.trim(),
                   'password': p.text,
-                  'roleId': r, // Assuming roleId is the correct allowed key for the role UUID
+                  'roleId': r,
                 };
                 try {
                   if (isEdit) {

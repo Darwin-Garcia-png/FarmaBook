@@ -6,6 +6,7 @@ import '../widgets/ventas/cart_section.dart';
 import '../widgets/ventas/sales_results_grid.dart';
 import '../widgets/ventas/sales_search_section.dart';
 import '../widgets/ventas/receipt_dialog.dart';
+import '../widgets/premium_header.dart';
 
 class VentasScreen extends StatefulWidget {
   const VentasScreen({super.key});
@@ -29,51 +30,11 @@ class _VentasScreenState extends State<VentasScreen> {
       value: _controller,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          title: Text('FarmaPOS',
-              style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                  color: Theme.of(context).textTheme.titleLarge?.color)),
-          centerTitle: true,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          elevation: 0,
-          actions: [
-            Consumer<VentasController>(
-              builder: (context, controller, child) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (controller.error != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(controller.error!), backgroundColor: Colors.red),
-                    );
-                    controller.clearMessage();
-                  }
-                });
-
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.refresh,
-                          color: Theme.of(context).textTheme.bodyLarge?.color),
-                      onPressed: () => controller.cargarHistorialVentas(),
-                      tooltip: 'Refrescar Historial',
-                    ),
-                    if (controller.carrito.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: IconButton(
-                          icon: Icon(Icons.delete_sweep_rounded,
-                              color: Theme.of(context).textTheme.bodyLarge?.color),
-                          onPressed: controller.vaciarCarrito,
-                          tooltip: 'Vaciar carrito',
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ],
+        appBar: const PremiumHeader(
+            title: 'Punto de Venta',
+            subtitle: 'Atención y Cobro',
+            icon: Icons.shopping_cart_rounded, // Icono más estándar y pequeño
+            baseColor: AppTheme.greenMetal,
         ),
         body: _buildBody(),
       ),
@@ -83,45 +44,41 @@ class _VentasScreenState extends State<VentasScreen> {
   Widget _buildBody() {
     return Row(
       children: [
+        _buildSidebar(),
         Expanded(
-          flex: 4,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 1)),
-            ),
-            child: Consumer<VentasController>(
-              builder: (context, controller, child) {
-                return Column(
+          flex: 5,
+          child: Consumer<VentasController>(
+            builder: (context, controller, child) {
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Column(
+                  key: ValueKey(controller.vistaActual),
                   children: [
                     if (controller.vistaActual == VentasView.search) ...[
                       const Padding(
-                        padding: EdgeInsets.all(16.0),
+                        padding: EdgeInsets.fromLTRB(32, 32, 32, 16),
                         child: SalesSearchSection(),
                       ),
                       const Expanded(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          padding: EdgeInsets.symmetric(horizontal: 32),
                           child: SalesResultsGrid(),
                         ),
                       ),
                     ] else if (controller.vistaActual == VentasView.history) ...[
-                      _buildHeader(context, 'Ventas Registradas', Icons.list_alt),
+                      _buildHeader(context, 'Historial de Ventas', Icons.history_edu_rounded),
                       Expanded(child: _buildSalesHistoryList(context, controller)),
                     ] else if (controller.vistaActual == VentasView.receipts) ...[
-                      _buildHeader(context, 'Archivo de Recibos', Icons.receipt_long),
+                      _buildHeader(context, 'Archivo de Comprobantes', Icons.receipt_long_rounded),
                       Expanded(child: _buildReceiptsCardsList(context, controller)),
                     ],
                   ],
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
-        const Expanded(
-          flex: 4,
-          child: CartSection(),
-        ),
-        _buildSidebar(),
+        const CartSection(),
       ],
     );
   }
@@ -147,27 +104,31 @@ class _VentasScreenState extends State<VentasScreen> {
     return Consumer<VentasController>(
       builder: (context, controller, child) {
         return Container(
-          width: 110,
+          width: 100,
+          margin: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1A1A1A)
-                : const Color(0xFF2A4365),
-            boxShadow: const [
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
               BoxShadow(
-                  color: Colors.black26, blurRadius: 10, offset: Offset(-2, 0))
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 30,
+                offset: const Offset(10, 0),
+              )
             ],
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
           ),
           child: Column(
             children: [
               const SizedBox(height: 32),
               _navButton(
-                icon: Icons.search,
+                icon: Icons.add_shopping_cart_rounded,
                 label: 'Vender',
                 isSelected: controller.vistaActual == VentasView.search,
                 onTap: () => controller.setVista(VentasView.search),
               ),
               _navButton(
-                icon: Icons.history,
+                icon: Icons.history_rounded,
                 label: 'Historial',
                 isSelected: controller.vistaActual == VentasView.history,
                 onTap: () => controller.setVista(VentasView.history),
@@ -179,10 +140,16 @@ class _VentasScreenState extends State<VentasScreen> {
                 onTap: () => controller.setVista(VentasView.receipts),
               ),
               const Spacer(),
-              const Padding(
-                padding: EdgeInsets.all(12.0),
-                child: Text('FarmaBook v1.0',
-                    style: TextStyle(color: Colors.white24, fontSize: 10)),
+              Container(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Colors.grey, size: 20),
+                    const SizedBox(height: 12),
+                    Text('v1.0', style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ],
           ),
@@ -201,23 +168,28 @@ class _VentasScreenState extends State<VentasScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 20),
           width: double.infinity,
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.ayanamiBlue : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isSelected ? [
+              BoxShadow(color: AppTheme.ayanamiBlue.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
+            ] : [],
           ),
           child: Column(
             children: [
-              Icon(icon, color: Colors.white, size: 28),
-              const SizedBox(height: 6),
+              Icon(icon, color: isSelected ? Colors.white : Colors.grey, size: 28),
+              const SizedBox(height: 8),
               Text(label,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey,
                       fontSize: 11,
-                      fontWeight: FontWeight.bold)),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.2)),
             ],
           ),
         ),
@@ -346,28 +318,17 @@ class _VentasScreenState extends State<VentasScreen> {
 
   String _getSafeDate(Map<String, dynamic> json) {
     if (json.isEmpty) return DateTime.now().toIso8601String();
-    
-    // Lista de posibles nombres de campos de fecha
     final fields = ['fechaDeVenta', 'fechaVenta', 'fecha_venta', 'fecha', 'createdAt', 'created_at', 'date', 'updatedAt'];
-    
     for(var f in fields) {
-       if(json[f] != null && json[f].toString().isNotEmpty) {
-           return json[f].toString();
-       }
+       if(json[f] != null && json[f].toString().isNotEmpty) return json[f].toString();
     }
-    
-    // Búsqueda profunda en niveles anidados (útil si la venta envuelve la fecha dentro de otro nodo)
     for (var value in json.values) {
       if (value is Map<String, dynamic>) {
         for (var f in fields) {
-          if (value[f] != null && value[f].toString().isNotEmpty) {
-            return value[f].toString();
-          }
+          if (value[f] != null && value[f].toString().isNotEmpty) return value[f].toString();
         }
       }
     }
-    
-    // Si realmente el backend no entrega fecha, lo marcamos para que lo sepas identificar visualmente
     return "2000-01-01T00:00:00Z"; 
   }
 }

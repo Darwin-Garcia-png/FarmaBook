@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:farmabook_flutter/router/app_router.dart';
+import 'package:farmabook_flutter/utils/global_error_handler.dart';
 import 'providers/theme_provider.dart';
 import 'controllers/almacen_controller.dart';
 import 'controllers/lotes_controller.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
       routerConfig: appRouter,
+      scaffoldMessengerKey: globalScaffoldMessengerKey,
     );
   }
 }

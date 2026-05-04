@@ -11,36 +11,34 @@ class SalesSearchSection extends StatelessWidget {
     final controller = context.watch<VentasController>();
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 20,
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 30,
               offset: const Offset(0, 10)),
         ],
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Column(
         children: [
           TextField(
             controller: controller.barcodeController,
             autofocus: true,
-            style:
-                TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
             decoration: InputDecoration(
               hintText: 'Escanear Código de Barras...',
-              hintStyle: const TextStyle(color: Colors.grey),
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
               prefixIcon:
-                  const Icon(Icons.barcode_reader, color: AppTheme.ayanamiBlue),
+                  const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.ayanamiBlue),
               filled: true,
-              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
               border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.all(18),
+              contentPadding: const EdgeInsets.all(22),
             ),
             onSubmitted: (_) => controller.buscarPorCodigo(),
           ),
@@ -50,36 +48,33 @@ class SalesSearchSection extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: controller.searchController,
-                  style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
                     hintText: 'Buscar por nombre de medicamento...',
-                    hintStyle: const TextStyle(color: Colors.grey),
+                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                     prefixIcon:
-                        const Icon(Icons.search, color: AppTheme.ayanamiBlue),
+                        const Icon(Icons.search_rounded, color: AppTheme.ayanamiBlue),
                     filled: true,
-                    fillColor: Theme.of(context).scaffoldBackgroundColor,
+                    fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.all(18),
+                    contentPadding: const EdgeInsets.all(22),
                   ),
                   onSubmitted: (_) => controller.buscarPorNombre(),
                 ),
               ),
-              const SizedBox(width: 12),
-              Material(
-                color: AppTheme.ayanamiBlue,
-                borderRadius: BorderRadius.circular(16),
-                child: InkWell(
-                  onTap: controller.buscarPorNombre,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 18),
-                    child: const Icon(Icons.search, color: Colors.white),
-                  ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: controller.buscarPorNombre,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.ayanamiBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(22),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  elevation: 8,
+                  shadowColor: AppTheme.ayanamiBlue.withOpacity(0.3),
                 ),
+                child: const Icon(Icons.search_rounded),
               ),
             ],
           ),

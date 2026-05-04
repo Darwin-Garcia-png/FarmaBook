@@ -152,14 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     isLoading: _controller.isLoading,
                                   ),
                                 ),
-                                if (_controller.errorMessage != null) ...[
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _controller.errorMessage!,
-                                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
                               ],
                             ),
                           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../controllers/estadisticas_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_header.dart';
 
 class EstadisticasScreen extends StatefulWidget {
   const EstadisticasScreen({super.key});
@@ -31,15 +32,23 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
     if (mounted) setState(() {});
   }
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: PremiumHeader(
+        title: 'Análisis & Estadísticas',
+        subtitle: 'Resumen financiero y rendimiento de productos',
+        icon: Icons.analytics_rounded,
+        baseColor: AppTheme.ayanamiBlue,
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh, color: AppTheme.ayanamiBlue),
+          onPressed: () => _controller.cargarEstadisticas(),
+        ),
+      ),
       body: _controller.isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
               slivers: [
-                _buildSliverHeader(),
                 SliverPadding(
                   padding: const EdgeInsets.all(24),
                   sliver: SliverList(
@@ -68,71 +77,48 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
             ),
     );
   }
-  Widget _buildSliverHeader() {
-    return SliverAppBar(
-      expandedHeight: 120,
-      floating: false,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text('Análisis & Estadísticas',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.white, fontSize: 18)),
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF6DABE4), Color(0xFF2A4365)],
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh, color: Colors.white),
-          onPressed: () => _controller.cargarEstadisticas(),
-        ),
-        const SizedBox(width: 16),
-      ],
-    );
-  }
-
 
   Widget _buildDailySummary() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Actividad de Hoy', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color)),
-        const SizedBox(height: 16),
+        const Text('ACTIVIDAD DE HOY', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
+        const SizedBox(height: 20),
         Row(
           children: [
-            Expanded(child: _miniKpiCard('Ingresos Hoy', '\$${_controller.ingresosHoy.toStringAsFixed(2)}', Icons.today, [const Color(0xFF6DABE4), const Color(0xFF4A90E2)])),
-            const SizedBox(width: 16),
-            Expanded(child: _miniKpiCard('Ventas Hoy', '${_controller.ventasHoy}', Icons.shopping_cart, [const Color(0xFF48BB78), const Color(0xFF38A169)])),
+            Expanded(child: _miniKpiCard('Ingresos Hoy', '\$${_controller.ingresosHoy.toStringAsFixed(2)}', Icons.payments_rounded, AppTheme.ayanamiBlue)),
+            const SizedBox(width: 20),
+            Expanded(child: _miniKpiCard('Ventas Hoy', '${_controller.ventasHoy}', Icons.shopping_cart_rounded, AppTheme.greenMetal)),
           ],
         ),
       ],
     );
   }
 
-  Widget _miniKpiCard(String label, String value, IconData icon, List<Color> colors) {
+  Widget _miniKpiCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: colors),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: colors[0].withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))],
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: color.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(color: color.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10))
+        ],
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white, size: 30),
-          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 20),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+              Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
             ],
           )
         ],
@@ -144,15 +130,15 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Rendimiento Mensual', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color)),
-        const SizedBox(height: 16),
+        const Text('RENDIMIENTO MENSUAL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
+        const SizedBox(height: 20),
         Row(
           children: [
-            Expanded(child: _kpiCard('Ingresos Mes', '\$${_controller.ingresosMes.toStringAsFixed(2)}', Icons.payments, [const Color(0xFF6DABE4), const Color(0xFF5A8BCF)])),
-            const SizedBox(width: 16),
-            Expanded(child: _kpiCard('Gastos Lotes', '\$${_controller.egresosMes.toStringAsFixed(2)}', Icons.shopping_bag, [const Color(0xFFE53E3E), const Color(0xFF9B2C2C)])),
-            const SizedBox(width: 16),
-            Expanded(child: _kpiCard('Balance Neto', '\$${_controller.balanceMes.toStringAsFixed(2)}', Icons.account_balance_wallet, [const Color(0xFF2F855A), const Color(0xFF3C5A4A)])),
+            Expanded(child: _kpiCard('Ingresos Mes', '\$${_controller.ingresosMes.toStringAsFixed(2)}', Icons.trending_up_rounded, AppTheme.ayanamiBlue)),
+            const SizedBox(width: 20),
+            Expanded(child: _kpiCard('Gastos Lotes', '\$${_controller.egresosMes.toStringAsFixed(2)}', Icons.trending_down_rounded, AppTheme.reiOrangeRed)),
+            const SizedBox(width: 20),
+            Expanded(child: _kpiCard('Balance Neto', '\$${_controller.balanceMes.toStringAsFixed(2)}', Icons.account_balance_wallet_rounded, AppTheme.greenMetal)),
           ],
         ),
       ],
@@ -199,22 +185,29 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
     );
   }
 
-  Widget _kpiCard(String label, String value, IconData icon, List<Color> colors) {
+  Widget _kpiCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: colors[0].withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: color.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(color: color.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.white70, size: 28),
-          const SizedBox(height: 16),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500)),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 24),
+          Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+          Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
         ],
       ),
     );
@@ -318,19 +311,34 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
 
   Widget _sectionCard({required String title, required String subtitle, required Widget child}) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 30, offset: const Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.titleLarge?.color)),
-          Text(subtitle, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title.toUpperCase(), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Divider(),
+          ),
           child,
         ],
       ),

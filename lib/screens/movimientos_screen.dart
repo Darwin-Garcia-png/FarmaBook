@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../controllers/movimientos_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_header.dart';
 
 class MovimientosScreen extends StatefulWidget {
   const MovimientosScreen({super.key});
@@ -35,48 +36,29 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Registro de Movimientos', 
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: -0.5, color: Theme.of(context).textTheme.titleLarge?.color)),
-            const Text('Supervisa tu negocio en tiempo real', style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.normal)),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        toolbarHeight: 80,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 24),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.2))
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8, height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.ayanamiBlue,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: AppTheme.ayanamiBlue, blurRadius: 6, spreadRadius: 2)]
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text('Audit Sync', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w800, fontSize: 13)),
-                  ],
-                ),
+      appBar: PremiumHeader(
+        title: 'Actividad de Auditoría',
+        subtitle: 'Historial completo de operaciones y cambios',
+        icon: Icons.history_rounded,
+        baseColor: AppTheme.ayanamiBlue,
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.ayanamiBlue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.2))
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.sync_rounded, color: AppTheme.ayanamiBlue, size: 18),
+              const SizedBox(width: 8),
+              Text('Live Feed Active', 
+                style: TextStyle(color: AppTheme.ayanamiBlue.withOpacity(0.8), fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)
               ),
-            ),
-          )
-        ],
+            ],
+          ),
+        ),
       ),
       body: _controller.isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -121,32 +103,39 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
   }
 
   Widget _buildList() {
-    if (_controller.movimientos.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.dashboard_customize_rounded, size: 100, color: Colors.grey.withOpacity(0.2)),
-            const SizedBox(height: 24),
-            const Text('El historial está impecable', style: TextStyle(color: Colors.grey, fontSize: 20, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            const Text('Inicia operaciones para ver los movimientos aquí.', style: TextStyle(color: Colors.grey, fontSize: 14)),
-          ],
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(48, 40, 48, 20),
+          sliver: SliverToBoxAdapter(
+            child: Row(
+              children: [
+                const Text('LÍNEA DE TIEMPO', 
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
+                const SizedBox(width: 16),
+                Expanded(child: Divider(color: Colors.grey.withOpacity(0.1))),
+              ],
+            ),
+          ),
         ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
-      itemCount: _controller.movimientos.length,
-      itemBuilder: (context, index) {
-        final item = _controller.movimientos[index];
-        return _ActivityTimelineTile(
-          item: item,
-          isFirst: index == 0,
-          isLast: index == _controller.movimientos.length - 1,
-        );
-      },
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 48),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final item = _controller.movimientos[index];
+                return _ActivityTimelineTile(
+                  item: item,
+                  isFirst: index == 0,
+                  isLast: index == _controller.movimientos.length - 1,
+                );
+              },
+              childCount: _controller.movimientos.length,
+            ),
+          ),
+        ),
+        const SliverPadding(padding: EdgeInsets.only(bottom: 50), sliver: SliverToBoxAdapter()),
+      ],
     );
   }
 }
@@ -168,65 +157,53 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
   void _showDetails(BuildContext context) {
     if (widget.item['payload'] == null || widget.item['payload'] is! Map) return;
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return BackdropFilter(
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            height: MediaQuery.of(context).size.height * 0.75,
+            width: 600,
+            height: MediaQuery.of(context).size.height * 0.8,
             decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 40,
-                  spreadRadius: 10,
-                )
-              ]
+              color: Theme.of(context).cardTheme.color?.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
             child: Column(
               children: [
-                const SizedBox(height: 16),
-                Center(
-                  child: Container(
-                    width: 50,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
+                  padding: const EdgeInsets.all(32),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: _getColor().withOpacity(0.2),
-                          shape: BoxShape.circle,
+                          color: _getColor().withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Icon(_getIcon(), color: _getColor(), size: 28),
+                        child: Icon(_getIcon(), color: _getColor(), size: 32),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 20),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Inspección de Registro', style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w600)),
-                            Text('ID: ${widget.item['cambioId']?.toString().substring(0,8) ?? "N/A" }...', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.titleLarge?.color)),
+                            Text('DETALLES DEL REGISTRO', 
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.grey.shade500, letterSpacing: 1.5)
+                            ),
+                            Text('${widget.item['accion']?.toString().toUpperCase()} - ${widget.item['entidad']?.toString().toUpperCase()}', 
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)
+                            ),
                           ],
                         ),
-                      )
+                      ),
+                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
                     ],
                   ),
                 ),
-                const Divider(height: 1, indent: 32, endIndent: 32),
+                const Divider(height: 1),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(32),
@@ -236,8 +213,8 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
               ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -246,17 +223,17 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
       final key = _formatKey(e.key);
       return Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+          color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(key.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1.2)),
-            const SizedBox(height: 8),
+            Text(key.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.2)),
+            const SizedBox(height: 12),
             _buildValueWidget(e.value, context),
           ],
         ),
@@ -272,10 +249,10 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
 
   Widget _buildValueWidget(dynamic value, BuildContext context) {
     if (value is Map) {
-      return Text(value.toString(), style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w500));
+      return Text(value.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600));
     }
     if (value is List) {
-      if (value.isEmpty) return const Text('Sin registros', style: TextStyle(color: Colors.grey));
+      if (value.isEmpty) return const Text('Sin registros', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600));
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: value.map((e) {
@@ -285,37 +262,44 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
             final sub = e['subTotal'] ?? '';
             return Container(
               margin: const EdgeInsets.only(top: 8.0),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(context).cardTheme.color,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: Text(nombre.toString(), style: const TextStyle(fontWeight: FontWeight.bold))),
+                  Expanded(child: Text(nombre.toString(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
                   if (cant.toString().isNotEmpty) Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: AppTheme.primaryBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                    child: Text('x$cant', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+                    decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                    child: Text('x$cant', style: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w900, fontSize: 12)),
                   ),
                   if (sub.toString().isNotEmpty) Padding(
                     padding: const EdgeInsets.only(left: 12.0),
-                    child: Text('\$$sub', style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.bold)),
+                    child: Text('\$$sub', style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w900, fontSize: 16)),
                   )
                 ],
               ),
             );
           }
           return Padding(
-            padding: const EdgeInsets.only(top: 4.0),
-            child: Text('• $e', style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color)),
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Row(
+              children: [
+                const Icon(Icons.arrow_right_rounded, color: AppTheme.ayanamiBlue),
+                const SizedBox(width: 8),
+                Expanded(child: Text(e.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+              ],
+            ),
           );
         }).toList(),
       );
     }
     final text = value?.toString() ?? 'N/A';
-    return Text(text, style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w600));
+    return Text(text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5));
   }
 
   Color _getColor() {
@@ -362,11 +346,9 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
     
     final createdAtStr = widget.item['created_at']?.toString() ?? '';
     String timeAgo = 'Justo ahora';
-    String exactTime = '--:--';
     
     try {
        final dt = DateTime.parse(createdAtStr).toLocal();
-       
        final diff = DateTime.now().difference(dt);
        if (diff.inSeconds < 60) timeAgo = 'Justo ahora';
        else if (diff.inMinutes < 60) timeAgo = 'Hace ${diff.inMinutes} min';
@@ -378,27 +360,24 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Timeline indicator
           SizedBox(
-            width: 40,
+            width: 32,
             child: Column(
               children: [
-                Container(width: 2, height: 20, color: widget.isFirst ? Colors.transparent : Theme.of(context).dividerColor),
+                Container(width: 2, height: 20, color: widget.isFirst ? Colors.transparent : Colors.grey.withOpacity(0.2)),
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
+                    color: color.withOpacity(0.1),
                     shape: BoxShape.circle,
-                    border: Border.all(color: color.withOpacity(0.5), width: 2)
                   ),
-                  child: Icon(icon, color: color, size: 16),
+                  child: Icon(icon, color: color, size: 14),
                 ),
-                Expanded(child: Container(width: 2, color: widget.isLast ? Colors.transparent : Theme.of(context).dividerColor)),
+                Expanded(child: Container(width: 2, color: widget.isLast ? Colors.transparent : Colors.grey.withOpacity(0.2))),
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          // Main Activity Card
+          const SizedBox(width: 24),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 24.0),
@@ -409,29 +388,20 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
                   onTap: () => _showDetails(context),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: _isHovered ? Theme.of(context).cardColor : Theme.of(context).cardColor.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(24),
+                      color: Theme.of(context).cardTheme.color,
+                      borderRadius: BorderRadius.circular(32),
                       border: Border.all(
-                        color: _isHovered ? color.withOpacity(0.5) : Theme.of(context).dividerColor.withOpacity(0.5),
+                        color: _isHovered ? color.withOpacity(0.3) : Theme.of(context).dividerColor.withOpacity(0.1),
                         width: 1.5
                       ),
                       boxShadow: [
-                        if (_isHovered)
-                          BoxShadow(
-                            color: color.withOpacity(0.15),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 8),
-                          )
-                        else
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
+                        BoxShadow(
+                          color: _isHovered ? color.withOpacity(0.1) : Colors.black.withOpacity(0.02),
+                          blurRadius: _isHovered ? 30 : 10,
+                          offset: const Offset(0, 8),
+                        )
                       ]
                     ),
                     child: Column(
@@ -443,32 +413,22 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
                             Row(
                               children: [
                                 CircleAvatar(
-                                  radius: 12,
-                                  backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
-                                  child: const Icon(Icons.person, size: 16, color: AppTheme.primaryBlue),
+                                  radius: 14,
+                                  backgroundColor: AppTheme.ayanamiBlue.withOpacity(0.1),
+                                  child: const Icon(Icons.person_rounded, size: 16, color: AppTheme.ayanamiBlue),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(nombreUsuario, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                const SizedBox(width: 10),
+                                Text(nombreUsuario, 
+                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: -0.2)
+                                ),
                               ],
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).scaffoldBackgroundColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Theme.of(context).dividerColor)
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.schedule, size: 12, color: Colors.grey.shade500),
-                                  const SizedBox(width: 4),
-                                  Text(timeAgo, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
-                                ],
-                              ),
-                            )
+                            Text(timeAgo, 
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade500)
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         RichText(
                           text: TextSpan(
                             style: TextStyle(
@@ -477,34 +437,34 @@ class _ActivityTimelineTileState extends State<_ActivityTimelineTile> {
                               color: Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                             children: [
-                              TextSpan(text: verb),
+                              TextSpan(text: verb, style: const TextStyle(fontWeight: FontWeight.w500)),
                               TextSpan(text: ' ${entidad.toUpperCase()}', style: TextStyle(fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        if (payload.isNotEmpty)
-                           Container(
-                             padding: const EdgeInsets.all(12),
-                             decoration: BoxDecoration(
-                               color: color.withOpacity(0.05),
-                               borderRadius: BorderRadius.circular(12),
-                             ),
-                             child: Row(
-                               children: [
-                                 Icon(Icons.data_object_rounded, size: 16, color: color.withOpacity(0.8)),
-                                 const SizedBox(width: 8),
-                                 Expanded(
-                                   child: Text(
-                                     'ID: ${widget.item['cambioId']?.toString().substring(0,8) ?? "..."} • Clic para ver payload completo',
-                                      style: TextStyle(fontSize: 12, color: color.withOpacity(0.8), fontWeight: FontWeight.w600),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                   ),
-                                 ),
-                               ],
-                             ),
-                           )
+                        if (payload.isNotEmpty) ...[
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.data_exploration_rounded, size: 18, color: color),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Audit ID: ${widget.item['cambioId']?.toString().substring(0,8) ?? "..."}',
+                                     style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                                  ),
+                                ),
+                                Icon(Icons.arrow_forward_ios_rounded, size: 12, color: color.withOpacity(0.5)),
+                              ],
+                            ),
+                          )
+                        ]
                       ],
                     ),
                   ),

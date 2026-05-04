@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/auth_service.dart';
+import '../utils/global_error_handler.dart' as import_handler;
 
 class LoginController extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -10,7 +11,6 @@ class LoginController extends ChangeNotifier {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   bool isLoading = false;
-  String? errorMessage;
   bool obscurePassword = true;
 
   void togglePasswordVisibility() {
@@ -22,7 +22,6 @@ class LoginController extends ChangeNotifier {
     if (!formKey.currentState!.validate()) return false;
 
     isLoading = true;
-    errorMessage = null;
     notifyListeners();
 
     try {
@@ -38,15 +37,17 @@ class LoginController extends ChangeNotifier {
             key: 'user_email', value: emailController.text.trim());
         return true;
       } else {
-        errorMessage = result['body']['error']?['message'] is List
+        final errorMsg = result['body']['error']?['message'] is List
             ? (result['body']['error']['message'] as List).join('\n')
             : result['body']['error']?['message'] ??
                 result['body']['message'] ??
+                result['message'] ??
                 'Login fallido';
+        import_handler.GlobalErrorHandler.showError(errorMsg, statusCode: result['statusCode']);
         return false;
       }
     } catch (e) {
-      errorMessage = 'Error: $e';
+      import_handler.GlobalErrorHandler.showError('Error: $e');
       return false;
     } finally {
       isLoading = false;
