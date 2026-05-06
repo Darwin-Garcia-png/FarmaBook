@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../utils/app_constants.dart';
 import '../utils/global_error_handler.dart';
@@ -143,17 +144,6 @@ class ApiService {
     return [];
   }
 
-  static Future<Map<String, dynamic>> registerSale(
-      List<Map<String, dynamic>> saleData) async {
-    await setAuthHeader();
-    final response = await _dio.post('/sales', data: {"saleData": saleData});
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return response.data as Map<String, dynamic>;
-    }
-    throw Exception(
-        'Error ${response.statusCode}: ${response.data['message'] ?? 'Error al registrar venta'}');
-  }
-
   static Future<List<dynamic>> getSales() async {
     await setAuthHeader();
     final response = await _dio.get('/sales');
@@ -190,8 +180,15 @@ class ApiService {
   // CLOUDINARY UPLOAD: Send image to Cloudinary and return secure_url
   static Future<String?> uploadImage(dynamic imageFile) async {
     try {
+      late MultipartFile mp;
+      if (kIsWeb) {
+        final bytes = await imageFile.readAsBytes();
+        mp = MultipartFile.fromBytes(bytes, filename: 'image.png');
+      } else {
+        mp = await MultipartFile.fromFile(imageFile.path);
+      }
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(imageFile.path),
+        'file': mp,
         'upload_preset': AppConstants.cloudinaryUploadPreset,
       });
 
@@ -429,5 +426,145 @@ class ApiService {
     await setAuthHeader();
     final response = await _dio.patch('/inventory/batches/$id', data: data);
     return response.data as Map<String, dynamic>;
+  }
+
+  // PRODUCTS - Suppliers
+  static Future<List<dynamic>> getProductSuppliers(String productId) async {
+    await setAuthHeader();
+    final response =
+        await _dio.get('/inventory/products/$productId/suppliers');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      return response.data['data'] as List<dynamic>? ?? [];
+    }
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> addSupplierToProduct(
+      String productId, String supplierId) async {
+    await setAuthHeader();
+    final response = await _dio.post('/inventory/products/$productId/suppliers',
+        data: {'proveedorId': supplierId});
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<void> removeSupplierFromProduct(
+      String productId, String supplierId) async {
+    await setAuthHeader();
+    await _dio.delete('/inventory/products/$productId/suppliers/$supplierId');
+  }
+
+  // GET BY IDENTIFIER
+  static Future<Map<String, dynamic>?> getCategoryByIdentifier(
+      String identifier) async {
+    await setAuthHeader();
+    try {
+      final response = await _dio.get('/inventory/categories/$identifier');
+      if (response.statusCode == 200) {
+        return (response.data as Map<String, dynamic>)['data']
+            as Map<String, dynamic>?;
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> getPresentationByIdentifier(
+      String identifier) async {
+    await setAuthHeader();
+    try {
+      final response =
+          await _dio.get('/inventory/presentations/$identifier');
+      if (response.statusCode == 200) {
+        return (response.data as Map<String, dynamic>)['data']
+            as Map<String, dynamic>?;
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> getSupplierByIdentifier(
+      String identifier) async {
+    await setAuthHeader();
+    try {
+      final response = await _dio.get('/inventory/suppliers/$identifier');
+      if (response.statusCode == 200) {
+        return (response.data as Map<String, dynamic>)['data']
+            as Map<String, dynamic>?;
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> getBatchById(String batchId) async {
+    await setAuthHeader();
+    try {
+      final response = await _dio.get('/inventory/batches/$batchId');
+      if (response.statusCode == 200) {
+        return (response.data as Map<String, dynamic>)['data']
+            as Map<String, dynamic>?;
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+    return null;
+  }
+
+  // INVENTORY ALL
+  static Future<Map<String, dynamic>> getInventoryAll() async {
+    await setAuthHeader();
+    final response = await _dio.get('/inventory/all');
+    return response.data as Map<String, dynamic>;
+  }
+
+  // USERS
+  static Future<Map<String, dynamic>?> getUserByName(String nombre) async {
+    await setAuthHeader();
+    try {
+      final response = await _dio.get('/users/$nombre');
+      if (response.statusCode == 200) {
+        return (response.data as Map<String, dynamic>)['data']
+            as Map<String, dynamic>?;
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+    return null;
+  }
+
+  // ANALYTICS REPORT
+  static Future<List<int>> getAnalyticsReportPdf() async {
+    await setAuthHeader();
+    final response = await _dio.get('/analytics/report',
+        options: Options(responseType: ResponseType.bytes));
+    return response.data as List<int>;
+  }
+
+  // SALES - With optional consumer name
+  static Future<Map<String, dynamic>> registerSale({
+    required List<Map<String, dynamic>> saleData,
+    String? nombreConsumidor,
+  }) async {
+    await setAuthHeader();
+    final body = <String, dynamic>{'saleData': saleData};
+    if (nombreConsumidor != null && nombreConsumidor.isNotEmpty) {
+      body['nombreConsumidor'] = nombreConsumidor;
+    }
+    final response = await _dio.post('/sales', data: body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return response.data as Map<String, dynamic>;
+    }
+    throw Exception(
+        'Error ${response.statusCode}: ${response.data['message'] ?? 'Error al registrar venta'}');
   }
 }

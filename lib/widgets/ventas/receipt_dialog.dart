@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import '../../theme/app_theme.dart';
 
 class ReceiptDialog extends StatelessWidget {
@@ -40,6 +43,8 @@ class ReceiptDialog extends StatelessWidget {
               _receiptRow(context, 'ID Venta:', '#${sale['ventaId']}'),
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
+              if (_getConsumidor().isNotEmpty)
+                _receiptRow(context, 'Consumidor:', _getConsumidor()),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text('PRODUCTOS',
@@ -126,20 +131,171 @@ class ReceiptDialog extends StatelessWidget {
                   style: TextStyle(
                       fontStyle: FontStyle.italic, color: Colors.grey)),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.ayanamiBlue,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('CERRAR'),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _printTicket(context),
+                      icon: const Icon(Icons.print_rounded),
+                      label: const Text('IMPRIMIR'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.ayanamiBlue,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 50),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade200,
+                        foregroundColor: Colors.grey.shade800,
+                        minimumSize: const Size(0, 50),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('CERRAR'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  String _getConsumidor() {
+    return sale['nombreConsumidor']?.toString() ?? '';
+  }
+
+  Future<void> _printTicket(BuildContext context) async {
+    final productos = (sale['productosVendidos'] as List<dynamic>?) ??
+        (sale['detalles'] as List<dynamic>?) ??
+        (sale['items'] as List<dynamic>?) ??
+        [];
+
+    final pdf = pw.Document();
+    final margen = 4.0;
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(
+          PdfPageFormat.roll80.width,
+          PdfPageFormat.roll80.height,
+          marginAll: margen,
+        ),
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Center(
+                child: pw.Text('FarmaBook',
+                    style: pw.TextStyle(
+                        fontSize: 14, fontWeight: pw.FontWeight.bold)),
+              ),
+              pw.SizedBox(height: 2),
+              pw.Center(
+                child: pw.Text('RECIBO DE VENTA',
+                    style: const pw.TextStyle(fontSize: 8)),
+              ),
+              pw.SizedBox(height: 6),
+              pw.Divider(thickness: 1),
+              pw.SizedBox(height: 6),
+              _row('ID:', '#${sale['ventaId']}'),
+              _row('Fecha:', _formatDate(_getSafeDate(sale))),
+              _row('Hora:', _formatTime(_getSafeDate(sale))),
+              if (_getConsumidor().isNotEmpty)
+                _row('Consumidor:', _getConsumidor()),
+              pw.SizedBox(height: 6),
+              pw.Divider(thickness: 1),
+              pw.SizedBox(height: 4),
+              pw.Text('PRODUCTOS',
+                  style: pw.TextStyle(
+                      fontSize: 8, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 4),
+              ...productos.map((det) {
+                final d = det as Map<String, dynamic>;
+                final nombre = d['nombre'] ??
+                    d['producto']?['nombre'] ??
+                    d['nombreProducto'] ??
+                    'Producto';
+                final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
+                final price = double.tryParse(
+                        d['subTotal']?.toString() ??
+                            d['precioTotal']?.toString() ??
+                            '0') ??
+                    0.0;
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 2),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                  pw.Expanded(
+                    child: pw.Text('$qty $nombre',
+                        style: const pw.TextStyle(fontSize: 7),
+                        maxLines: 2),
+                  ),
+                      pw.Text('\$${price.toStringAsFixed(2)}',
+                          style: const pw.TextStyle(fontSize: 7)),
+                    ],
+                  ),
+                );
+              }),
+              pw.SizedBox(height: 6),
+              pw.Divider(thickness: 2),
+              pw.SizedBox(height: 4),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('TOTAL',
+                      style: pw.TextStyle(
+                          fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(
+                      '\$${(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0).toStringAsFixed(2)}',
+                      style: pw.TextStyle(
+                          fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                ],
+              ),
+              pw.SizedBox(height: 12),
+              pw.Center(
+                child: pw.Text('¡Gracias por su compra!',
+                    style: pw.TextStyle(fontStyle: pw.FontStyle.italic)),
+              ),
+              pw.Spacer(),
+              pw.Center(
+                child: pw.Text(
+                    'Generado: ${DateTime.now().toString().substring(0, 19)}',
+                    style: const pw.TextStyle(fontSize: 6)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (format) async => pdf.save(),
+      name: 'recibo_${sale['ventaId']}.pdf',
+    );
+  }
+
+  pw.Widget _row(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 2),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(label,
+              style: pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
+          pw.Text(value,
+              style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
+        ],
       ),
     );
   }

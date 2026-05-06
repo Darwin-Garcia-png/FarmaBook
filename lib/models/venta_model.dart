@@ -27,12 +27,14 @@ class Venta {
   final double total;
   final DateTime fechaDeVenta;
   final List<ProductoVendido> productosVendidos;
+  final String? nombreConsumidor;
 
   Venta({
     required this.ventaId,
     required this.total,
     required this.fechaDeVenta,
     required this.productosVendidos,
+    this.nombreConsumidor,
   });
 
   factory Venta.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,7 @@ class Venta {
               .map((e) => ProductoVendido.fromJson(e as Map<String, dynamic>))
               .toList()
           : [],
+      nombreConsumidor: json['nombreConsumidor']?.toString(),
     );
   }
 }

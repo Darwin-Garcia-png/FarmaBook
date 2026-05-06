@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../controllers/almacen_controller.dart';
@@ -1052,54 +1053,139 @@ class InventoryDialogs {
           final img = await picker.pickImage(source: ImageSource.gallery);
           if (img != null) onImage(img);
         },
-        child: Container(
-          width: 140,
-          height: 140,
-          decoration: BoxDecoration(
-            color: AppTheme.ayanamiBlue.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-                color: AppTheme.ayanamiBlue.withOpacity(0.2), width: 2),
-            image: selected != null
-                ? (kIsWeb 
-                    ? DecorationImage(image: NetworkImage(selected.path), fit: BoxFit.cover)
-                    : DecorationImage(image: FileImage(File(selected.path)), fit: BoxFit.cover))
-                : (currentUrl != null && currentUrl.isNotEmpty)
-                    ? DecorationImage(
-                        image: NetworkImage(currentUrl), fit: BoxFit.cover)
-                    : null,
-          ),
-          child: (selected == null && (currentUrl == null || currentUrl.isEmpty))
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add_a_photo_rounded,
-                        color: AppTheme.ayanamiBlue.withOpacity(0.5), size: 40),
-                    const SizedBox(height: 8),
-                    const Text('Añadir foto',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.ayanamiBlue,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                )
-              : Stack(
-                  children: [
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                            color: Colors.white, shape: BoxShape.circle),
-                        child: const Icon(Icons.edit,
-                            size: 16, color: AppTheme.ayanamiBlue),
-                      ),
-                    )
-                  ],
+        child: kIsWeb && selected != null
+            ? _WebImagePreview(selected: selected, currentUrl: currentUrl)
+            : Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  color: AppTheme.ayanamiBlue.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: AppTheme.ayanamiBlue.withOpacity(0.2), width: 2),
+                  image: selected != null
+                      ? DecorationImage(
+                          image: FileImage(File(selected.path)),
+                          fit: BoxFit.cover)
+                      : (currentUrl != null && currentUrl.isNotEmpty)
+                          ? DecorationImage(
+                              image: NetworkImage(currentUrl),
+                              fit: BoxFit.cover)
+                          : null,
                 ),
-        ),
+                child: (selected == null &&
+                        (currentUrl == null || currentUrl.isEmpty))
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo_rounded,
+                              color:
+                                  AppTheme.ayanamiBlue.withOpacity(0.5),
+                              size: 40),
+                          const SizedBox(height: 8),
+                          const Text('Añadir foto',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.ayanamiBlue,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      )
+                    : Stack(
+                        children: [
+                          Positioned(
+                            right: 4,
+                            top: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle),
+                              child: const Icon(Icons.edit,
+                                  size: 16, color: AppTheme.ayanamiBlue),
+                            ),
+                          )
+                        ],
+                      ),
+              ),
       ),
+    );
+  }
+}
+
+class _WebImagePreview extends StatefulWidget {
+  final XFile selected;
+  final String? currentUrl;
+  const _WebImagePreview({required this.selected, this.currentUrl});
+
+  @override
+  State<_WebImagePreview> createState() => _WebImagePreviewState();
+}
+
+class _WebImagePreviewState extends State<_WebImagePreview> {
+  Uint8List? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBytes();
+  }
+
+  Future<void> _loadBytes() async {
+    final bytes = await widget.selected.readAsBytes();
+    if (mounted) setState(() => _bytes = bytes);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = _bytes != null;
+    final hasUrl =
+        widget.currentUrl != null && widget.currentUrl!.isNotEmpty;
+
+    return Container(
+      width: 140,
+      height: 140,
+      decoration: BoxDecoration(
+        color: AppTheme.ayanamiBlue.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+            color: AppTheme.ayanamiBlue.withOpacity(0.2), width: 2),
+        image: hasImage
+            ? DecorationImage(image: MemoryImage(_bytes!), fit: BoxFit.cover)
+            : hasUrl
+                ? DecorationImage(
+                    image: NetworkImage(widget.currentUrl!),
+                    fit: BoxFit.cover)
+                : null,
+      ),
+      child: (!hasImage && !hasUrl)
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add_a_photo_rounded,
+                    color: AppTheme.ayanamiBlue.withOpacity(0.5), size: 40),
+                const SizedBox(height: 8),
+                const Text('Añadir foto',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.ayanamiBlue,
+                        fontWeight: FontWeight.bold)),
+              ],
+            )
+          : Stack(
+              children: [
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                        color: Colors.white, shape: BoxShape.circle),
+                    child: const Icon(Icons.edit,
+                        size: 16, color: AppTheme.ayanamiBlue),
+                  ),
+                )
+              ],
+            ),
     );
   }
 }

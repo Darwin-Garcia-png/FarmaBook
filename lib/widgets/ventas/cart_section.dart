@@ -206,6 +206,8 @@ class CartSection extends StatelessWidget {
       ),
       child: Column(
         children: [
+          _buildConsumidorField(context, controller),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -271,6 +273,35 @@ class CartSection extends StatelessWidget {
                         Text('FINALIZAR VENTA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       ],
                     ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConsumidorField(BuildContext context, VentasController controller) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.ayanamiBlue.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Icon(Icons.person_outline_rounded, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: controller.consumidorController,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: const InputDecoration(
+                hintText: 'Nombre del consumidor (opcional)',
+                hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 8),
+              ),
             ),
           ),
         ],

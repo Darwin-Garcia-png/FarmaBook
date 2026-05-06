@@ -7,6 +7,7 @@ enum VentasView { search, history, receipts }
 class VentasController extends ChangeNotifier {
   final TextEditingController barcodeController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
+  final TextEditingController consumidorController = TextEditingController();
 
   List<Producto> productosEncontrados = [];
   final Map<String, Producto> cacheProductos = {};
@@ -184,12 +185,14 @@ class VentasController extends ChangeNotifier {
         }
       });
 
-      final result = await ApiService.registerSale(saleData);
+      final nombreConsumidor = consumidorController.text.trim();
+      final result = await ApiService.registerSale(
+        saleData: saleData,
+        nombreConsumidor: nombreConsumidor.isNotEmpty ? nombreConsumidor : null,
+      );
       
-      // EXTREME ROBUSTNESS: Construct a full sale object even if backend returns minimal data
       final responseData = result['data'] as Map<String, dynamic>? ?? {};
       
-      // We need a local backup of details because sometimes backend doesn't return them on POST
       final List<Map<String, dynamic>> localDetalles = saleData.map((item) {
         Producto? prod;
         try {
@@ -215,9 +218,11 @@ class VentasController extends ChangeNotifier {
             : (responseData['detalles'] != null && (responseData['detalles'] as List).isNotEmpty)
                 ? responseData['detalles']
                 : localDetalles,
+        'nombreConsumidor': responseData['nombreConsumidor'] ?? nombreConsumidor,
       };
 
       carrito.clear();
+      consumidorController.clear();
       mensaje = '¡Venta registrada correctamente! Total: \$${result['data']['total']}';
       productosEncontrados = [];
       notifyListeners();
@@ -236,6 +241,7 @@ class VentasController extends ChangeNotifier {
   void dispose() {
     barcodeController.dispose();
     searchController.dispose();
+    consumidorController.dispose();
     super.dispose();
   }
 }
