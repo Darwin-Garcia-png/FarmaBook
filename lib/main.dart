@@ -17,9 +17,9 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => AlmacenController()..init()),
-        ChangeNotifierProvider(create: (_) => LotesController()..init()),
-        ChangeNotifierProvider(create: (_) => NotificacionesController()..init()),
+        ChangeNotifierProvider(create: (_) => AlmacenController()),
+        ChangeNotifierProvider(create: (_) => LotesController()),
+        ChangeNotifierProvider(create: (_) => NotificacionesController()),
         ChangeNotifierProvider(create: (_) => DashboardController()),
       ],
       child: const MyApp(),

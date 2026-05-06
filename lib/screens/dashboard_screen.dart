@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../controllers/dashboard_controller.dart';
+import '../controllers/almacen_controller.dart';
+import '../controllers/lotes_controller.dart';
+import '../controllers/notificaciones_controller.dart';
 import '../theme/app_theme.dart';
 import 'inicio_screen.dart';
 import 'almacen_screen.dart';
@@ -253,6 +256,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         onTap: () async {
           Navigator.pop(context);
+          final almacen = context.read<AlmacenController>();
+          final lotes = context.read<LotesController>();
+          final notif = context.read<NotificacionesController>();
+          
+          // Reset controller state on logout
+          almacen.productos = [];
+          lotes.allBatches = [];
+          notif.notificaciones = [];
+          notif.unreadCount = 0;
+          notif.isLoading = true;
+          
           await _controller.logout();
           if (mounted) context.go('/login');
         },

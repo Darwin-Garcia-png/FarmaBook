@@ -51,7 +51,7 @@ class NotificacionesController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void init() async {
+  Future<void> init() async {
     isLoading = true;
     error = null;
     notifyListeners();
