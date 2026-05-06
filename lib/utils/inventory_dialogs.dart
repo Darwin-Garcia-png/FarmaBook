@@ -5,7 +5,6 @@ import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
-import 'dart:ui';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 
@@ -132,11 +131,9 @@ class InventoryDialogs {
                       : null;
                   loadedDate ??= DateTime.now().add(const Duration(days: 365));
 
-                  // Nuclear scan for price from batch
                   double bPrice = 0.0;
                   if (foundPrice == 0) {
-                    bPrice = ApiService.nuclearScan(
-                        Map<String, dynamic>.from(firstB));
+                    bPrice = double.tryParse(firstB['precioPorUnidad']?.toString() ?? '0') ?? 0.0;
                   }
 
                   setDialogState(() {
@@ -507,123 +504,6 @@ class InventoryDialogs {
     );
   }
 
-  // ─── QUICK-CREATE DIALOG ─────────────────────────────────────────────────
-  // Called when user selects the '+ Registrar nueva...' option
-  static Future<void> _showQuickCreate(
-    BuildContext context,
-    String tipo, // 'categoria' | 'presentacion' | 'proveedor'
-    AlmacenController controller,
-    StateSetter? setParent,
-    Function(String newId) onCreated,
-  ) async {
-    final nameCtrl = TextEditingController();
-    final formKey  = GlobalKey<FormState>();
-    bool saving = false;
-
-    final title = tipo == 'categoria' ? 'Nueva Categoría' : tipo == 'presentacion' ? 'Nueva Presentación' : 'Nuevo Proveedor';
-    final label = tipo == 'categoria' ? 'Nombre de la categoría' : tipo == 'presentacion' ? 'Nombre de la presentación' : 'Nombre / Razón Social';
-    final icon  = tipo == 'categoria' ? Icons.category_rounded : tipo == 'presentacion' ? Icons.medical_services_rounded : Icons.business_rounded;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Container(
-            width: 420,
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color ?? Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Form(
-              key: formKey,
-              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                // Header
-                Row(children: [
-                  Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-                    child: Icon(icon, color: AppTheme.ayanamiBlue, size: 24)),
-                  const SizedBox(width: 16),
-                  Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-                  const Spacer(),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
-                ]),
-                const SizedBox(height: 24),
-                // Input
-                TextFormField(
-                  controller: nameCtrl,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: label,
-                    prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 20),
-                    filled: true,
-                    fillColor: AppTheme.ayanamiBlue.withOpacity(0.04),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.ayanamiBlue, width: 2)),
-                    floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'El nombre es requerido' : null,
-                ),
-                const SizedBox(height: 24),
-                // Actions
-                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    icon: saving
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.check_rounded, size: 18),
-                    label: Text('Registrar $title', style: const TextStyle(fontWeight: FontWeight.w800)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0,
-                    ),
-                    onPressed: saving ? null : () async {
-                      if (!formKey.currentState!.validate()) return;
-                      setState(() => saving = true);
-                      try {
-                        await ApiService.setAuthHeader();
-                        String newId = '';
-                        final body = {'nombre': nameCtrl.text.trim()};
-
-                        if (tipo == 'categoria') {
-                          final res = await ApiService.dio.post('/inventory/categories', data: body);
-                          newId = (res.data['data']?['categoriaId'] ?? res.data['categoriaId'] ?? '').toString();
-                          await controller.reloadCategorias();
-                        } else if (tipo == 'presentacion') {
-                          final res = await ApiService.dio.post('/inventory/presentations', data: body);
-                          newId = (res.data['data']?['presentacionId'] ?? res.data['presentacionId'] ?? '').toString();
-                          await controller.reloadPresentaciones();
-                        } else {
-                          final res = await ApiService.dio.post('/inventory/suppliers', data: body);
-                          newId = (res.data['data']?['proveedorId'] ?? res.data['proveedorId'] ?? '').toString();
-                          await controller.reloadProveedores();
-                        }
-
-                        if (ctx.mounted) Navigator.pop(ctx);
-                        if (newId.isNotEmpty) onCreated(newId);
-                      } catch (e) {
-                        setState(() => saving = false);
-                        if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                            content: Text('Error: ${e.toString()}'),
-                            backgroundColor: AppTheme.reiOrangeRed,
-                          ));
-                        }
-                      }
-                    },
-                  ),
-                ]),
-              ]),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   static Widget _premiumDropdown(
       BuildContext context,
       String label,
@@ -642,7 +522,6 @@ class InventoryDialogs {
         child: (() {
           final tipo = idK == 'categoriaId' ? 'categoria' : idK == 'presentacionId' ? 'presentacion' : 'proveedor';
 
-          // Safety check: ensure 'value' exists in mapped items and IDs are unique
           final rawMapped = items.asMap().entries.map((entry) {
             final idx = entry.key;
             final i = entry.value;
@@ -663,7 +542,6 @@ class InventoryDialogs {
             return {'id': id, 'label': labelText};
           }).toList();
 
-          // De-duplicate by ID for UI safety
           final seen = <String>{};
           final List<Map<String, String>> mappedItems = [];
           for (var it in rawMapped) {
@@ -676,7 +554,6 @@ class InventoryDialogs {
           final bool valueExists = mappedItems.any((it) => it['id'] == value);
           final String? safeValue = valueExists ? value : null;
 
-          // Special sentinel ID for the 'create new' option
           const createNewId = '__CREATE_NEW__';
 
           return DropdownButtonFormField<String>(
@@ -693,41 +570,37 @@ class InventoryDialogs {
                   borderSide: BorderSide.none),
             ),
             items: [
-              // ── OPCIÓN ESPECIAL: Registrar nueva ──────────────────
               DropdownMenuItem<String>(
                 value: createNewId,
                 child: Row(children: [
-                  Icon(Icons.add_circle_rounded, color: AppTheme.ayanamiBlue, size: 18),
+                  Icon(Icons.add_circle_rounded, color: AppTheme.greenMetal, size: 18),
                   const SizedBox(width: 10),
                   Text(
-                    'Registrar nueva ${tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : 'proveedor'}',
-                    style: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w800, fontSize: 13),
+                    'Nueva ${tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : 'proveedor'}',
+                    style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w800, fontSize: 13),
                   ),
                 ]),
               ),
-              // Divider visual
-              const DropdownMenuItem<String>(
-                enabled: false,
-                value: '__DIVIDER__',
-                child: Divider(height: 1),
-              ),
-              // ── Lista de opciones existentes ──────────────────────
-              ...mappedItems.map((it) => DropdownMenuItem(
-                    value: it['id'],
-                    child: Text(it['label']!, overflow: TextOverflow.ellipsis),
-                  )),
+              if (mappedItems.isNotEmpty) ...[
+                const DropdownMenuItem<String>(
+                  enabled: false,
+                  value: '__DIVIDER__',
+                  child: Divider(height: 1),
+                ),
+                ...mappedItems.map((it) => DropdownMenuItem(
+                      value: it['id'],
+                      child: Text(it['label']!, overflow: TextOverflow.ellipsis),
+                    )),
+              ] else
+                const DropdownMenuItem<String>(
+                  enabled: false,
+                  value: '__EMPTY__',
+                  child: Text('(Sin registrar)', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic, fontSize: 12)),
+                ),
             ],
             onChanged: (v) {
-              if (v == createNewId && controller != null) {
-                // Abrir mini-diálogo de creación, luego seleccionar el nuevo ID
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _showQuickCreate(context, tipo, controller, setDialogState, (newId) {
-                    onChanged(newId);
-                    if (setDialogState != null) setDialogState(() {});
-                  });
-                });
-                // Devuelve null temporalmente (sin selección) mientras abre el diálogo
-                onChanged(null);
+              if (v == createNewId) {
+                _showQuickCreateDialog(context, tipo, controller, setDialogState);
               } else if (v != '__DIVIDER__') {
                 onChanged(v);
               }
@@ -736,6 +609,229 @@ class InventoryDialogs {
           );
         })(),
       ),
+    );
+  }
+
+  static Future<void> _showQuickCreateDialog(
+    BuildContext parentContext,
+    String tipo,
+    AlmacenController? controller,
+    StateSetter? setDialogState,
+  ) async {
+    final nameCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final telCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isCreating = false;
+
+    final tipoLabel = tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : 'proveedor';
+
+    await showDialog(
+      context: parentContext,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx2, setSt) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              child: Container(
+                width: 450,
+                padding: const EdgeInsets.all(28),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.greenMetal.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(Icons.add_circle_rounded, color: AppTheme.greenMetal, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Text('Nueva $tipoLabel',
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                          const Spacer(),
+                          IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: isCreating ? null : () => Navigator.pop(ctx2)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: nameCtrl,
+                        autofocus: true,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          labelText: 'Nombre *',
+                          prefixIcon: const Icon(Icons.label_rounded, color: AppTheme.ayanamiBlue, size: 20),
+                          filled: true,
+                          fillColor: AppTheme.ayanamiBlue.withOpacity(0.03),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Requerido';
+                          if (RegExp(r'[0-9]').hasMatch(v)) return 'No se permiten números';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: descCtrl,
+                        maxLines: 2,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          labelText: tipo == 'proveedor' ? 'Dirección (opcional)' : 'Descripción (opcional)',
+                          prefixIcon: Icon(
+                              tipo == 'proveedor' ? Icons.location_on_rounded : Icons.description_rounded,
+                              color: AppTheme.ayanamiBlue,
+                              size: 20),
+                          filled: true,
+                          fillColor: AppTheme.ayanamiBlue.withOpacity(0.03),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none),
+                        ),
+                      ),
+                      if (tipo == 'proveedor') ...[
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: telCtrl,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                          decoration: InputDecoration(
+                            labelText: 'Teléfono (opcional)',
+                            prefixIcon: const Icon(Icons.phone_rounded, color: AppTheme.ayanamiBlue, size: 20),
+                            filled: true,
+                            fillColor: AppTheme.ayanamiBlue.withOpacity(0.03),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                          decoration: InputDecoration(
+                            labelText: 'Email (opcional)',
+                            prefixIcon: const Icon(Icons.email_rounded, color: AppTheme.ayanamiBlue, size: 20),
+                            filled: true,
+                            fillColor: AppTheme.ayanamiBlue.withOpacity(0.03),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 28),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                              onPressed: isCreating ? null : () => Navigator.pop(ctx2),
+                              child: const Text('CANCELAR',
+                                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))),
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.greenMetal,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                            onPressed: isCreating
+                                ? null
+                                : () async {
+                                    if (!formKey.currentState!.validate()) return;
+                                    setSt(() => isCreating = true);
+
+                                    try {
+                                      Map<String, dynamic> data = {
+                                        'nombre': nameCtrl.text.trim(),
+                                      };
+
+                                      if (tipo == 'proveedor') {
+                                        if (descCtrl.text.trim().isNotEmpty) {
+                                          data['direccion'] = descCtrl.text.trim();
+                                        }
+                                        if (telCtrl.text.trim().isNotEmpty) {
+                                          data['telefono'] = telCtrl.text.trim();
+                                        }
+                                        if (emailCtrl.text.trim().isNotEmpty) {
+                                          data['email'] = emailCtrl.text.trim();
+                                        }
+                                      } else {
+                                        if (descCtrl.text.trim().isNotEmpty) {
+                                          data['descripcion'] = descCtrl.text.trim();
+                                        }
+                                      }
+
+                                      if (tipo == 'categoria') {
+                                        await ApiService.createCategory(data);
+                                      } else if (tipo == 'presentacion') {
+                                        await ApiService.createPresentation(data);
+                                      } else {
+                                        await ApiService.createSupplier(data);
+                                      }
+
+                                      if (Navigator.of(ctx2).canPop()) {
+                                        Navigator.pop(ctx2);
+                                        ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
+                                            content: Text('$tipoLabel registrada correctamente'),
+                                            backgroundColor: AppTheme.greenMetal));
+                                      }
+
+                                      if (tipo == 'categoria') {
+                                        controller?.fetchCategorias();
+                                      } else if (tipo == 'presentacion') {
+                                        controller?.fetchPresentaciones();
+                                      } else {
+                                        controller?.fetchProveedores();
+                                      }
+                                      setDialogState?.call(() {});
+                                    } catch (e) {
+                                      String errMsg = e.toString();
+                                      try {
+                                        final serverMsg = (e as dynamic)?.response?.data?['message'] ??
+                                            (e as dynamic)?.response?.data?['error'];
+                                        if (serverMsg != null) errMsg = serverMsg.toString();
+                                      } catch (_) {}
+                                      if (Navigator.of(ctx2).canPop()) {
+                                        ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
+                                            content: Text('Error: $errMsg'),
+                                            backgroundColor: AppTheme.reiOrangeRed));
+                                      }
+                                    } finally {
+                                      setSt(() => isCreating = false);
+                                    }
+                                  },
+                            child: isCreating
+                                ? const SizedBox(
+                                    width: 18, height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Text('REGISTRAR',
+                                    style: TextStyle(fontWeight: FontWeight.w900)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

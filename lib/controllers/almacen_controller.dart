@@ -129,7 +129,6 @@ class AlmacenController extends ChangeNotifier {
       _allFetchedProducts = rawData.whereType<Map<String, dynamic>>().map((p) {
         final Map<String, dynamic> m = Map<String, dynamic>.from(p);
         m['lotes'] ??= [];
-        m['precioPorUnidad'] = ApiService.nuclearScan(m);
         return m;
       }).toList();
 
@@ -180,7 +179,7 @@ class AlmacenController extends ChangeNotifier {
             if (currentPrice == 0) {
               final firstB = batches.first;
               final bPrice =
-                  ApiService.nuclearScan(Map<String, dynamic>.from(firstB));
+                  double.tryParse(firstB['precioPorUnidad']?.toString() ?? '0') ?? 0.0;
               if (bPrice > 0) p['precioPorUnidad'] = bPrice;
             }
           }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
+import '../utils/app_constants.dart';
 
 class MovimientosController extends ChangeNotifier {
   WebSocketChannel? _channel;
@@ -26,8 +27,7 @@ class MovimientosController extends ChangeNotifier {
         return;
       }
 
-      // Automatically construct WS URL based on current base URL
-      final baseUrl = ApiService.baseUrl;
+      final baseUrl = AppConstants.baseUrl;
       final wsUrl = baseUrl
           .replaceFirst('https://', 'wss://')
           .replaceFirst('http://', 'ws://');
@@ -48,18 +48,18 @@ class MovimientosController extends ChangeNotifier {
               notifyListeners();
             } else if (data['tipo'] == 'movimientos') {
               final payload = data['payload'] as Map<String, dynamic>;
-              movimientos.insert(0, payload); // Add to the top vertically
+              movimientos.insert(0, payload);
               notifyListeners();
             }
           } catch (e) {
-            print('Error decodificando socket de movimientos: $e');
+            debugPrint('Error decodificando socket de movimientos: $e');
           }
         },
         onDone: () {
-          print('WebSocket de Movimientos cerrado naturalmente.');
+          debugPrint('WebSocket de Movimientos cerrado naturalmente.');
         },
         onError: (e) {
-          print('Error en WebSocket de Movimientos: $e');
+          debugPrint('Error en WebSocket de Movimientos: $e');
           if (isLoading) {
              error = 'Error de conexión o el rol actual no tiene acceso de Dueño.';
              isLoading = false;

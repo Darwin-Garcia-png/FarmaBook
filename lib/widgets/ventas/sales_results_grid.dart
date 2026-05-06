@@ -114,7 +114,7 @@ class SalesResultsGrid extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                            '\$${p.precioPorUnidad?.toStringAsFixed(2) ?? "0.00"}',
+                            '\$${p.precioPorUnidad.toStringAsFixed(2)}',
                             style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 18,

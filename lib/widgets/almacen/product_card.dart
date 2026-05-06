@@ -248,11 +248,6 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProductActions(BuildContext context) {
-    // Deprecated in favor of the new inline action buttons inside the row
-    return const SizedBox();
-  }
-
   Future<void> _confirmarBorrado(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,

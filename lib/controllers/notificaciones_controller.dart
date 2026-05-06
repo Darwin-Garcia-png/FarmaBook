@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
+import '../utils/app_constants.dart';
 import '../services/api_service.dart';
 import '../services/notification_overlay_service.dart';
 import '../controllers/dashboard_controller.dart';
@@ -67,7 +68,7 @@ class NotificacionesController extends ChangeNotifier {
         return;
       }
 
-      final baseUrl = ApiService.baseUrl;
+      final baseUrl = AppConstants.baseUrl;
       final wsUrl = baseUrl
           .replaceFirst('https://', 'wss://')
           .replaceFirst('http://', 'ws://');

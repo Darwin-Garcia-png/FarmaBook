@@ -51,7 +51,7 @@ class VentasController extends ChangeNotifier {
         presentacionMap[p['presentacionId'].toString()] = p['nombre'].toString();
       }
     } catch (e) {
-      print('Error al cargar presentaciones: $e');
+      debugPrint('Error al cargar presentaciones: $e');
     }
   }
 
@@ -155,7 +155,7 @@ class VentasController extends ChangeNotifier {
     carrito.forEach((id, qty) {
       final prod = cacheProductos[id];
       if (prod != null) {
-        total += (prod.precioPorUnidad ?? 0) * qty;
+        total += prod.precioPorUnidad * qty;
       }
     });
     return total;

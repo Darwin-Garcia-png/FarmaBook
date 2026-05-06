@@ -29,7 +29,7 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = Theme.of(context).cardTheme.color ?? Colors.white;
-    
+
     return ClipRRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -64,7 +64,8 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
                     onPressed: () {
                       ScaffoldState? scaffold = Scaffold.maybeOf(context);
                       while (scaffold != null && !scaffold.hasDrawer) {
-                        scaffold = scaffold.context.findAncestorStateOfType<ScaffoldState>();
+                        scaffold = scaffold.context
+                            .findAncestorStateOfType<ScaffoldState>();
                       }
                       scaffold?.openDrawer();
                     },
@@ -99,7 +100,11 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
                         subtitle,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).textTheme.titleLarge?.color?.withOpacity(0.6),
+                          color: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.color
+                              ?.withOpacity(0.6),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -115,7 +120,9 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
                       children: [
                         IconButton(
                           icon: Icon(
-                            notifCtrl.unreadCount > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_outlined,
+                            notifCtrl.unreadCount > 0
+                                ? Icons.notifications_active_rounded
+                                : Icons.notifications_none_outlined,
                             color: baseColor,
                             size: 22,
                           ),
@@ -134,10 +141,14 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
                                 color: AppTheme.reiOrangeRed,
                                 shape: BoxShape.circle,
                               ),
-                              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                              constraints: const BoxConstraints(
+                                  minWidth: 14, minHeight: 14),
                               child: Text(
                                 '${notifCtrl.unreadCount}',
-                                style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold),
                                 textAlign: textAlignCenter(),
                               ),
                             ),
@@ -147,7 +158,8 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
                   },
                 ),
                 IconButton(
-                  icon: Icon(Icons.settings_outlined, color: baseColor, size: 22),
+                  icon:
+                      Icon(Icons.settings_outlined, color: baseColor, size: 22),
                   onPressed: () => context.push('/configuracion'),
                 ),
                 const SizedBox(width: 12),

@@ -5,12 +5,7 @@ import '../services/api_service.dart';
 class UsuariosController extends ChangeNotifier {
   Timer? _refreshTimer;
   List<dynamic> usuarios = [];
-  // Hardcoded default roles as fallback to ensure the UI is never empty
-  List<dynamic> roles = [
-    {'rolId': 'admin-uuid-placeholder', 'nombre': 'Administrador'},
-    {'rolId': 'cajero-uuid-placeholder', 'nombre': 'Cajero'},
-    {'rolId': 'dueno-uuid-placeholder', 'nombre': 'Dueño'},
-  ];
+  List<dynamic> roles = [];
   bool isLoading = false;
   String? error;
 
@@ -34,8 +29,7 @@ class UsuariosController extends ChangeNotifier {
     try {
       final resUsers = await ApiService.getUsers();
       usuarios = resUsers;
-      
-      // DISCOVERY: Extract unique roles from the user list itself
+
       final Map<String, dynamic> discoveredRoles = {};
       for (var u in usuarios) {
         if (u['Rol'] != null) {
@@ -46,22 +40,12 @@ class UsuariosController extends ChangeNotifier {
           }
         }
       }
-      
+
       if (discoveredRoles.isNotEmpty) {
         roles = discoveredRoles.values.toList();
       }
     } catch (e) {
       error = e.toString();
-    }
-
-    try {
-      final resRoles = await ApiService.getRoles();
-      if (resRoles.isNotEmpty) {
-        // Only if the guessed endpoint actually works, we prefer that
-        roles = resRoles;
-      }
-    } catch (e) {
-      print('DEBUG: Error fetching explicit roles: $e');
     } finally {
       isLoading = false;
       notifyListeners();

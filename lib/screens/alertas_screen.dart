@@ -124,8 +124,6 @@ class AlertasScreen extends StatelessWidget {
                 lotesCtrl.setExternalSearch(loteNombre!);
                 dashCtrl.onItemTapped(3); // Gestión de Lotes
             } else if (prodMatch != null) {
-                final prodNombre = prodMatch.group(1);
-                // Si detecta un producto, lo llevamos al almacén
                 dashCtrl.onItemTapped(1); // Almacén Central
             } else {
                 // Fallback inteligente

@@ -75,7 +75,7 @@ class CategoriasController extends ChangeNotifier {
   Future<bool> actualizarCategoria(dynamic id) async {
     try {
       await ApiService.setAuthHeader();
-      await _dio.put('/inventory/categories/$id', data: {
+      await _dio.patch('/inventory/categories/$id', data: {
         'nombre': nombreCtrl.text.trim(),
         'descripcion': descripcionCtrl.text.trim(),
       });

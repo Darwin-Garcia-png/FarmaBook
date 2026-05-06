@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../utils/app_constants.dart';
 import '../utils/global_error_handler.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://farmabook-mr5m.onrender.com';
   static final Dio _dio = Dio(BaseOptions(
-    baseUrl: baseUrl,
-    connectTimeout: const Duration(seconds: 60),
-    receiveTimeout: const Duration(seconds: 60),
+    baseUrl: AppConstants.baseUrl,
+    connectTimeout: AppConstants.connectTimeout,
+    receiveTimeout: AppConstants.receiveTimeout,
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -16,14 +16,14 @@ class ApiService {
       InterceptorsWrapper(
         onError: (DioException e, handler) {
           final statusCode = e.response?.statusCode;
-          final msg = e.response?.data?['message'] ?? 
-                      e.response?.data?['error'] ?? 
-                      e.message ?? 
-                      'Ha ocurrido un problema de red inusual.';
-          
+          final msg = e.response?.data?['message'] ??
+              e.response?.data?['error'] ??
+              e.message ??
+              'Ha ocurrido un problema de red inusual.';
+
           GlobalErrorHandler.showError(msg.toString(), statusCode: statusCode);
-          
-          return handler.next(e); // Continue yielding the error downwards
+
+          return handler.next(e);
         },
       ),
     );
@@ -31,12 +31,10 @@ class ApiService {
 
   static Dio get dio => _dio;
 
-  static Future<void> init() async {
-    // Already initialized via BaseOptions now, but keeping for compatibility
-  }
+  static Future<void> init() async {}
 
   static Future<String?> getToken() async {
-    return await _storage.read(key: 'jwt_token');
+    return await _storage.read(key: AppConstants.tokenKey);
   }
 
   static Future<void> setAuthHeader() async {
@@ -50,7 +48,11 @@ class ApiService {
 
   static Future<List<dynamic>> getProductos() async {
     await setAuthHeader();
-    final response = await _dio.get('/inventory/products?page=1&limit=100');
+    final response =
+        await _dio.get('/inventory/products', queryParameters: {
+          'page': 1,
+          'limit': AppConstants.maxPageLimit,
+        });
     if (response.statusCode == 200) {
       if (response.data is! Map<String, dynamic>) return [];
       final data = response.data as Map<String, dynamic>;
@@ -63,35 +65,18 @@ class ApiService {
   static Future<List<dynamic>> searchProducts(String query) async {
     await setAuthHeader();
     try {
-      // Trying to fetch with a high limit to allow local filtering as fallback
-      final response = await _dio.get('/inventory/products', queryParameters: {
-        'page': 1,
-        'limit': 1000,
+      final response = await _dio.get('/inventory/search', queryParameters: {
+        'query': query.trim(),
       });
 
       if (response.statusCode == 200) {
-        if (response.data is! Map<String, dynamic>) {
-          print(
-              'DEBUG: El servidor devolvió un formato no esperado (posiblemente HTML): ${response.data.runtimeType}');
-          return [];
-        }
+        if (response.data is! Map<String, dynamic>) return [];
         final data = response.data as Map<String, dynamic>;
-        final List<dynamic> products = data['data'] as List<dynamic>? ?? [];
-
-        final searchText = query.toLowerCase().trim();
-        if (searchText.isEmpty) return products;
-
-        return products.where((p) {
-          final nom = (p['nombre'] ?? '').toString().toLowerCase();
-          final cod = (p['codigoBarras'] ?? '').toString().toLowerCase();
-          return nom.contains(searchText) || cod.contains(searchText);
-        }).toList();
+        return data['data'] as List<dynamic>? ?? [];
       }
       return [];
     } catch (e) {
-      print('DEBUG: Error en searchProducts: $e');
-      // If the products fetching fails, return empty list instead of crashing
-      return [];
+      rethrow;
     }
   }
 
@@ -116,18 +101,46 @@ class ApiService {
 
   static Future<List<dynamic>> getPresentations() async {
     await setAuthHeader();
-    try {
-      final response = await _dio.get('/inventory/presentations');
-      if (response.statusCode == 200) {
-        if (response.data is! Map<String, dynamic>) return [];
-        final data = response.data as Map<String, dynamic>;
-        return data['data'] as List<dynamic>? ?? [];
-      }
-      return [];
-    } catch (e) {
-      print('DEBUG: Error en getPresentations: $e');
-      return [];
+    final response = await _dio.get('/inventory/presentations');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as List<dynamic>? ?? [];
     }
+    return [];
+  }
+
+  static Future<List<dynamic>> getCategories() async {
+    await setAuthHeader();
+    final response = await _dio.get('/inventory/categories');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as List<dynamic>? ?? [];
+    }
+    return [];
+  }
+
+  static Future<List<dynamic>> getSuppliers() async {
+    await setAuthHeader();
+    final response = await _dio.get('/inventory/suppliers');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as List<dynamic>? ?? [];
+    }
+    return [];
+  }
+
+  static Future<List<dynamic>> getBatches() async {
+    await setAuthHeader();
+    final response = await _dio.get('/inventory/batches');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as List<dynamic>? ?? [];
+    }
+    return [];
   }
 
   static Future<Map<String, dynamic>> registerSale(
@@ -143,107 +156,47 @@ class ApiService {
 
   static Future<List<dynamic>> getSales() async {
     await setAuthHeader();
-    try {
-      final response = await _dio.get('/sales');
-      if (response.statusCode == 200) {
-        if (response.data is! Map<String, dynamic>) return [];
-        final data = response.data as Map<String, dynamic>;
-        return data['data'] as List<dynamic>? ?? [];
-      }
-      return [];
-    } catch (e) {
-      print('DEBUG: Error en getSales: $e');
-      return [];
+    final response = await _dio.get('/sales');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as List<dynamic>? ?? [];
     }
+    return [];
   }
 
   static Future<Map<String, dynamic>?> getSaleById(String id) async {
     await setAuthHeader();
-    try {
-      final response = await _dio.get('/sales/$id');
-      if (response.statusCode == 200) {
-        if (response.data is! Map<String, dynamic>) return null;
-        final data = response.data as Map<String, dynamic>;
-        return data['data'] as Map<String, dynamic>?;
-      }
-    } catch (e) {
-      print('DEBUG: Error en getSaleById: $e');
+    final response = await _dio.get('/sales/$id');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return null;
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>?;
     }
     return null;
   }
 
-  // HIGH ROBUSTNESS: Centralized batch fetcher
   static Future<List<dynamic>> getBatchesByProduct(String productId) async {
     await setAuthHeader();
-    try {
-      // Try multiple endpoints based on user clues and common patterns
-      Response? response;
-      try {
-        response = await _dio.get('/inventory/products/$productId/batches');
-      } catch (_) {
-        try {
-          response = await _dio.get('/inventory/batches/$productId');
-        } catch (__) {
-          return [];
-        }
-      }
-
-      if (response.statusCode == 200) {
-        if (response.data is! Map<String, dynamic>) return [];
-        return response.data['data'] as List<dynamic>? ?? [];
-      }
-      return [];
-    } catch (e) {
-      print('DEBUG: Error en getBatchesByProduct: $e');
-      return [];
+    final response =
+        await _dio.get('/inventory/products/$productId/batches');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      return response.data['data'] as List<dynamic>? ?? [];
     }
+    return [];
   }
 
-  // NUCLEAR SCAN: Recursively find any candidate price in a JSON object
-  static double nuclearScan(Map<String, dynamic> json) {
-    double best = 0.0;
-    final priority = [
-      'precioVenta',
-      'precio_venta',
-      'precioPorUnidad',
-      'pvp',
-      'precio_unidad',
-      'precioUnidad',
-      'precio',
-      'costoCompra',
-      'precioCompra'
-    ];
-    for (var f in priority) {
-      if (json[f] != null) {
-        final d = double.tryParse(json[f].toString()) ?? 0.0;
-        if (d > 0) return d;
-      }
-    }
-    json.forEach((key, value) {
-      final k = key.toLowerCase();
-      if (k.contains('pre') ||
-          k.contains('pvp') ||
-          k.contains('venta') ||
-          k.contains('cost')) {
-        if (value is num && value > 0 && best == 0) best = value.toDouble();
-        if (value is String && best == 0) {
-          final d = double.tryParse(value);
-          if (d != null && d > 0) best = d;
-        }
-      }
-    });
-    return best;
-  }
   // CLOUDINARY UPLOAD: Send image to Cloudinary and return secure_url
   static Future<String?> uploadImage(dynamic imageFile) async {
     try {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(imageFile.path),
-        'upload_preset': 'farmabook',
+        'upload_preset': AppConstants.cloudinaryUploadPreset,
       });
 
       final response = await _dio.post(
-        'https://api.cloudinary.com/v1_1/dfffmvroq/image/upload',
+        AppConstants.cloudinaryUploadUrl,
         data: formData,
       );
 
@@ -251,7 +204,7 @@ class ApiService {
         return response.data['secure_url']?.toString();
       }
     } catch (e) {
-      print('DEBUG: Error en uploadImage: $e');
+      rethrow;
     }
     return null;
   }
@@ -267,28 +220,18 @@ class ApiService {
     return [];
   }
 
-  static Future<Map<String, dynamic>> createUser(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createUser(
+      Map<String, dynamic> data) async {
     await setAuthHeader();
-    try {
-      print('DEBUG: Intentando crear usuario con payload: $data');
-      final response = await _dio.post('/users', data: data);
-      return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.response?.data?['error'] ?? 'Error desconocido';
-      print('❌ ERROR EN CREATEUSER (Terminal): ${e.response?.data}');
-      throw Exception('Fallo al crear usuario: $msg');
-    }
+    final response = await _dio.post('/users', data: data);
+    return response.data as Map<String, dynamic>;
   }
 
-  static Future<Map<String, dynamic>> updateUser(String id, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateUser(
+      String id, Map<String, dynamic> data) async {
     await setAuthHeader();
-    try {
-      final response = await _dio.patch('/users/$id', data: data);
-      return response.data as Map<String, dynamic>;
-    } on DioException catch (e) {
-       final msg = e.response?.data?['message'] ?? e.response?.data?['error'] ?? 'Error desconocido';
-       throw Exception('Fallo al actualizar usuario: $msg');
-    }
+    final response = await _dio.patch('/users/$id', data: data);
+    return response.data as Map<String, dynamic>;
   }
 
   static Future<void> deleteUser(String id) async {
@@ -296,31 +239,195 @@ class ApiService {
     await _dio.delete('/users/$id');
   }
 
-  // Speculative Roles Fetching
-  static Future<List<dynamic>> getRoles() async {
+  // Analytics
+  static Future<Map<String, dynamic>> getRevenueToday() async {
     await setAuthHeader();
-    try {
-      // Trying common endpoints
-      Response response;
-      try {
-        response = await _dio.get('/users/roles');
-      } catch (_) {
-        response = await _dio.get('/roles');
-      }
-      if (response.statusCode == 200) {
-        if (response.data is Map && response.data['data'] != null) {
-          return response.data['data'] as List<dynamic>;
-        }
-        if (response.data is List) return response.data as List;
-      }
-    } catch (e) {
-      print('DEBUG: Error en getRoles: $e');
+    final response = await _dio.get('/analytics/revenues/today');
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> getRevenueMonth() async {
+    await setAuthHeader();
+    final response = await _dio.get('/analytics/revenues/month');
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> getSalesToday() async {
+    await setAuthHeader();
+    final response = await _dio.get('/analytics/sales/today');
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> getSalesMonth() async {
+    await setAuthHeader();
+    final response = await _dio.get('/analytics/sales/month');
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> getTopProducts() async {
+    await setAuthHeader();
+    final response = await _dio.get('/analytics/products/top');
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> getExpenses() async {
+    await setAuthHeader();
+    final response = await _dio.get('/analytics/expenses');
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> getBalance() async {
+    await setAuthHeader();
+    final response = await _dio.get('/analytics/balance');
+    return response.data as Map<String, dynamic>;
+  }
+
+  // Notifications
+  static Future<List<dynamic>> getNotifications() async {
+    await setAuthHeader();
+    final response = await _dio.get('/notifications');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      return response.data['data'] as List<dynamic>? ?? [];
     }
-    // Fallback/Mock roles if endpoint fails, based on common pharmacy roles
-    return [
-      {'rolId': 'admin-uuid-placeholder', 'nombre': 'Administrador'},
-      {'rolId': 'cajero-uuid-placeholder', 'nombre': 'Cajero'},
-      {'rolId': 'dueno-uuid-placeholder', 'nombre': 'Dueño'},
-    ];
+    return [];
+  }
+
+  // Movements
+  static Future<List<dynamic>> getMovements() async {
+    await setAuthHeader();
+    final response = await _dio.get('/movements');
+    if (response.statusCode == 200) {
+      if (response.data is! Map<String, dynamic>) return [];
+      return response.data['data'] as List<dynamic>? ?? [];
+    }
+    return [];
+  }
+
+  // CRUD Products
+  static Future<Map<String, dynamic>> createProduct(
+      Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response = await _dio.post('/inventory/products', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updateProduct(
+      String id, Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response = await _dio.patch('/inventory/products/$id', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<void> deleteProduct(String id) async {
+    await setAuthHeader();
+    await _dio.delete('/inventory/products/$id');
+  }
+
+  // CRUD Categories
+  static Future<Map<String, dynamic>> createCategory(
+      Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response = await _dio.post('/inventory/categories', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updateCategory(
+      String id, Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response =
+        await _dio.patch('/inventory/categories/$id', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<void> deleteCategory(String id) async {
+    await setAuthHeader();
+    await _dio.delete('/inventory/categories/$id');
+  }
+
+  static Future<bool> categoryExists(String name) async {
+    await setAuthHeader();
+    final response = await _dio.get('/inventory/categories/exists',
+        queryParameters: {'name': name});
+    return response.data['data'] == true;
+  }
+
+  // CRUD Presentations
+  static Future<Map<String, dynamic>> createPresentation(
+      Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response =
+        await _dio.post('/inventory/presentations', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updatePresentation(
+      String id, Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response =
+        await _dio.patch('/inventory/presentations/$id', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<void> deletePresentation(String id) async {
+    await setAuthHeader();
+    await _dio.delete('/inventory/presentations/$id');
+  }
+
+  static Future<bool> presentationExists(String name) async {
+    await setAuthHeader();
+    final response = await _dio.get('/inventory/presentations/exists',
+        queryParameters: {'name': name});
+    return response.data['data'] == true;
+  }
+
+  // CRUD Suppliers
+  static Future<Map<String, dynamic>> createSupplier(
+      Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response = await _dio.post('/inventory/suppliers', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updateSupplier(
+      String id, Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response =
+        await _dio.patch('/inventory/suppliers/$id', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<void> deleteSupplier(String id) async {
+    await setAuthHeader();
+    await _dio.delete('/inventory/suppliers/$id');
+  }
+
+  static Future<bool> supplierExistsByName(String name) async {
+    await setAuthHeader();
+    final response = await _dio.get('/inventory/suppliers/exists',
+        queryParameters: {'name': name});
+    return response.data['data'] == true;
+  }
+
+  static Future<bool> supplierExistsByEmail(String email) async {
+    await setAuthHeader();
+    final response = await _dio.get('/inventory/suppliers/exists',
+        queryParameters: {'email': email});
+    return response.data['data'] == true;
+  }
+
+  // CRUD Batches
+  static Future<Map<String, dynamic>> createBatch(
+      Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response = await _dio.post('/inventory/batches', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updateBatch(
+      String id, Map<String, dynamic> data) async {
+    await setAuthHeader();
+    final response = await _dio.patch('/inventory/batches/$id', data: data);
+    return response.data as Map<String, dynamic>;
   }
 }

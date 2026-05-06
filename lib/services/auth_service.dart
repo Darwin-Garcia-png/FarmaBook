@@ -1,15 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../utils/app_constants.dart';
 
 class AuthService {
   final Dio _dio = Dio();
   final _storage = const FlutterSecureStorage();
 
-  static const String baseUrl = 'https://farmabook-0vh1.onrender.com';
-  static const String tokenKey = 'jwt_token';
-
   AuthService() {
-    _dio.options.baseUrl = baseUrl;
+    _dio.options.baseUrl = AppConstants.baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 10);
     _dio.options.receiveTimeout = const Duration(seconds: 10);
     _dio.options.headers['Content-Type'] = 'application/json';
@@ -29,7 +27,7 @@ class AuthService {
 
       final token = body['data']?['token'] as String?;
       if (token != null && token.isNotEmpty) {
-        await _storage.write(key: tokenKey, value: token);
+        await _storage.write(key: AppConstants.tokenKey, value: token);
       }
 
       return {
@@ -63,10 +61,10 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: tokenKey);
+    await _storage.delete(key: AppConstants.tokenKey);
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: tokenKey);
+    return await _storage.read(key: AppConstants.tokenKey);
   }
 }

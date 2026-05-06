@@ -15,8 +15,6 @@ import 'categorias_screen.dart';
 import 'presentaciones_screen.dart';
 import 'usuarios_screen.dart';
 import 'manual_screen.dart';
-import '../controllers/notificaciones_controller.dart';
-import 'dart:ui';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -27,7 +25,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late DashboardController _controller;
-  late NotificacionesController _notifController;
 
   final List<Widget> _screens = const [
     InicioScreen(), // 0
@@ -48,7 +45,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _controller = Provider.of<DashboardController>(context);
-    _notifController = Provider.of<NotificacionesController>(context);
   }
 
   @override

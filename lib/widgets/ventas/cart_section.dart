@@ -133,7 +133,7 @@ class CartSection extends StatelessWidget {
                         Text(prod.nombre,
                             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
-                        Text('\$${prod.precioPorUnidad?.toStringAsFixed(2)} x unidad',
+                        Text('\$${prod.precioPorUnidad.toStringAsFixed(2)} x unidad',
                             style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
                       ],
                     ),
@@ -162,7 +162,7 @@ class CartSection extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Text('\$${((prod.precioPorUnidad ?? 0) * qty).toStringAsFixed(2)}',
+                  Text('\$${(prod.precioPorUnidad * qty).toStringAsFixed(2)}',
                       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.ayanamiBlue)),
                 ],
               )
