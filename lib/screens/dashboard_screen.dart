@@ -14,6 +14,7 @@ import 'movimientos_screen.dart';
 import 'categorias_screen.dart';
 import 'presentaciones_screen.dart';
 import 'usuarios_screen.dart';
+import 'manual_screen.dart';
 import '../controllers/notificaciones_controller.dart';
 import 'dart:ui';
 
@@ -40,6 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     PresentacionesScreen(), // 8
     ProveedoresScreen(), // 9
     UsuariosScreen(), // 10
+    ManualScreen(), // 11
   ];
 
   @override
@@ -84,6 +86,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4),
                     _buildDrawerItem(Icons.warning_amber_rounded, 'Centro de Alertas', 5),
                     _buildDrawerItem(Icons.history_rounded, 'Movimientos Hoy', 6),
+                    _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11),
                     
                     const SizedBox(height: 12),
                     _buildExpansionCatalogos(),

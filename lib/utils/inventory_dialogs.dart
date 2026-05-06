@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
@@ -5,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import 'dart:ui';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 
 class InventoryDialogs {
   static Future<void> showAddEditProduct(BuildContext context,
@@ -179,20 +182,21 @@ class InventoryDialogs {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _buildProductCardSection(
-                                      context,
-                                      isEdit,
-                                      isNewBatchOnly || isBatchOnlyEdit,
-                                      codigo,
-                                      nombre,
-                                      desc,
-                                      catId,
-                                      presId,
-                                      controller,
-                                      currentImageUrl,
-                                      selectedImage,
-                                      (img) => setDialogState(() => selectedImage = img),
-                                      (v) => setDialogState(() => catId = v),
-                                      (v) => setDialogState(() => presId = v)),
+                      context,
+                      isEdit,
+                      isNewBatchOnly || isBatchOnlyEdit,
+                      codigo,
+                      nombre,
+                      desc,
+                      catId,
+                      presId,
+                      controller,
+                      currentImageUrl,
+                      selectedImage,
+                      (img) => setDialogState(() => selectedImage = img),
+                      (v) => setDialogState(() => catId = v),
+                      (v) => setDialogState(() => presId = v),
+                      setDialogState: setDialogState),
                                   const SizedBox(width: 24),
                                   _buildBatchCardSection(
                                       ctx,
@@ -308,7 +312,8 @@ class InventoryDialogs {
       XFile? selectedImage,
       Function(XFile?) onImage,
       Function(String?) onCat,
-      Function(String?) onPres) {
+      Function(String?) onPres,
+      {StateSetter? setDialogState}) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,7 +336,9 @@ class InventoryDialogs {
               Expanded(
                   child: _premiumDropdown(context, 'Categoría', catId,
                       controller.categorias, 'categoriaId', 'nombre', onCat,
-                      readOnly: readOnly)),
+                      readOnly: readOnly,
+                      controller: readOnly ? null : controller,
+                      setDialogState: setDialogState)),
               const SizedBox(width: 16),
               Expanded(
                   child: _premiumDropdown(
@@ -342,7 +349,9 @@ class InventoryDialogs {
                       'presentacionId',
                       'nombre',
                       onPres,
-                      readOnly: readOnly)),
+                      readOnly: readOnly,
+                      controller: readOnly ? null : controller,
+                      setDialogState: setDialogState)),
             ],
           ),
         ],
@@ -374,7 +383,9 @@ class InventoryDialogs {
               req: true),
           if (!isBatchEdit)
             _premiumDropdown(context, 'Proveedor', provId,
-                controller.proveedores, 'proveedorId', 'nombre', onProv),
+                controller.proveedores, 'proveedorId', 'nombre', onProv,
+                controller: controller,
+                setDialogState: setDialogState),
           Row(
             children: [
               Expanded(
@@ -426,6 +437,18 @@ class InventoryDialogs {
       bool readOnly = false,
       int maxLines = 1,
       TextInputType keyboard = TextInputType.text}) {
+    
+    // Configurar restricciones de entrada automáticas
+    List<TextInputFormatter> formatters = [];
+    if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true)) {
+      // Solo números y un punto decimal
+      formatters.add(FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')));
+    } else if (label.toLowerCase().contains('nombre') || label.toLowerCase().contains('categoría') || label.toLowerCase().contains('presentación')) {
+      // Evitar números en campos de nombre puro (opcional, depende de la lógica de negocio)
+      // Pero el usuario pidió: "no se puedan colocar numeros donde solo deben de ir letras"
+      // formatters.add(FilteringTextInputFormatter.deny(RegExp(r'[0-9]'))); 
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
@@ -433,6 +456,8 @@ class InventoryDialogs {
         readOnly: readOnly,
         maxLines: maxLines,
         keyboardType: keyboard,
+        inputFormatters: formatters,
+        autovalidateMode: AutovalidateMode.onUserInteraction, // Validación inmediata
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           labelText: label,
@@ -452,11 +477,149 @@ class InventoryDialogs {
               borderRadius: BorderRadius.circular(16),
               borderSide:
                   const BorderSide(color: AppTheme.ayanamiBlue, width: 2)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
           floatingLabelStyle: const TextStyle(
               color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold),
         ),
-        validator: (v) =>
-            req && (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+        validator: (v) {
+          if (req && (v == null || v.trim().isEmpty)) return 'Este campo es requerido';
+          
+          if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true)) {
+            if (v != null && v.isNotEmpty) {
+              final val = double.tryParse(v.replaceAll(',', '.'));
+              if (val == null) return 'Ingrese un número válido';
+              if (val < 0) return 'No se permiten valores negativos';
+            }
+          }
+
+          // Validación de letras donde solo van letras (si el usuario lo pidió explícitamente para nombres)
+          if (label.toLowerCase().contains('nombre') && !label.toLowerCase().contains('lote') && !label.toLowerCase().contains('comercial')) {
+             if (v != null && RegExp(r'[0-9]').hasMatch(v)) {
+               return 'No se permiten números en este campo';
+             }
+          }
+
+          return null;
+        },
+      ),
+    );
+  }
+
+  // ─── QUICK-CREATE DIALOG ─────────────────────────────────────────────────
+  // Called when user selects the '+ Registrar nueva...' option
+  static Future<void> _showQuickCreate(
+    BuildContext context,
+    String tipo, // 'categoria' | 'presentacion' | 'proveedor'
+    AlmacenController controller,
+    StateSetter? setParent,
+    Function(String newId) onCreated,
+  ) async {
+    final nameCtrl = TextEditingController();
+    final formKey  = GlobalKey<FormState>();
+    bool saving = false;
+
+    final title = tipo == 'categoria' ? 'Nueva Categoría' : tipo == 'presentacion' ? 'Nueva Presentación' : 'Nuevo Proveedor';
+    final label = tipo == 'categoria' ? 'Nombre de la categoría' : tipo == 'presentacion' ? 'Nombre de la presentación' : 'Nombre / Razón Social';
+    final icon  = tipo == 'categoria' ? Icons.category_rounded : tipo == 'presentacion' ? Icons.medical_services_rounded : Icons.business_rounded;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Container(
+            width: 420,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color ?? Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Form(
+              key: formKey,
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Header
+                Row(children: [
+                  Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+                    child: Icon(icon, color: AppTheme.ayanamiBlue, size: 24)),
+                  const SizedBox(width: 16),
+                  Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                  const Spacer(),
+                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                ]),
+                const SizedBox(height: 24),
+                // Input
+                TextFormField(
+                  controller: nameCtrl,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: label,
+                    prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 20),
+                    filled: true,
+                    fillColor: AppTheme.ayanamiBlue.withOpacity(0.04),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.ayanamiBlue, width: 2)),
+                    floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'El nombre es requerido' : null,
+                ),
+                const SizedBox(height: 24),
+                // Actions
+                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    icon: saving
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.check_rounded, size: 18),
+                    label: Text('Registrar $title', style: const TextStyle(fontWeight: FontWeight.w800)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0,
+                    ),
+                    onPressed: saving ? null : () async {
+                      if (!formKey.currentState!.validate()) return;
+                      setState(() => saving = true);
+                      try {
+                        await ApiService.setAuthHeader();
+                        String newId = '';
+                        final body = {'nombre': nameCtrl.text.trim()};
+
+                        if (tipo == 'categoria') {
+                          final res = await ApiService.dio.post('/inventory/categories', data: body);
+                          newId = (res.data['data']?['categoriaId'] ?? res.data['categoriaId'] ?? '').toString();
+                          await controller.reloadCategorias();
+                        } else if (tipo == 'presentacion') {
+                          final res = await ApiService.dio.post('/inventory/presentations', data: body);
+                          newId = (res.data['data']?['presentacionId'] ?? res.data['presentacionId'] ?? '').toString();
+                          await controller.reloadPresentaciones();
+                        } else {
+                          final res = await ApiService.dio.post('/inventory/suppliers', data: body);
+                          newId = (res.data['data']?['proveedorId'] ?? res.data['proveedorId'] ?? '').toString();
+                          await controller.reloadProveedores();
+                        }
+
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (newId.isNotEmpty) onCreated(newId);
+                      } catch (e) {
+                        setState(() => saving = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                            content: Text('Error: ${e.toString()}'),
+                            backgroundColor: AppTheme.reiOrangeRed,
+                          ));
+                        }
+                      }
+                    },
+                  ),
+                ]),
+              ]),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -469,18 +632,21 @@ class InventoryDialogs {
       String idK,
       String labelK,
       Function(String?) onChanged,
-      {bool readOnly = false}) {
+      {bool readOnly = false,
+      AlmacenController? controller,
+      StateSetter? setDialogState}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: IgnorePointer(
         ignoring: readOnly,
         child: (() {
+          final tipo = idK == 'categoriaId' ? 'categoria' : idK == 'presentacionId' ? 'presentacion' : 'proveedor';
+
           // Safety check: ensure 'value' exists in mapped items and IDs are unique
           final rawMapped = items.asMap().entries.map((entry) {
             final idx = entry.key;
             final i = entry.value;
             final map = Map<String, dynamic>.from(i);
-            // Use the specific key first, then try common ID fields, finally use index as last resort
             final id = (map[idK]?.toString().isNotEmpty == true)
                 ? map[idK].toString()
                 : (map['id']?.toString().isNotEmpty == true)
@@ -510,8 +676,11 @@ class InventoryDialogs {
           final bool valueExists = mappedItems.any((it) => it['id'] == value);
           final String? safeValue = valueExists ? value : null;
 
+          // Special sentinel ID for the 'create new' option
+          const createNewId = '__CREATE_NEW__';
+
           return DropdownButtonFormField<String>(
-            initialValue: safeValue,
+            value: safeValue,
             isExpanded: true,
             decoration: InputDecoration(
               labelText: label,
@@ -523,15 +692,47 @@ class InventoryDialogs {
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none),
             ),
-            items: mappedItems
-                .map((it) => DropdownMenuItem(
-                      value: it['id'],
-                      child:
-                          Text(it['label']!, overflow: TextOverflow.ellipsis),
-                    ))
-                .toList(),
-            onChanged: onChanged,
-            validator: (v) => v == null ? 'Requerido' : null,
+            items: [
+              // ── OPCIÓN ESPECIAL: Registrar nueva ──────────────────
+              DropdownMenuItem<String>(
+                value: createNewId,
+                child: Row(children: [
+                  Icon(Icons.add_circle_rounded, color: AppTheme.ayanamiBlue, size: 18),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Registrar nueva ${tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : 'proveedor'}',
+                    style: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ]),
+              ),
+              // Divider visual
+              const DropdownMenuItem<String>(
+                enabled: false,
+                value: '__DIVIDER__',
+                child: Divider(height: 1),
+              ),
+              // ── Lista de opciones existentes ──────────────────────
+              ...mappedItems.map((it) => DropdownMenuItem(
+                    value: it['id'],
+                    child: Text(it['label']!, overflow: TextOverflow.ellipsis),
+                  )),
+            ],
+            onChanged: (v) {
+              if (v == createNewId && controller != null) {
+                // Abrir mini-diálogo de creación, luego seleccionar el nuevo ID
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _showQuickCreate(context, tipo, controller, setDialogState, (newId) {
+                    onChanged(newId);
+                    if (setDialogState != null) setDialogState(() {});
+                  });
+                });
+                // Devuelve null temporalmente (sin selección) mientras abre el diálogo
+                onChanged(null);
+              } else if (v != '__DIVIDER__') {
+                onChanged(v);
+              }
+            },
+            validator: (v) => (v == null || v == createNewId || v == '__DIVIDER__') ? 'Requerido' : null,
           );
         })(),
       ),
@@ -764,10 +965,9 @@ class InventoryDialogs {
             border: Border.all(
                 color: AppTheme.ayanamiBlue.withOpacity(0.2), width: 2),
             image: selected != null
-                ? DecorationImage(
-                    image: NetworkImage(selected.path), // In web, file path is a blob URL
-                    fit: BoxFit.cover,
-                  )
+                ? (kIsWeb 
+                    ? DecorationImage(image: NetworkImage(selected.path), fit: BoxFit.cover)
+                    : DecorationImage(image: FileImage(File(selected.path)), fit: BoxFit.cover))
                 : (currentUrl != null && currentUrl.isNotEmpty)
                     ? DecorationImage(
                         image: NetworkImage(currentUrl), fit: BoxFit.cover)

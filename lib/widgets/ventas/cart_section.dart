@@ -199,7 +199,7 @@ class CartSection extends StatelessWidget {
 
   Widget _buildSummarySection(BuildContext context, VentasController controller) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),

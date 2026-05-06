@@ -115,11 +115,21 @@ class AlertasScreen extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(32),
         onTap: () {
-            final match = RegExp(r'lote: (\w+)').firstMatch(msg);
-            if (match != null) {
-                final loteNombre = match.group(1);
+            // Intentar detectar si es un lote o un producto
+            final loteMatch = RegExp(r'(?:lote:|Lote:)\s*([a-zA-Z0-9_-]+)').firstMatch(msg);
+            final prodMatch = RegExp(r'(?:producto:|Producto:)\s*([a-zA-Z0-9\s]+)').firstMatch(msg);
+
+            if (loteMatch != null) {
+                final loteNombre = loteMatch.group(1);
                 lotesCtrl.setExternalSearch(loteNombre!);
                 dashCtrl.onItemTapped(3); // Gestión de Lotes
+            } else if (prodMatch != null) {
+                final prodNombre = prodMatch.group(1);
+                // Si detecta un producto, lo llevamos al almacén
+                dashCtrl.onItemTapped(1); // Almacén Central
+            } else {
+                // Fallback inteligente
+                dashCtrl.onItemTapped(isUrgent ? 1 : 3);
             }
         },
         child: Padding(

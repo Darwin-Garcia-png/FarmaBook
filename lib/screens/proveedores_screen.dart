@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/proveedores_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
+import 'package:flutter/services.dart';
 
 class ProveedoresScreen extends StatefulWidget {
   const ProveedoresScreen({super.key});
@@ -133,14 +134,28 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
       child: TextFormField(
         controller: ctrl,
         keyboardType: keyboard,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        inputFormatters: [
+          if (keyboard == TextInputType.phone || keyboard == TextInputType.number) FilteringTextInputFormatter.digitsOnly,
+        ],
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           filled: true,
           fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
         ),
-        validator: req ? (v) => v!.trim().isEmpty ? 'Requerido' : null : null,
+        validator: (v) {
+          if (req && (v == null || v.trim().isEmpty)) return 'Requerido';
+          if (keyboard == TextInputType.phone && v != null && v.isNotEmpty && v.length < 7) {
+            return 'Teléfono demasiado corto';
+          }
+          if (keyboard == TextInputType.emailAddress && v != null && v.isNotEmpty) {
+            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) return 'Email inválido';
+          }
+          return null;
+        },
       ),
     );
   }

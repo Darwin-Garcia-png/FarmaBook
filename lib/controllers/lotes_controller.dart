@@ -1,3 +1,4 @@
+import 'dart:async'; // Añadido para Timer
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
@@ -5,9 +6,22 @@ import '../utils/global_error_handler.dart';
 
 class LotesController extends ChangeNotifier {
   final _dio = ApiService.dio;
+  Timer? _refreshTimer;
 
   List<Map<String, dynamic>> allBatches = [];
   bool isLoading = false;
+
+  LotesController() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
+      if (!isLoading) fetchAllBatches();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
   
   // Categorization
   List<Map<String, dynamic>> get vencidos => allBatches.where((b) {

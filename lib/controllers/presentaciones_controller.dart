@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/api_service.dart';
 
 class PresentacionesController extends ChangeNotifier {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://farmabook.onrender.com'));
-  final _storage = const FlutterSecureStorage();
+  final Dio _dio = ApiService.dio;
+  Timer? _refreshTimer;
 
   List<dynamic> presentaciones = [];
   bool isLoading = true;
@@ -12,6 +13,20 @@ class PresentacionesController extends ChangeNotifier {
 
   final TextEditingController nombreCtrl = TextEditingController();
   final TextEditingController descripcionCtrl = TextEditingController();
+
+  PresentacionesController() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (!isLoading) cargarPresentaciones();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    nombreCtrl.dispose();
+    descripcionCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> init() async {
     await cargarPresentaciones();
@@ -23,8 +38,7 @@ class PresentacionesController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await ApiService.setAuthHeader();
       final res = await _dio.get('/inventory/presentations');
       presentaciones = res.data['data'] ?? [];
     } catch (e) {
@@ -41,8 +55,7 @@ class PresentacionesController extends ChangeNotifier {
     }
 
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await ApiService.setAuthHeader();
       
       await _dio.post('/inventory/presentations', data: {
         'nombre': nombreCtrl.text.trim(),
@@ -61,8 +74,7 @@ class PresentacionesController extends ChangeNotifier {
 
   Future<bool> actualizarPresentacion(dynamic id) async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await ApiService.setAuthHeader();
       await _dio.put('/inventory/presentations/$id', data: {
         'nombre': nombreCtrl.text.trim(),
         'descripcion': descripcionCtrl.text.trim(),
@@ -76,20 +88,12 @@ class PresentacionesController extends ChangeNotifier {
 
   Future<bool> eliminarPresentacion(dynamic id) async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await ApiService.setAuthHeader();
       await _dio.delete('/inventory/presentations/$id');
       await cargarPresentaciones();
       return true;
     } catch (e) {
       return false;
     }
-  }
-
-  @override
-  void dispose() {
-    nombreCtrl.dispose();
-    descripcionCtrl.dispose();
-    super.dispose();
   }
 }

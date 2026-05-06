@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/api_service.dart';
 
 class ProveedoresController extends ChangeNotifier {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://farmabook.onrender.com'));
-  final _storage = const FlutterSecureStorage();
+  final Dio _dio = ApiService.dio;
+  Timer? _refreshTimer;
 
   List<dynamic> proveedores = [];
   bool isLoading = true;
@@ -15,6 +16,23 @@ class ProveedoresController extends ChangeNotifier {
   final TextEditingController telefonoCtrl = TextEditingController();
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController searchCtrl = TextEditingController();
+
+  ProveedoresController() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (!isLoading) cargarProveedores();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    nombreCtrl.dispose();
+    direccionCtrl.dispose();
+    telefonoCtrl.dispose();
+    emailCtrl.dispose();
+    searchCtrl.dispose();
+    super.dispose();
+  }
 
   List<dynamic> get filteredProveedores {
     final query = searchCtrl.text.toLowerCase();
@@ -37,8 +55,7 @@ class ProveedoresController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await ApiService.setAuthHeader();
       final res = await _dio.get('/inventory/suppliers');
       proveedores = res.data['data'] ?? [];
     } catch (e) {
@@ -53,8 +70,7 @@ class ProveedoresController extends ChangeNotifier {
     if (nombreCtrl.text.trim().isEmpty) return false;
 
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await ApiService.setAuthHeader();
       
       await _dio.post('/inventory/suppliers', data: {
         'nombre': nombreCtrl.text.trim(),
@@ -74,8 +90,7 @@ class ProveedoresController extends ChangeNotifier {
 
   Future<bool> actualizarProveedor(String id, Map<String, dynamic> data) async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await ApiService.setAuthHeader();
       await _dio.put('/inventory/suppliers/$id', data: data);
       await cargarProveedores();
       return true;
@@ -87,8 +102,7 @@ class ProveedoresController extends ChangeNotifier {
 
   Future<bool> eliminarProveedor(String id) async {
     try {
-      final token = await _storage.read(key: 'jwt_token');
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await ApiService.setAuthHeader();
       await _dio.delete('/inventory/suppliers/$id');
       await cargarProveedores();
       return true;
@@ -103,15 +117,5 @@ class ProveedoresController extends ChangeNotifier {
     direccionCtrl.clear();
     telefonoCtrl.clear();
     emailCtrl.clear();
-  }
-
-  @override
-  void dispose() {
-    nombreCtrl.dispose();
-    direccionCtrl.dispose();
-    telefonoCtrl.dispose();
-    emailCtrl.dispose();
-    searchCtrl.dispose();
-    super.dispose();
   }
 }

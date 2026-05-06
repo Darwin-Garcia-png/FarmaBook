@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/usuarios_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
+import 'package:flutter/services.dart';
 
 class UsuariosScreen extends StatefulWidget {
   const UsuariosScreen({super.key});
@@ -307,9 +308,10 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                             children: [
                               const Text('Contraseña', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                               const SizedBox(height: 8),
-                              TextField(
+                              TextFormField(
                                 controller: passCtrl,
                                 obscureText: !showPass,
+                                autovalidateMode: AutovalidateMode.onUserInteraction,
                                 decoration: InputDecoration(
                                   hintText: isEdit ? 'Dejar en blanco para no cambiar' : 'Mínimo 8 caracteres',
                                   hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
@@ -321,8 +323,14 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                                   filled: true,
                                   fillColor: Colors.grey.withOpacity(0.05),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                                  errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
                                   contentPadding: const EdgeInsets.all(20),
                                 ),
+                                validator: (v) {
+                                  if (!isEdit && (v == null || v.isEmpty)) return 'Contraseña requerida';
+                                  if (v != null && v.isNotEmpty && v.length < 8) return 'Mínimo 8 caracteres';
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 20),
                             ],
@@ -371,8 +379,12 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF4A5568))),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: ctrl,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          inputFormatters: [
+            if (label.toLowerCase().contains('nombre')) FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+          ],
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
@@ -380,8 +392,14 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             filled: true,
             fillColor: Colors.grey.withOpacity(0.05),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
             contentPadding: const EdgeInsets.all(20),
           ),
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'Este campo es obligatorio';
+            if (label.toLowerCase().contains('nombre') && RegExp(r'[0-9]').hasMatch(v)) return 'No se permiten números';
+            return null;
+          },
         ),
         const SizedBox(height: 16),
       ],

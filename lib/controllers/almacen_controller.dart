@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 
 class AlmacenController extends ChangeNotifier {
   final _dio = ApiService.dio;
+  Timer? _refreshTimer; 
 
   List<Map<String, dynamic>> productos = [];
   List<Map<String, dynamic>> _allFetchedProducts = [];
@@ -23,6 +25,19 @@ class AlmacenController extends ChangeNotifier {
     searchCtrl.addListener(() {
       _applyLocalFilters();
     });
+    // Polling cada 15 segundos
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+       if (!isLoadingInitial) {
+         fetchProducts(isRefresh: false); 
+       }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> init() async {

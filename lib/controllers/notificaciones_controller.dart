@@ -3,8 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../services/notification_overlay_service.dart';
+import '../controllers/dashboard_controller.dart';
+import '../controllers/lotes_controller.dart';
+import '../router/app_router.dart';
 
 class NotificacionesController extends ChangeNotifier {
   WebSocketChannel? _channel;
@@ -126,6 +130,12 @@ class NotificacionesController extends ChangeNotifier {
     final mensaje = notification['mensaje'] ?? 'Tienes una nueva notificación';
     final isUrgent = tipo == 'stock_bajo';
 
+    // Extract structured payload (direct IDs from the WS event)
+    final innerPayload = notification['payload'] as Map<String, dynamic>? ?? {};
+    final loteId = innerPayload['loteId']?.toString();
+    final nombreLote = innerPayload['nombreLote']?.toString();
+    final productoId = innerPayload['productoId']?.toString();
+
     // 1. Play Sound
     try {
       final tempPlayer = AudioPlayer();
@@ -134,11 +144,32 @@ class NotificacionesController extends ChangeNotifier {
       debugPrint('Error al reproducir sonido: $e');
     }
 
-    // 2. Show Overlay
+    // 2. Show Overlay with structured navigation
     NotificationOverlayService().showNotification(
-      isUrgent ? '¡ALERTA DE STOCK!' : 'AVISO DE VENCIMIENTO', 
+      isUrgent ? '¡ALERTA DE STOCK!' : 'AVISO DE VENCIMIENTO',
       mensaje,
       isUrgent: isUrgent,
+      onTap: () {
+        final context = navigatorKey.currentContext;
+        if (context == null) return;
+
+        final dashCtrl = Provider.of<DashboardController>(context, listen: false);
+
+        // Use structured payload data (more reliable than regex)
+        if (loteId != null || nombreLote != null) {
+          // Navigate to Lotes module and apply search filter
+          final lotesCtrl = Provider.of<LotesController>(context, listen: false);
+          if (nombreLote != null) {
+            lotesCtrl.setExternalSearch(nombreLote);
+          }
+          dashCtrl.onItemTapped(3); // Gestión de Lotes
+        } else if (productoId != null) {
+          dashCtrl.onItemTapped(1); // Almacén Central
+        } else {
+          // Fallback: best guess based on alert type
+          dashCtrl.onItemTapped(isUrgent ? 3 : 3);
+        }
+      },
     );
   }
 

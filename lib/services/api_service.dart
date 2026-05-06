@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../utils/global_error_handler.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://farmabook-0vh1.onrender.com';
+  static const String baseUrl = 'https://farmabook-mr5m.onrender.com';
   static final Dio _dio = Dio(BaseOptions(
     baseUrl: baseUrl,
     connectTimeout: const Duration(seconds: 60),

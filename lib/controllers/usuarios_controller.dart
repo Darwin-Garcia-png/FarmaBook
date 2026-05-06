@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class UsuariosController extends ChangeNotifier {
+  Timer? _refreshTimer;
   List<dynamic> usuarios = [];
   // Hardcoded default roles as fallback to ensure the UI is never empty
   List<dynamic> roles = [
@@ -11,6 +13,18 @@ class UsuariosController extends ChangeNotifier {
   ];
   bool isLoading = false;
   String? error;
+
+  UsuariosController() {
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (!isLoading) fetchAll();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> fetchAll() async {
     isLoading = true;

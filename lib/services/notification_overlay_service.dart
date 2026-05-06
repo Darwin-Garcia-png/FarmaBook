@@ -12,7 +12,7 @@ class NotificationOverlayService {
 
   final List<_ActiveNotification> _activeNotifications = [];
 
-  void showNotification(String title, String message, {bool isUrgent = true}) {
+  void showNotification(String title, String message, {bool isUrgent = true, VoidCallback? onTap}) {
     final overlayState = navigatorKey.currentState?.overlay;
     if (overlayState == null) return;
 
@@ -27,6 +27,7 @@ class NotificationOverlayService {
         isUrgent: isUrgent,
         index: _activeNotifications.indexWhere((n) => n.id == notificationId),
         onClose: () => _removeNotification(notificationId),
+        onTap: onTap,
       ),
     );
 
@@ -67,6 +68,7 @@ class _StackableNotification extends StatefulWidget {
   final bool isUrgent;
   final int index;
   final VoidCallback onClose;
+  final VoidCallback? onTap;
 
   const _StackableNotification({
     required this.id,
@@ -75,6 +77,7 @@ class _StackableNotification extends StatefulWidget {
     required this.isUrgent,
     required this.index,
     required this.onClose,
+    this.onTap,
   });
 
   @override
@@ -129,7 +132,11 @@ class _StackableNotificationState extends State<_StackableNotification> with Sin
         child: GestureDetector(
           onTap: () {
             widget.onClose();
-            navigatorKey.currentContext?.push('/alertas');
+            if (widget.onTap != null) {
+              widget.onTap!();
+            } else {
+              navigatorKey.currentContext?.push('/alertas');
+            }
           },
           child: SlideTransition(
             position: _offsetAnimation,

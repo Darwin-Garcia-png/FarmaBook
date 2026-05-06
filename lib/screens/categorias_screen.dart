@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/categorias_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
+import 'package:flutter/services.dart';
 
 class CategoriasScreen extends StatefulWidget {
   const CategoriasScreen({super.key});
@@ -147,12 +148,18 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
     }
   }
 
-  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, int maxLines = 1}) {
+  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, int maxLines = 1, TextInputType keyboard = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: ctrl,
         maxLines: maxLines,
+        keyboardType: keyboard,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        inputFormatters: [
+           if (keyboard == TextInputType.number) FilteringTextInputFormatter.digitsOnly,
+           if (label.toLowerCase().contains('nombre')) FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+        ],
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue),
@@ -160,8 +167,15 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           filled: true,
           fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
         ),
-        validator: req ? (v) => v!.trim().isEmpty ? 'Este campo es obligatorio' : null : null,
+        validator: (v) {
+          if (req && (v == null || v.trim().isEmpty)) return 'Este campo es obligatorio';
+          if (label.toLowerCase().contains('nombre') && v != null && RegExp(r'[0-9]').hasMatch(v)) {
+            return 'No se permiten números en el nombre';
+          }
+          return null;
+        },
       ),
     );
   }
