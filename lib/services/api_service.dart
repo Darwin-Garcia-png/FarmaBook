@@ -15,14 +15,18 @@ class ApiService {
     },
   ))..interceptors.add(
       InterceptorsWrapper(
-        onError: (DioException e, handler) {
+        onError: (DioException e, handler) async {
           final statusCode = e.response?.statusCode;
           final msg = e.response?.data?['message'] ??
               e.response?.data?['error'] ??
               e.message ??
               'Ha ocurrido un problema de red inusual.';
 
-          GlobalErrorHandler.showError(msg.toString(), statusCode: statusCode);
+          // Only show errors to user if authenticated
+          final token = await getToken();
+          if (token != null && token.isNotEmpty) {
+            GlobalErrorHandler.showError(msg.toString(), statusCode: statusCode);
+          }
 
           return handler.next(e);
         },
