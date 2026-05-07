@@ -22,6 +22,9 @@ class NotificacionesController extends ChangeNotifier {
   bool isPushEnabled = true;
   Timer? _persistenceTimer;
 
+  // Track already-alerted notifications to prevent duplicates
+  final Set<String> _alertedIds = {};
+
   NotificacionesController() {
     _initAudio();
     _startPersistenceTimer();
@@ -38,10 +41,11 @@ class NotificacionesController extends ChangeNotifier {
 
   void _startPersistenceTimer() {
     _persistenceTimer?.cancel();
-    // 12 minutes for production, as requested.
     _persistenceTimer = Timer.periodic(const Duration(minutes: 12), (timer) {
+      // Only notify about NEW unread items, don't re-alert old ones
       if (isPushEnabled && unreadCount > 0) {
-        _triggerInitialAlerts(notificaciones.take(2).toList());
+        // Silent notification — no sound/overlay on timer ticks
+        notifyListeners();
       }
     });
   }
@@ -74,34 +78,59 @@ class NotificacionesController extends ChangeNotifier {
           .replaceFirst('http://', 'ws://');
 
       final uri = Uri.parse('$wsUrl/notifications?token=$token');
-      
+
       _channel = WebSocketChannel.connect(uri);
 
       _channel!.stream.listen(
         (message) {
           try {
             final data = jsonDecode(message);
-            
+
             if (data['tipo'] == 'historial') {
               final payload = data['payload'] as List;
               notificaciones = payload.cast<Map<String, dynamic>>();
               unreadCount = notificaciones.length;
               isLoading = false;
-              
-              if (isPushEnabled) {
-                _triggerInitialAlerts(notificaciones.take(3).toList());
+
+              // Mark all history notifications as already alerted
+              _alertedIds.clear();
+              for (var n in notificaciones) {
+                final id = (n['notificacionId'] ?? n['id'] ?? '').toString();
+                if (id.isNotEmpty) _alertedIds.add(id);
               }
-              
+
+              // Alert only the 3 most recent, but only if not yet alerted
+              final recent = notificaciones.take(3).toList();
+              for (var n in recent) {
+                final id = (n['notificacionId'] ?? n['id'] ?? '').toString();
+                if (!_alertedIds.contains(id)) {
+                  _alertedIds.add(id);
+                  if (isPushEnabled) _triggerAlert(n);
+                }
+              }
+
               notifyListeners();
             } else if (data['tipo'] == 'stock_bajo' || data['tipo'] == 'vencimiento') {
               final notification = data['payload'] as Map<String, dynamic>;
-              notificaciones.insert(0, notification);
-              unreadCount++;
-              
+              final notifId = (notification['notificacionId'] ?? notification['id'] ?? '').toString();
+
+              // Prevent duplicate alerts
+              if (_alertedIds.contains(notifId)) return;
+
+              // Also check if notification already exists in list
+              final alreadyExists = notificaciones.any((n) =>
+                  (n['notificacionId'] ?? n['id'] ?? '').toString() == notifId);
+              if (!alreadyExists) {
+                notificaciones.insert(0, notification);
+                unreadCount++;
+              }
+
+              if (notifId.isNotEmpty) _alertedIds.add(notifId);
+
               if (isPushEnabled) {
                 _triggerAlert(notification);
               }
-              
+
               notifyListeners();
             }
           } catch (e) {
@@ -131,13 +160,11 @@ class NotificacionesController extends ChangeNotifier {
     final mensaje = notification['mensaje'] ?? 'Tienes una nueva notificación';
     final isUrgent = tipo == 'stock_bajo';
 
-    // Extract structured payload (direct IDs from the WS event)
     final innerPayload = notification['payload'] as Map<String, dynamic>? ?? {};
     final loteId = innerPayload['loteId']?.toString();
     final nombreLote = innerPayload['nombreLote']?.toString();
     final productoId = innerPayload['productoId']?.toString();
 
-    // 1. Play Sound
     try {
       final tempPlayer = AudioPlayer();
       await tempPlayer.play(AssetSource('sounds/hey_listen.mp3'));
@@ -145,7 +172,6 @@ class NotificacionesController extends ChangeNotifier {
       debugPrint('Error al reproducir sonido: $e');
     }
 
-    // 2. Show Overlay with structured navigation
     NotificationOverlayService().showNotification(
       isUrgent ? '¡ALERTA DE STOCK!' : 'AVISO DE VENCIMIENTO',
       mensaje,
@@ -156,33 +182,19 @@ class NotificacionesController extends ChangeNotifier {
 
         final dashCtrl = Provider.of<DashboardController>(context, listen: false);
 
-        // Use structured payload data (more reliable than regex)
         if (loteId != null || nombreLote != null) {
-          // Navigate to Lotes module and apply search filter
           final lotesCtrl = Provider.of<LotesController>(context, listen: false);
           if (nombreLote != null) {
             lotesCtrl.setExternalSearch(nombreLote);
           }
-          dashCtrl.onItemTapped(3); // Gestión de Lotes
+          dashCtrl.onItemTapped(3);
         } else if (productoId != null) {
-          dashCtrl.onItemTapped(1); // Almacén Central
+          dashCtrl.onItemTapped(1);
         } else {
-          // Fallback: best guess based on alert type
           dashCtrl.onItemTapped(isUrgent ? 3 : 3);
         }
       },
     );
-  }
-
-  void _triggerInitialAlerts(List<Map<String, dynamic>> initialNotifs) async {
-    if (initialNotifs.isEmpty) return;
-
-    for (var i = 0; i < initialNotifs.length; i++) {
-        final n = initialNotifs[i];
-        Future.delayed(Duration(milliseconds: i * 1500), () {
-             if (isPushEnabled) _triggerAlert(n);
-        });
-    }
   }
 
   void markAllAsRead() {
