@@ -12,12 +12,13 @@ class VentasController extends ChangeNotifier {
   List<Producto> productosEncontrados = [];
   final Map<String, Producto> cacheProductos = {};
   final Map<String, int> carrito = {};
-  final Map<String, String> presentacionMap = {}; // ID -> Nombre
-  
+  final Map<String, String> presentacionMap = {};
+  final Map<String, Map<String, dynamic>> _batchCache = {};
+
   List<dynamic> ventasHistorial = [];
   Map<String, dynamic>? ultimaVenta;
   VentasView vistaActual = VentasView.search;
-  
+
   bool isLoading = false;
   bool isLoadingHistorial = false;
   String? mensaje;
@@ -56,6 +57,38 @@ class VentasController extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> _enrichWithBatches(Producto producto) async {
+    final id = producto.productoId;
+    if (_batchCache.containsKey(id)) return _batchCache[id];
+
+    try {
+      final batches = await ApiService.getBatchesByProduct(id);
+      if (batches.isNotEmpty) {
+        int totalStock = 0;
+        for (var b in batches) {
+          totalStock += (b['cantidadDisponible'] as num? ?? 0).toInt();
+        }
+
+        double price = producto.precioPorUnidad;
+        if (price == 0.0) {
+          final firstBatch = batches.first;
+          price = double.tryParse(
+                firstBatch['precioPorUnidad']?.toString() ?? '0') ??
+              0.0;
+        }
+
+        final enriched = <String, dynamic>{
+          'batches': batches,
+          'totalStock': totalStock,
+          'price': price,
+        };
+        _batchCache[id] = enriched;
+        return enriched;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   void clearMessage() {
     mensaje = null;
     error = null;
@@ -74,8 +107,15 @@ class VentasController extends ChangeNotifier {
     try {
       final prodData = await ApiService.getProductByIdentifier(codigo);
       if (prodData != null) {
-        final producto = Producto.fromJson(prodData);
+        var producto = Producto.fromJson(prodData);
         cacheProductos[producto.productoId] = producto;
+
+        final enriched = await _enrichWithBatches(producto);
+        if (enriched != null) {
+          producto = _updateProducto(producto, enriched);
+          cacheProductos[producto.productoId] = producto;
+        }
+
         agregarAlCarrito(producto);
         barcodeController.clear();
       } else {
@@ -101,10 +141,21 @@ class VentasController extends ChangeNotifier {
 
     try {
       final results = await ApiService.searchProducts(nombre);
-      productosEncontrados = results.map((json) => Producto.fromJson(json)).toList();
-      for (var p in productosEncontrados) {
-        cacheProductos[p.productoId] = p;
+      final List<Producto> hydrated = [];
+
+      for (var json in results) {
+        var producto = Producto.fromJson(json);
+        cacheProductos[producto.productoId] = producto;
+
+        final enriched = await _enrichWithBatches(producto);
+        if (enriched != null) {
+          producto = _updateProducto(producto, enriched);
+          cacheProductos[producto.productoId] = producto;
+        }
+        hydrated.add(producto);
       }
+
+      productosEncontrados = hydrated;
       if (productosEncontrados.isEmpty) {
         error = 'No se encontraron productos con: $nombre';
       }
@@ -116,14 +167,28 @@ class VentasController extends ChangeNotifier {
     }
   }
 
+  Producto _updateProducto(Producto producto, Map<String, dynamic> enriched) {
+    return Producto(
+      productoId: producto.productoId,
+      codigoBarras: producto.codigoBarras,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion,
+      categoriaId: producto.categoriaId,
+      presentacionId: producto.presentacionId,
+      proveedoresId: producto.proveedoresId,
+      cantidadDisponible: enriched['totalStock'] ?? producto.cantidadDisponible,
+      precioPorUnidad: enriched['price'] ?? producto.precioPorUnidad,
+      imagenUrl: producto.imagenUrl,
+      dosisRecomendada: producto.dosisRecomendada,
+    );
+  }
+
   void agregarAlCarrito(Producto producto) {
     final id = producto.productoId;
     if (producto.cantidadDisponible <= (carrito[id] ?? 0)) {
-       // We can return a specific error or use a callback to show snackbar
-       // For now, let's just use the error string
-       error = 'Stock insuficiente para ${producto.nombre}';
-       notifyListeners();
-       return;
+      error = 'Stock insuficiente para ${producto.nombre}';
+      notifyListeners();
+      return;
     }
     carrito[id] = (carrito[id] ?? 0) + 1;
     cacheProductos[id] = producto;
@@ -190,16 +255,19 @@ class VentasController extends ChangeNotifier {
         saleData: saleData,
         nombreConsumidor: nombreConsumidor.isNotEmpty ? nombreConsumidor : null,
       );
-      
+
       final responseData = result['data'] as Map<String, dynamic>? ?? {};
-      
+
       final List<Map<String, dynamic>> localDetalles = saleData.map((item) {
         Producto? prod;
         try {
-          prod = cacheProductos.values.firstWhere((p) => (p.codigoBarras == item['codigoProducto'] || p.productoId == item['codigoProducto']));
+          prod = cacheProductos.values.firstWhere((p) =>
+              (p.codigoBarras == item['codigoProducto'] ||
+                  p.productoId == item['codigoProducto']));
         } catch (_) {}
-        
-        final presName = (prod != null) ? (presentacionMap[prod.presentacionId] ?? '') : '';
+
+        final presName =
+            (prod != null) ? (presentacionMap[prod.presentacionId] ?? '') : '';
         return {
           'productoId': prod?.productoId ?? 'N/A',
           'nombre': prod?.nombre ?? 'Producto',
@@ -212,18 +280,26 @@ class VentasController extends ChangeNotifier {
       ultimaVenta = {
         'ventaId': responseData['ventaId'] ?? responseData['id'] ?? 'N/A',
         'total': responseData['total'] ?? total,
-        'fechaDeVenta': responseData['fechaDeVenta'] ?? responseData['fecha'] ?? responseData['createdAt'] ?? DateTime.now().toIso8601String(),
-        'productosVendidos': (responseData['productosVendidos'] != null && (responseData['productosVendidos'] as List).isNotEmpty) 
-            ? responseData['productosVendidos'] 
-            : (responseData['detalles'] != null && (responseData['detalles'] as List).isNotEmpty)
-                ? responseData['detalles']
-                : localDetalles,
-        'nombreConsumidor': responseData['nombreConsumidor'] ?? nombreConsumidor,
+        'fechaDeVenta': responseData['fechaDeVenta'] ??
+            responseData['fecha'] ??
+            responseData['createdAt'] ??
+            DateTime.now().toIso8601String(),
+        'productosVendidos':
+            (responseData['productosVendidos'] != null &&
+                    (responseData['productosVendidos'] as List).isNotEmpty)
+                ? responseData['productosVendidos']
+                : (responseData['detalles'] != null &&
+                        (responseData['detalles'] as List).isNotEmpty)
+                    ? responseData['detalles']
+                    : localDetalles,
+        'nombreConsumidor':
+            responseData['nombreConsumidor'] ?? nombreConsumidor,
       };
 
       carrito.clear();
       consumidorController.clear();
-      mensaje = '¡Venta registrada correctamente! Total: \$${result['data']['total']}';
+      mensaje =
+          '¡Venta registrada correctamente! Total: \$${result['data']['total']}';
       productosEncontrados = [];
       notifyListeners();
       return result;
