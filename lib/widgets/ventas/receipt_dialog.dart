@@ -1,0 +1,359 @@
+import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import '../../theme/app_theme.dart';
+
+class ReceiptDialog extends StatelessWidget {
+  final Map<String, dynamic> sale;
+
+  const ReceiptDialog({super.key, required this.sale});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 400,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 20)],
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle_outline,
+                  color: AppTheme.greenMetal, size: 60),
+              const SizedBox(height: 16),
+              Text('FarmaBook',
+                  style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).textTheme.titleLarge?.color)),
+              const Text('RECIBO DE VENTA',
+                  style: TextStyle(
+                      letterSpacing: 2, fontSize: 12, color: Colors.grey)),
+              Divider(
+                  height: 40,
+                  thickness: 1,
+                  color: Theme.of(context).dividerColor),
+              _receiptRow(context, 'ID Venta:', '#${sale['ventaId']}'),
+              _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
+              _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
+              if (_getConsumidor().isNotEmpty)
+                _receiptRow(context, 'Consumidor:', _getConsumidor()),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('PRODUCTOS',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color:
+                            Theme.of(context).textTheme.titleLarge?.color)),
+              ),
+              const SizedBox(height: 12),
+              ...((sale['productosVendidos'] as List<dynamic>?) ??
+                      (sale['detalles'] as List<dynamic>?) ??
+                      (sale['items'] as List<dynamic>?) ??
+                      [])
+                  .map((det) {
+                final Map<String, dynamic> d = det as Map<String, dynamic>;
+                final String nombre = d['nombre'] ??
+                    d['producto']?['nombre'] ??
+                    d['nombreProducto'] ??
+                    d['productoNombre'] ??
+                    'Producto';
+                final String pres =
+                    d['presentacion'] ?? d['producto']?['presentacion'] ?? '';
+                final int qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
+                final double price = double.tryParse(
+                        d['subTotal']?.toString() ??
+                            d['precioTotal']?.toString() ??
+                            d['subtotal']?.toString() ??
+                            '0') ??
+                    0.0;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${qty}x $nombre ${pres.isNotEmpty ? "($pres)" : ""}',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.color),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text('\$${price.toStringAsFixed(2)}',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.color)),
+                    ],
+                  ),
+                );
+              }),
+              Divider(
+                  height: 40,
+                  thickness: 2,
+                  color: Theme.of(context).dividerColor),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('TOTAL',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          color:
+                              Theme.of(context).textTheme.titleLarge?.color)),
+                  Text(
+                      '\$${(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0).toStringAsFixed(2)}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          color: AppTheme.greenMetal)),
+                ],
+              ),
+              const SizedBox(height: 40),
+              const Text('¡Gracias por su compra!',
+                  style: TextStyle(
+                      fontStyle: FontStyle.italic, color: Colors.grey)),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _printTicket(context),
+                      icon: const Icon(Icons.print_rounded),
+                      label: const Text('IMPRIMIR'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.ayanamiBlue,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 50),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade200,
+                        foregroundColor: Colors.grey.shade800,
+                        minimumSize: const Size(0, 50),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('CERRAR'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getConsumidor() {
+    return sale['nombreConsumidor']?.toString() ?? '';
+  }
+
+  Future<void> _printTicket(BuildContext context) async {
+    final productos = (sale['productosVendidos'] as List<dynamic>?) ??
+        (sale['detalles'] as List<dynamic>?) ??
+        (sale['items'] as List<dynamic>?) ??
+        [];
+
+    final pdf = pw.Document();
+    final margen = 4.0;
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(
+          PdfPageFormat.roll80.width,
+          PdfPageFormat.roll80.height,
+          marginAll: margen,
+        ),
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Center(
+                child: pw.Text('FarmaBook',
+                    style: pw.TextStyle(
+                        fontSize: 14, fontWeight: pw.FontWeight.bold)),
+              ),
+              pw.SizedBox(height: 2),
+              pw.Center(
+                child: pw.Text('RECIBO DE VENTA',
+                    style: const pw.TextStyle(fontSize: 8)),
+              ),
+              pw.SizedBox(height: 6),
+              pw.Divider(thickness: 1),
+              pw.SizedBox(height: 6),
+              _row('ID:', '#${sale['ventaId']}'),
+              _row('Fecha:', _formatDate(_getSafeDate(sale))),
+              _row('Hora:', _formatTime(_getSafeDate(sale))),
+              if (_getConsumidor().isNotEmpty)
+                _row('Consumidor:', _getConsumidor()),
+              pw.SizedBox(height: 6),
+              pw.Divider(thickness: 1),
+              pw.SizedBox(height: 4),
+              pw.Text('PRODUCTOS',
+                  style: pw.TextStyle(
+                      fontSize: 8, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 4),
+              ...productos.map((det) {
+                final d = det as Map<String, dynamic>;
+                final nombre = d['nombre'] ??
+                    d['producto']?['nombre'] ??
+                    d['nombreProducto'] ??
+                    'Producto';
+                final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
+                final price = double.tryParse(
+                        d['subTotal']?.toString() ??
+                            d['precioTotal']?.toString() ??
+                            '0') ??
+                    0.0;
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 2),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                  pw.Expanded(
+                    child: pw.Text('$qty $nombre',
+                        style: const pw.TextStyle(fontSize: 7),
+                        maxLines: 2),
+                  ),
+                      pw.Text('\$${price.toStringAsFixed(2)}',
+                          style: const pw.TextStyle(fontSize: 7)),
+                    ],
+                  ),
+                );
+              }),
+              pw.SizedBox(height: 6),
+              pw.Divider(thickness: 2),
+              pw.SizedBox(height: 4),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('TOTAL',
+                      style: pw.TextStyle(
+                          fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(
+                      '\$${(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0).toStringAsFixed(2)}',
+                      style: pw.TextStyle(
+                          fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                ],
+              ),
+              pw.SizedBox(height: 12),
+              pw.Center(
+                child: pw.Text('¡Gracias por su compra!',
+                    style: pw.TextStyle(fontStyle: pw.FontStyle.italic)),
+              ),
+              pw.Spacer(),
+              pw.Center(
+                child: pw.Text(
+                    'Generado: ${DateTime.now().toString().substring(0, 19)}',
+                    style: const pw.TextStyle(fontSize: 6)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (format) async => pdf.save(),
+      name: 'recibo_${sale['ventaId']}.pdf',
+    );
+  }
+
+  pw.Widget _row(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 2),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(label,
+              style: pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
+          pw.Text(value,
+              style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(dynamic dateStr) {
+    if (dateStr == null || dateStr.toString().isEmpty) return 'N/A';
+    try {
+      final dt = DateTime.parse(dateStr.toString()).toLocal();
+      return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+    } catch (_) {
+      try {
+        final s = dateStr.toString();
+        if (s.contains('T')) return s.split('T')[0];
+        return s.split(' ')[0];
+      } catch (__) { return 'N/A'; }
+    }
+  }
+
+  String _formatTime(dynamic dateStr) {
+    if (dateStr == null || dateStr.toString().isEmpty) return 'N/A';
+    try {
+      final dt = DateTime.parse(dateStr.toString()).toLocal();
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      try {
+        final s = dateStr.toString();
+        if (s.contains('T')) return s.split('T')[1].substring(0, 5);
+        if (s.contains(' ')) return s.split(' ')[1].substring(0, 5);
+      } catch (__) { return 'N/A'; }
+    }
+    return 'N/A';
+  }
+
+  Widget _receiptRow(BuildContext context, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Text(value,
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Theme.of(context).textTheme.bodyLarge?.color)),
+        ],
+      ),
+    );
+  }
+
+  String _getSafeDate(Map<String, dynamic> json) {
+    if (json.isEmpty) return DateTime.now().toIso8601String();
+    final fields = ['fechaDeVenta', 'fechaVenta', 'fecha_venta', 'fecha', 'createdAt', 'created_at', 'date', 'updatedAt'];
+    for(var f in fields) {
+       if(json[f] != null && json[f].toString().isNotEmpty) {
+           return json[f].toString();
+       }
+    }
+    return DateTime.now().toIso8601String();
+  }
+}
