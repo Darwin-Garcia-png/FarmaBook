@@ -5,6 +5,7 @@ import '../controllers/almacen_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
 import '../utils/inventory_dialogs.dart';
+import '../utils/price_formatter.dart';
 
 class LotesScreen extends StatefulWidget {
   const LotesScreen({super.key});
@@ -21,6 +22,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
+    context.read<LotesController>().touch();
     _tabController = TabController(length: 5, vsync: this);
   }
 
@@ -42,19 +44,28 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
             subtitle: 'Control de caducidad y trazabilidad',
             icon: Icons.layers_outlined,
             baseColor: AppTheme.ayanamiBlue,
-            trailing: ElevatedButton.icon(
-              onPressed: () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl),
-              icon: const Icon(Icons.add_box_rounded),
-              label: const Text('Entrada de Lote', style: TextStyle(fontWeight: FontWeight.w900)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.ayanamiBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                elevation: 8,
-                shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              IconButton(
+                icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)),
+                onPressed: () => lotesCtrl.init(),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
-            ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl),
+                icon: const Icon(Icons.add_box_rounded),
+                label: const Text('Entrada de Lote', style: TextStyle(fontWeight: FontWeight.w900)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.ayanamiBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  elevation: 8,
+                  shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4),
+                ),
+              ),
+            ]),
           ),
           body: lotesCtrl.isLoading
               ? const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue))
@@ -71,19 +82,49 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                       child: _buildTabs(context, lotesCtrl),
                     ),
                     Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
+                      child: Stack(
                         children: [
-                          _buildBatchList(lotesCtrl.activeBatches, almacenCtrl, lotesCtrl),
-                          _buildBatchList(lotesCtrl.porVencer, almacenCtrl, lotesCtrl),
-                          _buildBatchList(lotesCtrl.vencidos, almacenCtrl, lotesCtrl),
-                          _buildBatchList(lotesCtrl.bajoStock, almacenCtrl, lotesCtrl),
-                          _buildArchivedList(lotesCtrl.archivedBatches),
-                    ],
-                  ),
+                          NotificationListener<ScrollNotification>(
+                            onNotification: (scrollInfo) {
+                              if (!lotesCtrl.isFetchingMore &&
+                                  scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
+                                lotesCtrl.fetchAllBatches(isRefresh: false);
+                              }
+                              return false;
+                            },
+                            child: TabBarView(
+                              controller: _tabController,
+                              children: [
+                                _buildBatchList(lotesCtrl.activeBatches, almacenCtrl, lotesCtrl),
+                                _buildBatchList(lotesCtrl.porVencer, almacenCtrl, lotesCtrl),
+                                _buildBatchList(lotesCtrl.vencidos, almacenCtrl, lotesCtrl),
+                                _buildBatchList(lotesCtrl.bajoStock, almacenCtrl, lotesCtrl),
+                                _buildArchivedList(lotesCtrl.archivedBatches),
+                              ],
+                            ),
+                          ),
+                          if (lotesCtrl.isFetchingMore)
+                            Positioned(
+                              bottom: 16,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardTheme.color,
+                                    shape: BoxShape.circle,
+                                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                                  ),
+                                  child: const CircularProgressIndicator(),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
           );
       },
     );
@@ -315,7 +356,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                       const SizedBox(width: 8),
                       Text('Precio histórico:', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
-                      Text('\$${precio.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.ayanamiBlue, letterSpacing: -0.5)),
+                      Text(formatCop(precio), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.ayanamiBlue, letterSpacing: -0.5)),
                       const Spacer(),
                       Text('Lote #${b['loteId'] ?? b['batchId'] ?? b['id'] ?? 'N/A'}', style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
                     ],
@@ -410,7 +451,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                 const SizedBox(width: 12),
                 Column(
                   children: [
-                    _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl, prod: b['originalProduct'], prefillBatch: b)),
+                    _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl, prefillBatch: b)),
                     const SizedBox(height: 6),
                     _actionIcon(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(b, lotesCtrl, almacenCtrl)),
                   ],

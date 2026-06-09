@@ -5,7 +5,7 @@ import '../services/api_service.dart';
 
 class PresentacionesController extends ChangeNotifier {
   final Dio _dio = ApiService.dio;
-  Timer? _refreshTimer;
+
 
   List<dynamic> presentaciones = [];
   bool isLoading = true;
@@ -14,15 +14,10 @@ class PresentacionesController extends ChangeNotifier {
   final TextEditingController nombreCtrl = TextEditingController();
   final TextEditingController descripcionCtrl = TextEditingController();
 
-  PresentacionesController() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 120), (timer) {
-      if (!isLoading) cargarPresentaciones();
-    });
-  }
+  PresentacionesController();
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
     nombreCtrl.dispose();
     descripcionCtrl.dispose();
     super.dispose();

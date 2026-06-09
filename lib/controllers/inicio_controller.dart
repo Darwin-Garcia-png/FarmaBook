@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class InicioController extends ChangeNotifier {
   final Dio _dio = ApiService.dio;
+  Timer? _autoClearTimer;
 
   double ingresos = 0;
   double egresos = 0;
@@ -21,6 +23,38 @@ class InicioController extends ChangeNotifier {
   
   bool isLoading = true;
   String? error;
+
+  @override
+  void dispose() {
+    _autoClearTimer?.cancel();
+    super.dispose();
+  }
+
+  void touch() {
+    _autoClearTimer?.cancel();
+    _autoClearTimer = null;
+  }
+
+  void scheduleAutoClear() {
+    _autoClearTimer?.cancel();
+    _autoClearTimer = Timer(const Duration(minutes: 5), () {
+      clearData();
+    });
+  }
+
+  void clearData() {
+    topProducts.clear();
+    alertsVencimiento.clear();
+    alertsStock.clear();
+    recentSales.clear();
+    ingresos = 0;
+    egresos = 0;
+    balance = 0;
+    marginPercent = 0;
+    expensePercent = 0;
+    stockHealthPercent = 0;
+    notifyListeners();
+  }
 
   Future<void> init() async {
     await cargarDatos();
@@ -89,35 +123,18 @@ class InicioController extends ChangeNotifier {
           return exp != null && exp.isBefore(threshold);
         }).toList();
 
-        // Stock Bajo (Hidratación de Lotes)
-        final List<Map<String, dynamic>> hyd = [];
-        int healthyCount = 0;
-        
-        // Hidratar stock real para los primeros 30 productos para precisión del dashboard
-        await Future.wait(rawProds.take(30).map((p) async {
-           final pId = p['productoId']?.toString();
-           if (pId == null) return;
-           try {
-             final bRes = await _dio.get('/inventory/products/$pId/batches');
-             final bList = bRes.data['data'] as List? ?? [];
-             int sumValue = 0;
-             for (var b in bList) sumValue += (b['cantidadDisponible'] as num? ?? 0).toInt();
-             
-             if (sumValue >= 30) healthyCount++;
-             
-             final clone = Map<String, dynamic>.from(p);
-             clone['cantidadDisponible'] = sumValue;
-             hyd.add(clone);
-           } catch (_) { 
-             hyd.add(Map<String, dynamic>.from(p)); 
-           }
-        }));
-        
-        alertsStock = hyd.where((p) => (p['cantidadDisponible'] as num? ?? 0) < 30).toList();
-        
+        // Stock Bajo - usar datos de productos directamente SIN fetch individual
+        alertsStock = rawProds.where((p) {
+          final stock = (p['cantidadDisponible'] as num? ?? 0).toInt();
+          return stock > 0 && stock < 30;
+        }).toList();
+
         // Salud de Stock (Ratio de productos saludables)
+        final healthyCount = rawProds.where((p) {
+          return (p['cantidadDisponible'] as num? ?? 0).toInt() >= 30;
+        }).length;
         if (rawProds.isNotEmpty) {
-           stockHealthPercent = healthyCount / (rawProds.length > 30 ? 30 : rawProds.length);
+           stockHealthPercent = healthyCount / rawProds.length;
            if (stockHealthPercent > 1) stockHealthPercent = 1;
         }
 

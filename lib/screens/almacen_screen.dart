@@ -15,6 +15,25 @@ class AlmacenScreen extends StatefulWidget {
 }
 
 class _AlmacenScreenState extends State<AlmacenScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<AlmacenController>().touch();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+        context.read<AlmacenController>().fetchProducts(isRefresh: false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<AlmacenController, LotesController>(
@@ -23,11 +42,17 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Column(
             children: [
-              const PremiumHeader(
+              PremiumHeader(
                 title: 'Almacén Central', 
                 subtitle: 'Inventario general de medicamentos', 
                 icon: Icons.inventory_2_rounded, 
-                baseColor: AppTheme.ayanamiBlue
+                baseColor: AppTheme.ayanamiBlue,
+                trailing: IconButton(
+                  icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)),
+                  onPressed: () => controller.init(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
               ),
               _buildHeader(context, controller),
               _buildMainContent(context, controller, lotesCtrl),
@@ -63,9 +88,20 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
                 hintStyle: const TextStyle(color: Colors.grey),
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 suffixIcon: controller.searchCtrl.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.grey),
-                        onPressed: () => controller.searchCtrl.clear())
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.search, color: AppTheme.ayanamiBlue),
+                            onPressed: () => controller.search()),
+                          IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () {
+                              controller.searchCtrl.clear();
+                              controller.search();
+                            }),
+                        ],
+                      )
                     : null,
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -75,6 +111,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
                 contentPadding:
                     const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
               ),
+              onSubmitted: (_) => controller.search(),
             ),
           ),
           const SizedBox(width: 16),
@@ -200,19 +237,41 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
     }
 
     return Expanded(
-      child: GridView.builder(
-        padding: const EdgeInsets.all(32),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 300,
-            childAspectRatio: 0.75,
-            crossAxisSpacing: 24,
-            mainAxisSpacing: 24),
-        itemCount: controller.productos.length,
-        itemBuilder: (context, index) => ProductCard(
-          p: controller.productos[index],
-          controller: controller,
-          lotesCtrl: lotesCtrl,
-        ),
+      child: Stack(
+        children: [
+          GridView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.only(left: 32, right: 32, top: 32, bottom: 80),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 300,
+                childAspectRatio: 0.75,
+                crossAxisSpacing: 24,
+                mainAxisSpacing: 24),
+            itemCount: controller.productos.length,
+            itemBuilder: (context, index) => ProductCard(
+              p: controller.productos[index],
+              controller: controller,
+              lotesCtrl: lotesCtrl,
+            ),
+          ),
+          if (controller.isFetchingMore)
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    shape: BoxShape.circle,
+                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                  ),
+                  child: const CircularProgressIndicator(),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

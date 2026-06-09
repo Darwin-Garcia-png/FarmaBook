@@ -3,6 +3,7 @@ import '../../theme/app_theme.dart';
 import '../../controllers/almacen_controller.dart';
 import '../../controllers/lotes_controller.dart';
 import '../../utils/inventory_dialogs.dart';
+import '../../utils/price_formatter.dart';
 
 class BatchDetailsModal extends StatelessWidget {
   final Map<String, dynamic> p;
@@ -153,8 +154,8 @@ class BatchDetailsModal extends StatelessWidget {
                                     ],
                                   ),
                                   const SizedBox(height: 8),
-                                  Text(
-                                    '\$${(double.tryParse((l['costoCompra'] ?? l['costoDeCompra'] ?? '0').toString()) ?? 0.0).toStringAsFixed(2)} / ud',
+                                    Text(
+                                    '${formatCop(double.tryParse((l['costoCompra'] ?? l['costoDeCompra'] ?? '0').toString()) ?? 0.0)} / ud',
                                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
                                   ),
                                 ],

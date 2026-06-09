@@ -1,21 +1,42 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
+import 'api_service.dart';
 import '../utils/app_constants.dart';
 
 class AuthService {
-  final Dio _dio = Dio();
-  final _storage = const FlutterSecureStorage();
+  static Dio? _authDio;
 
-  AuthService() {
-    _dio.options.baseUrl = AppConstants.baseUrl;
-    _dio.options.connectTimeout = const Duration(seconds: 10);
-    _dio.options.receiveTimeout = const Duration(seconds: 10);
-    _dio.options.headers['Content-Type'] = 'application/json';
+  static Dio _getDio() {
+    if (_authDio != null) return _authDio!;
+    final dio = Dio(BaseOptions(
+      baseUrl: AppConstants.baseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ));
+    if (!kIsWeb) {
+      try {
+        (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient =
+            () {
+          final client = HttpClient();
+          client.badCertificateCallback = (cert, host, port) => true;
+          return client;
+        };
+      } catch (_) {}
+    }
+    _authDio = dio;
+    return dio;
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
+    ApiService.clearCachedToken();
     try {
-      final response = await _dio.post(
+      final response = await _getDio().post(
         '/auth/login',
         data: {
           'username': email.trim(),
@@ -25,9 +46,14 @@ class AuthService {
 
       final body = response.data as Map<String, dynamic>;
 
-      final token = body['data']?['token'] as String?;
+      String? token;
+      token = body['data']?['token'] as String?;
+      token ??= body['token'] as String?;
+      token ??= body['access_token'] as String?;
+      token ??= body['accessToken'] as String?;
+      token ??= body['jwt'] as String?;
       if (token != null && token.isNotEmpty) {
-        await _storage.write(key: AppConstants.tokenKey, value: token);
+        await ApiService.setToken(token);
       }
 
       return {
@@ -54,17 +80,18 @@ class AuthService {
     } catch (e) {
       return {
         'statusCode': 0,
-        'message': 'Error inesperado: $e',
+        'body': <String, dynamic>{},
+        'message': 'Error: $e',
         'error': true,
       };
     }
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: AppConstants.tokenKey);
+    await ApiService.setToken(null);
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: AppConstants.tokenKey);
+    return await ApiService.getToken();
   }
 }

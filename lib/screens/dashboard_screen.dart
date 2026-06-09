@@ -4,16 +4,18 @@ import 'package:provider/provider.dart';
 import '../controllers/dashboard_controller.dart';
 import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
+import '../controllers/inicio_controller.dart';
+import '../controllers/ventas_controller.dart';
+import '../controllers/estadisticas_controller.dart';
 import '../controllers/notificaciones_controller.dart';
 import '../theme/app_theme.dart';
 import 'inicio_screen.dart';
 import 'almacen_screen.dart';
 import 'proveedores_screen.dart';
+import 'casas_screen.dart';
 import 'estadisticas_screen.dart';
 import 'ventas_screen.dart';
-import 'alertas_screen.dart';
 import 'lotes_screen.dart';
-import 'movimientos_screen.dart';
 import 'categorias_screen.dart';
 import 'presentaciones_screen.dart';
 import 'usuarios_screen.dart';
@@ -69,8 +71,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _buildDrawerItem(Icons.point_of_sale_rounded, 'Punto de Venta', 2),
                     _buildDrawerItem(Icons.layers_outlined, 'Gestión de Lotes', 3),
                     _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4),
-                    _buildDrawerItem(Icons.warning_amber_rounded, 'Centro de Alertas', 5),
-                    _buildDrawerItem(Icons.history_rounded, 'Movimientos Hoy', 6),
                     _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11),
                     
                     const SizedBox(height: 12),
@@ -102,9 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 4:
         return const EstadisticasScreen();
       case 5:
-        return const AlertasScreen();
-      case 6:
-        return const MovimientosScreen();
+        return const CasasScreen();
       case 7:
         return const CategoriasScreen();
       case 8:
@@ -121,7 +119,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildExpansionCatalogos() {
-    bool isCatalogActive = [7, 8, 9, 10].contains(_controller.selectedIndex);
+    bool isCatalogActive = [5, 7, 8, 9, 10].contains(_controller.selectedIndex);
     
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -137,6 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           )
         ),
         children: [
+          _buildDrawerSubItem(Icons.business_rounded, 'Casas', 5),
           _buildDrawerSubItem(Icons.category_rounded, 'Categorías', 7),
           _buildDrawerSubItem(Icons.medication_liquid_rounded, 'Presentaciones', 8),
           _buildDrawerSubItem(Icons.local_shipping_rounded, 'Proveedores', 9),
@@ -273,16 +272,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         onTap: () async {
           Navigator.pop(context);
-          final almacen = context.read<AlmacenController>();
-          final lotes = context.read<LotesController>();
-          final notif = context.read<NotificacionesController>();
-          
-          // Reset controller state on logout
-          almacen.productos = [];
-          lotes.allBatches = [];
-          notif.notificaciones = [];
-          notif.unreadCount = 0;
-          notif.isLoading = true;
+          context.read<AlmacenController>().clearData();
+          context.read<LotesController>().clearData();
+          context.read<VentasController>().clearData();
+          context.read<InicioController>().clearData();
+          context.read<EstadisticasController>().clearData();
+          context.read<NotificacionesController>().clearData();
           
           await _controller.logout();
           if (mounted) context.go('/login');

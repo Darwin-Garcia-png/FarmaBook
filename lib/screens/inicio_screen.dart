@@ -5,8 +5,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../controllers/inicio_controller.dart';
+import '../utils/price_formatter.dart';
 import '../controllers/dashboard_controller.dart';
-import '../controllers/notificaciones_controller.dart';
 import '../theme/app_theme.dart';
 
 class InicioScreen extends StatefulWidget {
@@ -23,6 +23,7 @@ class _InicioScreenState extends State<InicioScreen> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
+    _ctrl.touch();
     _ctrl.addListener(() { if (mounted) setState(() {}); });
     _ctrl.init();
     _pulse = AnimationController(duration: const Duration(milliseconds: 1800), vsync: this)..repeat();
@@ -79,18 +80,16 @@ class _InicioScreenState extends State<InicioScreen> with TickerProviderStateMix
                 ])),
                 const SizedBox(width: 24),
                 _quickActionBtn('Nueva Venta', Icons.point_of_sale_rounded, AppTheme.ayanamiBlue, () => _go(2)),
-                const SizedBox(width: 12),
-                _quickActionBtn('Ver Alertas', Icons.warning_amber_rounded, AppTheme.reiOrangeRed, () => _go(5)),
               ]),
               const SizedBox(height: 40),
 
               // ── KPIs ───────────────────────────────────────────────
               Row(children: [
-                _kpi('Ingresos del Mes', '\$${_ctrl.ingresos.toStringAsFixed(2)}', Icons.trending_up_rounded, AppTheme.greenMetal, () => _go(4)),
+                _kpi('Ingresos del Mes', formatCop(_ctrl.ingresos), Icons.trending_up_rounded, AppTheme.greenMetal, () => _go(4)),
                 const SizedBox(width: 20),
-                _kpi('Egresos Totales', '\$${_ctrl.egresos.toStringAsFixed(2)}', Icons.trending_down_rounded, AppTheme.reiOrangeRed, () => _go(4)),
+                _kpi('Egresos Totales', formatCop(_ctrl.egresos), Icons.trending_down_rounded, AppTheme.reiOrangeRed, () => _go(4)),
                 const SizedBox(width: 20),
-                _kpi('Balance Neto', '\$${(_ctrl.ingresos - _ctrl.egresos).toStringAsFixed(2)}', Icons.account_balance_wallet_rounded, const Color(0xFF8B5CF6), () => _go(4)),
+                _kpi('Balance Neto', formatCop(_ctrl.ingresos - _ctrl.egresos), Icons.account_balance_wallet_rounded, const Color(0xFF8B5CF6), () => _go(4)),
                 const SizedBox(width: 20),
                 _kpi('Salud Inventario', '${(_ctrl.stockHealthPercent * 100).toInt()}%', Icons.inventory_2_rounded, AppTheme.ayanamiBlue, () => _go(1)),
               ]),
@@ -239,7 +238,7 @@ class _InicioScreenState extends State<InicioScreen> with TickerProviderStateMix
             const SizedBox(width: 12),
             Text('Ventas Recientes', style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w900)),
           ]),
-          TextButton(onPressed: () => _go(6), child: const Text('Ver todo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.ayanamiBlue))),
+          const SizedBox.shrink(),
         ]),
         const Divider(height: 24),
         if (_ctrl.recentSales.isEmpty)
@@ -259,7 +258,7 @@ class _InicioScreenState extends State<InicioScreen> with TickerProviderStateMix
                 Text('#$shortId', style: TextStyle(color: text, fontSize: 13, fontWeight: FontWeight.w900)),
                 Text(desc, style: TextStyle(color: Colors.grey.shade500, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
               ])),
-              Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w900, fontSize: 15)),
+              Text(formatCop(total), style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w900, fontSize: 15)),
             ]));
           }),
       ]),
@@ -280,7 +279,7 @@ class _InicioScreenState extends State<InicioScreen> with TickerProviderStateMix
           _pulseDot(totalAlerts > 0 ? AppTheme.reiOrangeRed : AppTheme.greenMetal),
           const SizedBox(width: 12),
           Expanded(child: Text(totalAlerts > 0 ? '$totalAlerts Alertas Activas' : 'Sin Alertas', style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w900))),
-          TextButton(onPressed: () => _go(5), child: const Text('Ver', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800))),
+          const SizedBox.shrink(),
         ]),
         const Divider(height: 20),
         if (totalAlerts == 0)
@@ -330,7 +329,7 @@ class _InicioScreenState extends State<InicioScreen> with TickerProviderStateMix
               child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: colors[i % colors.length])))),
             const SizedBox(width: 12),
             Expanded(child: Text(p['nombre'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis)),
-            Text('\$${(p['ingresosGenerados'] as num? ?? 0).toStringAsFixed(0)}', style: TextStyle(color: colors[i % colors.length], fontWeight: FontWeight.w900, fontSize: 14)),
+            Text(formatCop((p['ingresosGenerados'] as num? ?? 0)), style: TextStyle(color: colors[i % colors.length], fontWeight: FontWeight.w900, fontSize: 14)),
           ]));
         }),
       ]),
@@ -343,7 +342,6 @@ class _InicioScreenState extends State<InicioScreen> with TickerProviderStateMix
       ('Punto de Venta', Icons.point_of_sale_rounded, AppTheme.greenMetal, 2),
       ('Gestión de Lotes', Icons.layers_rounded, AppTheme.reiOrangeRed, 3),
       ('Estadísticas', Icons.insights_rounded, const Color(0xFF8B5CF6), 4),
-      ('Movimientos', Icons.history_rounded, const Color(0xFFF59E0B), 6),
       ('Manual de Ayuda', Icons.menu_book_rounded, AppTheme.ayanamiBlue, 11),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -421,17 +419,12 @@ class _InicioScreenState extends State<InicioScreen> with TickerProviderStateMix
               ]),
             ]),
             Row(children: [
-              Consumer<NotificacionesController>(builder: (ctx, notif, _) => Stack(alignment: Alignment.center, children: [
-                IconButton(
-                  icon: Icon(notif.unreadCount > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_rounded, color: text),
-                  onPressed: () { notif.markAllAsRead(); _go(5); },
-                ),
-                if (notif.unreadCount > 0) Positioned(right: 8, top: 8, child: Container(
-                  padding: const EdgeInsets.all(3), decoration: const BoxDecoration(color: AppTheme.reiOrangeRed, shape: BoxShape.circle),
-                  constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
-                  child: Text('${notif.unreadCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                )),
-              ])),
+              IconButton(
+                icon: Icon(Icons.refresh_rounded, size: 20, color: text.withOpacity(0.7)),
+                onPressed: () => _ctrl.cargarDatos(),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
               IconButton(icon: Icon(Icons.settings_outlined, color: text), onPressed: () => GoRouter.of(context).push('/configuracion')),
             ]),
           ]),

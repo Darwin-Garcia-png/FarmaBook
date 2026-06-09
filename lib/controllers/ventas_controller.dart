@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/producto_model.dart';
@@ -5,9 +6,10 @@ import '../models/producto_model.dart';
 enum VentasView { search, history, receipts }
 
 class VentasController extends ChangeNotifier {
+  Timer? _autoClearTimer;
   final TextEditingController barcodeController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
-  final TextEditingController consumidorController = TextEditingController();
+  final TextEditingController clienteIdController = TextEditingController();
 
   List<Producto> productosEncontrados = [];
   final Map<String, Producto> cacheProductos = {};
@@ -36,7 +38,7 @@ class VentasController extends ChangeNotifier {
     isLoadingHistorial = true;
     notifyListeners();
     try {
-      ventasHistorial = await ApiService.getSales();
+      ventasHistorial = await ApiService.getSales(limit: 30);
       await cargarPresentaciones();
     } catch (e) {
       error = 'Error al cargar historial: $e';
@@ -87,6 +89,26 @@ class VentasController extends ChangeNotifier {
       }
     } catch (_) {}
     return null;
+  }
+
+  void touch() {
+    _autoClearTimer?.cancel();
+    _autoClearTimer = null;
+  }
+
+  void scheduleAutoClear() {
+    _autoClearTimer?.cancel();
+    _autoClearTimer = Timer(const Duration(minutes: 5), () {
+      clearData();
+    });
+  }
+
+  void clearData() {
+    productosEncontrados.clear();
+    cacheProductos.clear();
+    carrito.clear();
+    _batchCache.clear();
+    notifyListeners();
   }
 
   void clearMessage() {
@@ -250,10 +272,10 @@ class VentasController extends ChangeNotifier {
         }
       });
 
-      final nombreConsumidor = consumidorController.text.trim();
+      final clienteId = clienteIdController.text.trim();
       final result = await ApiService.registerSale(
         saleData: saleData,
-        nombreConsumidor: nombreConsumidor.isNotEmpty ? nombreConsumidor : null,
+        clienteId: clienteId.isNotEmpty ? clienteId : null,
       );
 
       final responseData = result['data'] as Map<String, dynamic>? ?? {};
@@ -292,12 +314,12 @@ class VentasController extends ChangeNotifier {
                         (responseData['detalles'] as List).isNotEmpty)
                     ? responseData['detalles']
                     : localDetalles,
-        'nombreConsumidor':
-            responseData['nombreConsumidor'] ?? nombreConsumidor,
+        'clienteId':
+            responseData['clienteId'] ?? clienteId,
       };
 
       carrito.clear();
-      consumidorController.clear();
+      clienteIdController.clear();
       mensaje =
           '¡Venta registrada correctamente! Total: \$${result['data']['total']}';
       productosEncontrados = [];
@@ -315,9 +337,16 @@ class VentasController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _autoClearTimer?.cancel();
     barcodeController.dispose();
     searchController.dispose();
-    consumidorController.dispose();
+    clienteIdController.dispose();
+    cacheProductos.clear();
+    _batchCache.clear();
+    ventasHistorial.clear();
+    productosEncontrados.clear();
+    carrito.clear();
+    presentacionMap.clear();
     super.dispose();
   }
 }

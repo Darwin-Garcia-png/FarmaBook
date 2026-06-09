@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../controllers/estadisticas_controller.dart';
+import '../utils/price_formatter.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
 
@@ -17,6 +18,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
   @override
   void initState() {
     super.initState();
+    _c.touch();
     _c.addListener(() { if (mounted) setState(() {}); });
     _c.init();
   }
@@ -27,7 +29,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
   // ─────────────── HELPERS ────────────────────────────────────────
   static const _colors = [AppTheme.ayanamiBlue, AppTheme.greenMetal, Color(0xFFF59E0B), AppTheme.reiOrangeRed, Color(0xFF8B5CF6)];
 
-  String _fmt(double v) => '\$${v.toStringAsFixed(2)}';
+  String _fmt(double v) => formatCop(v);
 
   Widget _card({required Widget child, Color? accent}) => Container(
     padding: const EdgeInsets.all(28),
@@ -90,7 +92,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
             onPressed: () => _showSummary(),
           ),
           const SizedBox(width: 10),
-          IconButton(icon: const Icon(Icons.refresh_rounded, color: AppTheme.ayanamiBlue), onPressed: _c.cargarEstadisticas),
+          IconButton(icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)), onPressed: _c.cargarEstadisticas),
         ]),
       ),
       body: _c.isLoading

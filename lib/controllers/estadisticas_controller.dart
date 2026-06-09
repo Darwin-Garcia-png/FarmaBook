@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,9 +12,16 @@ DateTime _toBogota(DateTime utc) => utc.isUtc
 
 class EstadisticasController extends ChangeNotifier {
   final Dio _dio = ApiService.dio;
+  Timer? _autoClearTimer;
 
   bool isLoading = false;
   String? error;
+
+  @override
+  void dispose() {
+    _autoClearTimer?.cancel();
+    super.dispose();
+  }
 
   // ── KPIs básicos de la API ──────────────────────────────────────
   double ingresosHoy = 0;
@@ -52,6 +60,48 @@ class EstadisticasController extends ChangeNotifier {
 
   // ── Resumen del día (objeto plano para el modal) ─────────────────
   Map<String, dynamic> dailySummary = {};
+
+  void touch() {
+    _autoClearTimer?.cancel();
+    _autoClearTimer = null;
+  }
+
+  void scheduleAutoClear() {
+    _autoClearTimer?.cancel();
+    _autoClearTimer = Timer(const Duration(minutes: 5), () {
+      clearData();
+    });
+  }
+
+  void clearData() {
+    topProductosHoy.clear();
+    topProductosMes.clear();
+    topProductosGlobal.clear();
+    dailyTrend.clear();
+    ingresosPorHora.clear();
+    rankingProductosHoy.clear();
+    categoryData.clear();
+    dailySummary.clear();
+    ingresosHoy = 0;
+    ingresosMes = 0;
+    ventasHoy = 0;
+    ventasMes = 0;
+    egresosMes = 0;
+    balanceMes = 0;
+    ticketMaximo = 0;
+    ticketMinimo = 0;
+    averageTicket = 0;
+    totalUnidadesHoy = 0;
+    peakHour = 0;
+    peakHourCount = 0;
+    primeraVentaHora = '--:--';
+    ultimaVentaHora = '--:--';
+    promedioVentaDiaria = 0;
+    mejorDiaMes = 0;
+    mejorDiaIngresos = 0;
+    diasConVentas = 0;
+    notifyListeners();
+  }
 
   // ─────────────────────────────────────────────────────────────────
   Future<void> init() async => cargarEstadisticas();
@@ -117,7 +167,7 @@ class EstadisticasController extends ChangeNotifier {
         'fechaInicio': todayStr,
         'fechaFin': todayStr,
         'page': 1,
-        'limit': 5000,
+        'limit': 200,
       });
       final List salesList = res.data['data'] ?? [];
 
@@ -195,15 +245,15 @@ class EstadisticasController extends ChangeNotifier {
       final salesRes = await _dio.get('/sales', queryParameters: {
         'fechaInicio': fmt.format(firstDay),
         'fechaFin':    fmt.format(lastDay),
-        'page': 1, 'limit': 5000,
+        'page': 1, 'limit': 200,
       });
       final List salesList = salesRes.data['data'] ?? [];
 
       // Categorías — mapa producto → categoría
       final Map<String, double> catMap = {};
       try {
-        final prodsRes = await _dio.get('/inventory/products', queryParameters: {'page': 1, 'limit': 2000});
-        final catsRes  = await _dio.get('/inventory/categories', queryParameters: {'page': 1, 'limit': 500});
+        final prodsRes = await _dio.get('/inventory/products', queryParameters: {'page': 1, 'limit': 100});
+        final catsRes  = await _dio.get('/inventory/categories', queryParameters: {'page': 1, 'limit': 100});
         final Map<String, String> prodToCat = {};
         final Map<String, String> catIdToName = {};
 

@@ -3,23 +3,15 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class UsuariosController extends ChangeNotifier {
-  Timer? _refreshTimer;
+
   List<dynamic> usuarios = [];
   List<dynamic> roles = [];
   bool isLoading = false;
   String? error;
 
-  UsuariosController() {
-    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      if (!isLoading) fetchAll();
-    });
-  }
+  UsuariosController();
 
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
+
 
   Future<void> fetchAll() async {
     isLoading = true;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/api_service.dart';
 
 class ConfigController extends ChangeNotifier {
   final _storage = const FlutterSecureStorage();
@@ -100,7 +101,7 @@ class ConfigController extends ChangeNotifier {
   }
 
   Future<void> cerrarSesion() async {
-    await _storage.delete(key: 'jwt_token');
+    await ApiService.setToken(null);
     await _storage.delete(key: 'user_email');
   }
 }

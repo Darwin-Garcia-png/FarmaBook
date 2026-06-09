@@ -1,12 +1,9 @@
-import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class ProveedoresController extends ChangeNotifier {
   final Dio _dio = ApiService.dio;
-  Timer? _refreshTimer;
-  Timer? _debounceTimer;
 
   List<dynamic> proveedores = [];
   List<dynamic> _filteredCache = [];
@@ -19,16 +16,8 @@ class ProveedoresController extends ChangeNotifier {
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController searchCtrl = TextEditingController();
 
-  ProveedoresController() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 120), (timer) {
-      if (!isLoading) cargarProveedores();
-    });
-  }
-
   @override
   void dispose() {
-    _refreshTimer?.cancel();
-    _debounceTimer?.cancel();
     nombreCtrl.dispose();
     direccionCtrl.dispose();
     telefonoCtrl.dispose();
@@ -40,26 +29,22 @@ class ProveedoresController extends ChangeNotifier {
   List<dynamic> get filteredProveedores => _filteredCache;
 
   Future<void> init() async {
-    searchCtrl.addListener(_onSearchChanged);
     await cargarProveedores();
   }
 
-  void _onSearchChanged() {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      _applyLocalFilter();
-    });
+  void search(String query) {
+    _applyLocalFilter(query);
   }
 
-  void _applyLocalFilter() {
-    final query = searchCtrl.text.toLowerCase().trim();
-    if (query.isEmpty) {
+  void _applyLocalFilter([String? query]) {
+    final q = (query ?? searchCtrl.text).toLowerCase().trim();
+    if (q.isEmpty) {
       _filteredCache = proveedores;
     } else {
       _filteredCache = proveedores.where((p) {
         final name = (p['nombre'] ?? '').toString().toLowerCase();
         final mail = (p['email'] ?? '').toString().toLowerCase();
-        return name.contains(query) || mail.contains(query);
+        return name.contains(q) || mail.contains(q);
       }).toList();
     }
     notifyListeners();

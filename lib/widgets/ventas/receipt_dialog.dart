@@ -3,6 +3,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../theme/app_theme.dart';
+import '../../utils/price_formatter.dart';
 
 class ReceiptDialog extends StatelessWidget {
   final Map<String, dynamic> sale;
@@ -43,8 +44,8 @@ class ReceiptDialog extends StatelessWidget {
               _receiptRow(context, 'ID Venta:', '#${sale['ventaId']}'),
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
-              if (_getConsumidor().isNotEmpty)
-                _receiptRow(context, 'Consumidor:', _getConsumidor()),
+                if (_getConsumidor().isNotEmpty)
+                _receiptRow(context, 'Cliente:', _getConsumidor()),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text('PRODUCTOS',
@@ -94,7 +95,7 @@ class ReceiptDialog extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Text('\$${price.toStringAsFixed(2)}',
+                      Text(formatCop(price),
                           style: TextStyle(
                               fontSize: 13,
                               color: Theme.of(context)
@@ -119,7 +120,7 @@ class ReceiptDialog extends StatelessWidget {
                           color:
                               Theme.of(context).textTheme.titleLarge?.color)),
                   Text(
-                      '\$${(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0).toStringAsFixed(2)}',
+                      formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0),
                       style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
@@ -171,7 +172,7 @@ class ReceiptDialog extends StatelessWidget {
   }
 
   String _getConsumidor() {
-    return sale['nombreConsumidor']?.toString() ?? '';
+    return sale['clienteId']?.toString() ?? '';
   }
 
   Future<void> _printTicket(BuildContext context) async {
@@ -211,7 +212,7 @@ class ReceiptDialog extends StatelessWidget {
               _row('Fecha:', _formatDate(_getSafeDate(sale))),
               _row('Hora:', _formatTime(_getSafeDate(sale))),
               if (_getConsumidor().isNotEmpty)
-                _row('Consumidor:', _getConsumidor()),
+                _row('Cliente:', _getConsumidor()),
               pw.SizedBox(height: 6),
               pw.Divider(thickness: 1),
               pw.SizedBox(height: 4),
@@ -241,7 +242,7 @@ class ReceiptDialog extends StatelessWidget {
                         style: const pw.TextStyle(fontSize: 7),
                         maxLines: 2),
                   ),
-                      pw.Text('\$${price.toStringAsFixed(2)}',
+                      pw.Text(formatCop(price),
                           style: const pw.TextStyle(fontSize: 7)),
                     ],
                   ),
@@ -257,7 +258,7 @@ class ReceiptDialog extends StatelessWidget {
                       style: pw.TextStyle(
                           fontSize: 12, fontWeight: pw.FontWeight.bold)),
                   pw.Text(
-                      '\$${(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0).toStringAsFixed(2)}',
+                      formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0),
                       style: pw.TextStyle(
                           fontSize: 12, fontWeight: pw.FontWeight.bold)),
                 ],

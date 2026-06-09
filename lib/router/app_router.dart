@@ -11,7 +11,6 @@ import '../screens/presentaciones_screen.dart';
 import '../screens/estadisticas_screen.dart';
 import '../screens/configuracion_screen.dart';
 import '../screens/usuarios_screen.dart';
-import '../screens/alertas_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -64,10 +63,6 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/usuarios',
       builder: (context, state) => const UsuariosScreen(),
-    ),
-    GoRoute(
-      path: '/alertas',
-      builder: (context, state) => const AlertasScreen(),
     ),
   ],
 );

@@ -1,4 +1,4 @@
-import 'dart:async'; // Añadido para Timer
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
@@ -6,10 +6,14 @@ import '../utils/global_error_handler.dart';
 
 class LotesController extends ChangeNotifier {
   final _dio = ApiService.dio;
-  Timer? _refreshTimer;
+  Timer? _autoClearTimer;
 
   List<Map<String, dynamic>> allBatches = [];
   bool isLoading = false;
+  
+  bool isFetchingMore = false;
+  bool hasMore = true;
+  int currentPage = 1;
 
   List<Map<String, dynamic>> _vencidos = [];
   List<Map<String, dynamic>> _porVencer = [];
@@ -27,18 +31,6 @@ class LotesController extends ChangeNotifier {
   List<Map<String, dynamic>> get archivedBatches => _archivedBatches;
   List<Map<String, dynamic>> get activeBatches => _activeBatches;
 
-  LotesController() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 120), (timer) {
-      if (!isLoading) fetchAllBatches();
-    });
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
-
   void _recomputeCategories() {
     final now = DateTime.now();
     final sixtyDays = now.add(const Duration(days: 60));
@@ -53,9 +45,9 @@ class LotesController extends ChangeNotifier {
       final d = DateTime.tryParse(b['fechaDeVencimiento'] ?? b['fechaVencimiento'] ?? '');
       final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
       final isExpired = d != null && d.isBefore(now);
-      final hasNoProduct = (b['originalProduct'] as Map?)?.isEmpty ?? true;
-      // Archived = agotado OR expired OR product deleted
-      if (stock <= 0 || isExpired || hasNoProduct) {
+      
+      // Archived = agotado OR expired
+      if (stock <= 0 || isExpired) {
         _archivedBatches.add(b);
         if (stock <= 0) _agotados.add(b);
         if (isExpired) _vencidos.add(b);
@@ -77,8 +69,32 @@ class LotesController extends ChangeNotifier {
   String? error;
   String externalSearchQuery = '';
 
+  @override
+  void dispose() {
+    _autoClearTimer?.cancel();
+    super.dispose();
+  }
+
   void setExternalSearch(String query) {
     externalSearchQuery = query;
+    notifyListeners();
+  }
+
+  void touch() {
+    _autoClearTimer?.cancel();
+    _autoClearTimer = null;
+  }
+
+  void scheduleAutoClear() {
+    _autoClearTimer?.cancel();
+    _autoClearTimer = Timer(const Duration(minutes: 5), () {
+      clearData();
+    });
+  }
+
+  void clearData() {
+    allBatches.clear();
+    currentPage = 1;
     notifyListeners();
   }
 
@@ -88,42 +104,36 @@ class LotesController extends ChangeNotifier {
   }
 
   Future<void> init() async {
-    await fetchAllBatches();
+    await fetchAllBatches(isRefresh: true);
   }
 
-  Future<void> fetchAllBatches() async {
-    isLoading = true;
-    error = null;
-    notifyListeners();
+  Future<void> fetchAllBatches({bool isRefresh = false}) async {
+    if (isRefresh) {
+      isLoading = true;
+      currentPage = 1;
+      hasMore = true;
+      allBatches.clear();
+      error = null;
+      notifyListeners();
+    } else {
+      if (!hasMore || isFetchingMore) return;
+      isFetchingMore = true;
+      notifyListeners();
+    }
 
     try {
-      await ApiService.setAuthHeader();
-
-      // Peticiones paralelas para máxima velocidad
-      final results = await Future.wait([
-        _dio.get('/inventory/products?page=1&limit=10000'),
-        _dio.get('/inventory/batches'),
-      ]);
-
-      final productsList = results[0].data['data'] as List? ?? [];
-      final batchesList = results[1].data['data'] as List? ?? [];
-
-      // Mapeo O(1) de productos
-      final productMap = {
-        for (var p in productsList) p['productoId'].toString(): p
-      };
-
-      allBatches = batchesList.map((b) {
-        final pId = b['productoId']?.toString();
-        final p = productMap[pId] ?? {};
-        return {
-          ...Map<String, dynamic>.from(b),
-          'productoNombre': p['nombre'] ?? 'Producto Desconocido',
-          'productoCodigo': p['codigoBarras'] ?? 'N/A',
-          'originalProduct': p,
-        };
-      }).toList();
+      final batchesList = await ApiService.getBatches(page: currentPage, limit: 100);
       
+      if (batchesList.length < 100) {
+        hasMore = false;
+      } else {
+        currentPage++;
+      }
+
+      final newBatches = batchesList.cast<Map<String, dynamic>>().toList();
+      
+      allBatches.addAll(newBatches);
+
       // Ordenar por defecto por fecha de vencimiento más cercana
       allBatches.sort((a, b) {
         final dateA = DateTime.tryParse(a['fechaDeVencimiento'] ?? a['fechaVencimiento'] ?? '9999-12-31');
@@ -138,6 +148,7 @@ class LotesController extends ChangeNotifier {
       GlobalErrorHandler.showError('No se pudieron cargar los lotes. Verifica tu conexión.');
     } finally {
       isLoading = false;
+      isFetchingMore = false;
       notifyListeners();
     }
   }
@@ -145,9 +156,10 @@ class LotesController extends ChangeNotifier {
   Future<Response> createBatch(Map<String, dynamic> data) async {
     await ApiService.setAuthHeader();
     try {
-      final res = await _dio.post('/inventory/batches', data: data);
-      await fetchAllBatches();
-      return res;
+      final res = await ApiService.createBatch(data);
+      await fetchAllBatches(isRefresh: true);
+      // El helper devuelve map, lo casteamos a Response para mantener compatibilidad si es necesario
+      return Response(requestOptions: RequestOptions(), data: res, statusCode: 200);
     } catch (e) {
       GlobalErrorHandler.showError('No se pudo crear el lote.');
       rethrow;
@@ -157,9 +169,9 @@ class LotesController extends ChangeNotifier {
   Future<Response> updateBatch(String id, Map<String, dynamic> data) async {
     await ApiService.setAuthHeader();
     try {
-      final res = await _dio.patch('/inventory/batches/$id', data: data);
-      await fetchAllBatches();
-      return res;
+      final res = await ApiService.updateBatch(id, data);
+      await fetchAllBatches(isRefresh: true);
+      return Response(requestOptions: RequestOptions(), data: res, statusCode: 200);
     } catch (e) {
       GlobalErrorHandler.showError('No se pudo actualizar el lote.');
       rethrow;
@@ -170,12 +182,12 @@ class LotesController extends ChangeNotifier {
     await ApiService.setAuthHeader();
     try {
       await _dio.delete('/inventory/batches/$id');
-      await fetchAllBatches();
+      await fetchAllBatches(isRefresh: true);
     } catch (_) {
       // Fallback: si DELETE no existe en backend, se asigna stock 0 via PATCH
       try {
-        await _dio.patch('/inventory/batches/$id', data: {'cantidadDisponible': 0});
-        await fetchAllBatches();
+        await ApiService.updateBatch(id, {'cantidadDisponible': 0});
+        await fetchAllBatches(isRefresh: true);
       } catch (_) {
         GlobalErrorHandler.showError('No se pudo eliminar el lote. El backend no soporta borrado.');
       }

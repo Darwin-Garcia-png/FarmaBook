@@ -180,11 +180,20 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                   hintText: 'Buscar...',
                   hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
                   prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+                  suffixIcon: _controller.searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.grey),
+                          onPressed: () {
+                            _controller.searchCtrl.clear();
+                            _controller.search('');
+                          })
+                      : null,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                   filled: true,
                   fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
+                onChanged: (v) => _controller.search(v),
               ),
             ),
             const SizedBox(width: 16),

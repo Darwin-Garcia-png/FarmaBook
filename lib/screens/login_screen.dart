@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../controllers/login_controller.dart';
 import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
-import '../controllers/notificaciones_controller.dart';
 import '../widgets/gradient_button.dart';
 import '../theme/app_theme.dart';
 
@@ -39,12 +38,32 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     final success = await _controller.login();
     if (success && mounted) {
-      await Future.wait([
-        context.read<AlmacenController>().init(),
-        context.read<LotesController>().init(),
-        context.read<NotificacionesController>().init(),
-      ]);
-      if (mounted) context.go('/dashboard');
+      try {
+        await Future.wait([
+          context.read<AlmacenController>().init(),
+          context.read<LotesController>().init(),
+        ]);
+        if (mounted) context.go('/dashboard');
+      } catch (e) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Error al cargar datos'),
+              content: Text('$e'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    if (mounted) context.go('/dashboard');
+                  },
+                  child: const Text('Continuar'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
     }
   }
 

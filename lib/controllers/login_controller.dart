@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/auth_service.dart';
-import '../utils/global_error_handler.dart' as import_handler;
+import '../router/app_router.dart';
 
 class LoginController extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -18,6 +18,25 @@ class LoginController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _showError(String message, {int? statusCode}) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+    showDialog(
+      context: ctx,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        title: Text(statusCode != null ? 'Error ($statusCode)' : 'Error'),
+        content: SingleChildScrollView(child: Text(message)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<bool> login() async {
     if (!formKey.currentState!.validate()) return false;
 
@@ -30,24 +49,32 @@ class LoginController extends ChangeNotifier {
         passwordController.text,
       );
 
-      if (result['statusCode'] == 200 && result['body']['success'] == true) {
-        // Save email for profile display in Settings
+      if (result['statusCode'] == 200) {
+        final storedToken = await _authService.getToken();
+        if (storedToken == null || storedToken.isEmpty) {
+          _showError(
+            'Login exitoso pero no se encontró token.\n'
+            'Respuesta del servidor:\n$result',
+            statusCode: 200,
+          );
+          return false;
+        }
         const storage = FlutterSecureStorage();
         await storage.write(
             key: 'user_email', value: emailController.text.trim());
         return true;
       } else {
-        final errorMsg = result['body']['error']?['message'] is List
+        final errorMsg = result['body']?['error']?['message'] is List
             ? (result['body']['error']['message'] as List).join('\n')
-            : result['body']['error']?['message'] ??
-                result['body']['message'] ??
+            : result['body']?['error']?['message'] ??
+                result['body']?['message'] ??
                 result['message'] ??
                 'Login fallido';
-        import_handler.GlobalErrorHandler.showError(errorMsg, statusCode: result['statusCode']);
+        _showError(errorMsg, statusCode: result['statusCode']);
         return false;
       }
     } catch (e) {
-      import_handler.GlobalErrorHandler.showError('Error: $e');
+      _showError('Error: $e');
       return false;
     } finally {
       isLoading = false;

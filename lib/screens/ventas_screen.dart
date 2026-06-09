@@ -19,6 +19,12 @@ class _VentasScreenState extends State<VentasScreen> {
   final VentasController _controller = VentasController();
 
   @override
+  void initState() {
+    super.initState();
+    _controller.touch();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -30,11 +36,17 @@ class _VentasScreenState extends State<VentasScreen> {
       value: _controller,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: const PremiumHeader(
+        appBar: PremiumHeader(
             title: 'Punto de Venta',
             subtitle: 'Atención y Cobro',
-            icon: Icons.shopping_cart_rounded, // Icono más estándar y pequeño
+            icon: Icons.shopping_cart_rounded,
             baseColor: AppTheme.greenMetal,
+            trailing: IconButton(
+              icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.greenMetal.withOpacity(0.7)),
+              onPressed: () => _controller.cargarHistorialVentas(),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
         ),
         body: _buildBody(),
       ),

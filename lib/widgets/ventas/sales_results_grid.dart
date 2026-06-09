@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../controllers/ventas_controller.dart';
+import '../../utils/price_formatter.dart';
 
 class SalesResultsGrid extends StatelessWidget {
   const SalesResultsGrid({super.key});
@@ -114,7 +115,7 @@ class SalesResultsGrid extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                            '\$${p.precioPorUnidad.toStringAsFixed(2)}',
+                            formatCop(p.precioPorUnidad),
                             style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 18,

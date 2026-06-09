@@ -10,6 +10,176 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 
 class InventoryDialogs {
+  /// Diálogo solo para EDITAR producto (sin sección de lote).
+  /// No crea lotes nuevos, solo actualiza los datos del producto vía PATCH.
+  static Future<void> showEditProduct(BuildContext context,
+      AlmacenController controller,
+      {required Map<String, dynamic> prod}) async {
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+    // Extraer precio de todos los campos posibles
+    double foundPrice = 0.0;
+    for (final f in ['precioPorUnidad', 'precioVenta', 'precio_venta', 'precio', 'pvp', 'precio_unidad', 'precioUnidad']) {
+      final val = prod[f];
+      if (val != null) {
+        final pVal = double.tryParse(val.toString()) ?? 0.0;
+        if (pVal > 0) { foundPrice = pVal; break; }
+      }
+    }
+
+    final codigoCtrl = TextEditingController(text: prod['codigoBarras']?.toString() ?? '');
+    final nombreCtrl = TextEditingController(text: prod['nombre']?.toString() ?? '');
+    final descCtrl = TextEditingController(text: prod['descripcion']?.toString() ?? '');
+    final precioCtrl = TextEditingController(text: foundPrice > 0 ? foundPrice.toStringAsFixed(2) : '');
+    String? catId = prod['categoriaId']?.toString();
+    String? presId = prod['presentacionId']?.toString();
+    String? currentImageUrl = prod['imagenUrl']?.toString();
+    XFile? selectedImage;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              clipBehavior: Clip.antiAlias,
+              child: Container(
+                width: 600,
+                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withOpacity(0.8)]),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                            child: const Icon(Icons.edit_rounded, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 18),
+                          const Text('Editar Medicamento',
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
+                          const Spacer(),
+                          IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white), onPressed: () => Navigator.pop(dialogCtx)),
+                        ],
+                      ),
+                    ),
+                    // Body
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(32, 24, 32, 32),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
+                              const SizedBox(height: 16),
+                              _buildImagePicker(context, currentImageUrl, selectedImage,
+                                  (img) => setDialogState(() => selectedImage = img)),
+                              const SizedBox(height: 20),
+                              _premiumField(context, 'Código de Barras *', codigoCtrl, Icons.qr_code_scanner_rounded, req: true),
+                              _premiumField(context, 'Nombre Comercial *', nombreCtrl, Icons.medication_rounded, req: true),
+                              _premiumField(context, 'Descripción / Notas', descCtrl, Icons.notes_rounded, maxLines: 2),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _premiumDropdown(context, 'Categoría', catId,
+                                        controller.categorias, 'categoriaId', 'nombre',
+                                        (v) => setDialogState(() => catId = v),
+                                        controller: controller, setDialogState: setDialogState),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _premiumDropdown(context, 'Presentación', presId,
+                                        controller.presentaciones, 'presentacionId', 'nombre',
+                                        (v) => setDialogState(() => presId = v),
+                                        controller: controller, setDialogState: setDialogState),
+                                  ),
+                                ],
+                              ),
+                              _premiumField(context, 'Precio de Venta *', precioCtrl, Icons.sell_rounded,
+                                  req: true, keyboard: TextInputType.number),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Actions
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(dialogCtx),
+                              style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)),
+                              child: const Text('CANCELAR', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))),
+                          const SizedBox(width: 16),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 8, shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4)),
+                            onPressed: () async {
+                              if (!formKey.currentState!.validate()) return;
+                              final pId = prod['productoId']?.toString();
+                              if (pId == null || pId.isEmpty) return;
+
+                              try {
+                                String? uploadedUrl;
+                                if (selectedImage != null) {
+                                  uploadedUrl = await ApiService.uploadImage(selectedImage);
+                                }
+
+                                final Map<String, dynamic> prodData = {
+                                  'codigoBarras': codigoCtrl.text.trim(),
+                                  'nombre': nombreCtrl.text.trim(),
+                                  'descripcion': descCtrl.text.trim(),
+                                  'categoriaId': catId,
+                                  'presentacionId': presId,
+                                  'precioPorUnidad': double.tryParse(precioCtrl.text.replaceAll(',', '.')) ?? 0.0,
+                                };
+                                if (uploadedUrl != null) prodData['imagenUrl'] = uploadedUrl;
+
+                                await ApiService.updateProduct(pId, prodData);
+                                Navigator.pop(dialogCtx);
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                    content: Text('Producto actualizado correctamente'),
+                                    backgroundColor: AppTheme.greenMetal));
+                                controller.fetchProducts(isRefresh: true);
+                              } catch (e) {
+                                String errMsg = e.toString();
+                                try { final dioErr = e as dynamic; final serverMsg = dioErr?.response?.data?['message'] ?? dioErr?.response?.data?['error']; if (serverMsg != null) errMsg = serverMsg.toString(); } catch (_) {}
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text('Error: $errMsg'),
+                                    backgroundColor: AppTheme.reiOrangeRed));
+                              }
+                            },
+                            child: const Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   static Future<void> showAddEditProduct(BuildContext context,
       AlmacenController controller, LotesController lotesCtrl,
       {Map<String, dynamic>? prod,
@@ -49,6 +219,18 @@ class InventoryDialogs {
         }
       }
     }
+    if (foundPrice == 0 && prefillBatch != null) {
+      for (var f in priceFields) {
+        final val = prefillBatch[f];
+        if (val != null) {
+          final pVal = double.tryParse(val.toString()) ?? 0.0;
+          if (pVal > 0) {
+            foundPrice = pVal;
+            break;
+          }
+        }
+      }
+    }
 
     if (isBatchOnlyEdit) {
       stockVal = prefillBatch['cantidadDisponible']?.toString() ?? '0';
@@ -72,19 +254,22 @@ class InventoryDialogs {
     }
     // For existing products: expiryDate stays null until loaded async below
 
-    final codigo = TextEditingController(text: prod?['codigoBarras'] ?? '');
-    final nombre = TextEditingController(text: prod?['nombre'] ?? '');
-    final desc = TextEditingController(text: prod?['descripcion'] ?? '');
+    final codigo = TextEditingController(
+        text: prod?['codigoBarras']?.toString() ?? prefillBatch?['codigoBarras']?.toString() ?? '');
+    final nombre = TextEditingController(
+        text: prod?['nombre']?.toString() ?? prefillBatch?['nombre']?.toString() ?? '');
+    final desc = TextEditingController(
+        text: prod?['descripcion']?.toString() ?? prefillBatch?['descripcion']?.toString() ?? '');
     final precio = TextEditingController(
         text: foundPrice > 0 ? foundPrice.toString() : '');
     final precioCompra = TextEditingController(text: precioCompraVal);
     final batchName = TextEditingController(text: batchNameVal);
     final stock = TextEditingController(text: stockVal);
     XFile? selectedImage;
-    String? currentImageUrl = prod?['imagenUrl']?.toString();
+    String? currentImageUrl = prod?['imagenUrl']?.toString() ?? prefillBatch?['imagenUrl']?.toString();
 
-    String? catId = prod?['categoriaId']?.toString();
-    String? presId = prod?['presentacionId']?.toString();
+    String? catId = prod?['categoriaId']?.toString() ?? prefillBatch?['categoriaId']?.toString();
+    String? presId = prod?['presentacionId']?.toString() ?? prefillBatch?['presentacionId']?.toString();
     String? provId;
     if (prod != null &&
         prod['proveedoresId'] != null &&
@@ -92,6 +277,11 @@ class InventoryDialogs {
       provId = prod['proveedoresId'][0]?.toString();
     } else if (prod != null && prod['proveedorId'] != null) {
       provId = prod['proveedorId']?.toString();
+    } else if (prefillBatch != null && prefillBatch['proveedoresId'] != null &&
+        (prefillBatch['proveedoresId'] as List).isNotEmpty) {
+      provId = prefillBatch['proveedoresId'][0]?.toString();
+    } else if (prefillBatch != null && prefillBatch['proveedorId'] != null) {
+      provId = prefillBatch['proveedorId']?.toString();
     }
 
     // ---------- Show dialog IMMEDIATELY (no await before this) ----------

@@ -3,6 +3,7 @@ import '../../theme/app_theme.dart';
 import '../../controllers/almacen_controller.dart';
 import '../../controllers/lotes_controller.dart';
 import '../../utils/inventory_dialogs.dart';
+import '../../utils/price_formatter.dart';
 import 'batch_details_modal.dart';
 
 class ProductCard extends StatelessWidget {
@@ -77,8 +78,8 @@ class ProductCard extends StatelessWidget {
                 ),
               );
             } else {
-              InventoryDialogs.showAddEditProduct(
-                  context, controller, lotesCtrl,
+              InventoryDialogs.showEditProduct(
+                  context, controller,
                   prod: Map<String, dynamic>.from(p));
             }
           },
@@ -192,7 +193,7 @@ class ProductCard extends StatelessWidget {
                         children: [
                           const Text('PRECIO UNITARIO', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1)),
                           Text(
-                            '\$${_getSafePrice(p)}',
+                            formatCop(_getSafePrice(p)),
                             style: const TextStyle(
                                 color: AppTheme.ayanamiBlue,
                                 fontSize: 22,
@@ -204,7 +205,7 @@ class ProductCard extends StatelessWidget {
                       Row(
                         children: [
                           _actionButton(context, Icons.edit_rounded, AppTheme.ayanamiBlue, () {
-                            InventoryDialogs.showAddEditProduct(context, controller, lotesCtrl, prod: Map<String, dynamic>.from(p));
+                            InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
                           }),
                           const SizedBox(width: 8),
                           _actionButton(context, Icons.delete_rounded, AppTheme.reiOrangeRed, () {
@@ -272,8 +273,8 @@ class ProductCard extends StatelessWidget {
     }
   }
 
-  String _getSafePrice(dynamic p) {
-    if (p == null) return "0.00";
+  num _getSafePrice(dynamic p) {
+    if (p == null) return 0.0;
     final List<String> fields = [
       'precioVenta',
       'precio_venta',
@@ -289,9 +290,9 @@ class ProductCard extends StatelessWidget {
       final val = p[f];
       if (val != null) {
         final pVal = double.tryParse(val.toString()) ?? 0.0;
-        if (pVal > 0) return pVal.toStringAsFixed(2);
+        if (pVal > 0) return pVal;
       }
     }
-    return "0.00";
+    return 0.0;
   }
 }

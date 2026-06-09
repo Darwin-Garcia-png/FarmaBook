@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../controllers/ventas_controller.dart';
+import '../../utils/price_formatter.dart';
 import 'receipt_dialog.dart';
 
 class CartSection extends StatelessWidget {
@@ -119,7 +120,7 @@ class CartSection extends StatelessWidget {
                     Text(prod.nombre,
                         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text('\$${prod.precioPorUnidad.toStringAsFixed(2)} u.',
+                    Text('${formatCop(prod.precioPorUnidad)} u.',
                         style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
                   ],
                 ),
@@ -147,7 +148,7 @@ class CartSection extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('\$${(prod.precioPorUnidad * qty).toStringAsFixed(2)}',
+                  Text(formatCop(prod.precioPorUnidad * qty),
                       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.ayanamiBlue)),
                   InkWell(
                     onTap: () => controller.eliminarDelCarrito(id),
@@ -189,7 +190,7 @@ class CartSection extends StatelessWidget {
             children: [
               const Text('TOTAL',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1)),
-              Text('\$${controller.total.toStringAsFixed(2)}',
+              Text(formatCop(controller.total),
                   style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
@@ -202,7 +203,7 @@ class CartSection extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: controller.carrito.isEmpty || controller.isLoading
+              onPressed: controller.carrito.isEmpty || controller.isLoading || controller.clienteIdController.text.trim().isEmpty
                   ? null
                   : () async {
                       final result = await controller.registrarVenta();
@@ -249,11 +250,11 @@ class CartSection extends StatelessWidget {
           Icon(Icons.person_outline_rounded, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 16),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
-              controller: controller.consumidorController,
+              child: TextField(
+              controller: controller.clienteIdController,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               decoration: const InputDecoration(
-                hintText: 'Consumidor (opcional)',
+                hintText: 'Nombre del Cliente',
                 hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
                 border: InputBorder.none,
                 isDense: true,

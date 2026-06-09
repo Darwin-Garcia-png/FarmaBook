@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../controllers/notificaciones_controller.dart';
 import '../theme/app_theme.dart';
+import '../controllers/notificaciones_controller.dart';
 
 class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -125,7 +125,6 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
                         ),
                         onPressed: () {
                           notifCtrl.markAllAsRead();
-                          context.push('/alertas');
                         },
                       ),
                       if (notifCtrl.unreadCount > 0)
@@ -146,7 +145,7 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
                                   color: Colors.white,
                                   fontSize: 8,
                                   fontWeight: FontWeight.bold),
-                              textAlign: textAlignCenter(),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
