@@ -53,16 +53,14 @@ class LotesController extends ChangeNotifier {
         if (isExpired) _vencidos.add(b);
         continue;
       }
-      // Cada lote va a UNA sola categoría (orden de prioridad)
+      _activeBatches.add(b);
       if (d != null && d.isBefore(sixtyDays)) {
         _porVencer.add(b);
-      } else if (stock < 30) {
+      }
+      if (stock < 30) {
         _bajoStock.add(b);
-      } else {
-        _saludables.add(b);
       }
     }
-    _activeBatches = List.from(_saludables);
   }
 
   String? error;

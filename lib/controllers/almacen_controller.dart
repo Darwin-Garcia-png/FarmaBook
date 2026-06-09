@@ -131,6 +131,7 @@ class AlmacenController extends ChangeNotifier {
       {required bool isEdit,
       required String? productId,
       required Map<String, dynamic> data}) async {
+    await ApiService.setAuthHeader();
     if (isEdit) {
       return await _dio.patch('/inventory/products/$productId', data: data);
     } else {
