@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
@@ -11,14 +13,23 @@ import 'controllers/dashboard_controller.dart';
 import 'controllers/notificaciones_controller.dart';
 import 'theme/app_theme.dart';
 
+class _AllowAllCerts extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (cert, host, port) => true;
+  }
+}
+
 void main() async {
+  HttpOverrides.global = _AllowAllCerts();
   WidgetsFlutterBinding.ensureInitialized();
   PaintingBinding.instance.imageCache.maximumSize = 20;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 10 << 20;
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
   };
-  PlatformDispatcher.instance.onError = (error, stack) {
+  ui.PlatformDispatcher.instance.onError = (error, stack) {
     debugPrint('Unhandled error: $error\n$stack');
     return true;
   };

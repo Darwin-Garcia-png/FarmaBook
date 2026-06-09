@@ -1,7 +1,4 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
-import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 import '../utils/app_constants.dart';
 
@@ -19,16 +16,6 @@ class AuthService {
         'Accept': 'application/json',
       },
     ));
-    if (!kIsWeb) {
-      try {
-        (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient =
-            () {
-          final client = HttpClient();
-          client.badCertificateCallback = (cert, host, port) => true;
-          return client;
-        };
-      } catch (_) {}
-    }
     _authDio = dio;
     return dio;
   }

@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../utils/app_constants.dart';
@@ -43,23 +41,9 @@ class ApiService {
       ),
     );
 
-  static void _configureAdapter() {
-    if (!kIsWeb) {
-      try {
-        (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient =
-            () {
-          final client = HttpClient();
-          client.badCertificateCallback = (cert, host, port) => true;
-          return client;
-        };
-      } catch (_) {}
-    }
-  }
-
   static Dio get dio => _dio;
 
   static Future<void> init() async {
-    _configureAdapter();
     _cachedToken = await _storage.read(key: AppConstants.tokenKey);
   }
 
