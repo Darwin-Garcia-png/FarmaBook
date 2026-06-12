@@ -3,39 +3,22 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class UsuariosController extends ChangeNotifier {
-
-  List<dynamic> usuarios = [];
-  List<dynamic> roles = [];
+  List<Map<String, dynamic>> usuarios = [];
+  List<Map<String, dynamic>> deletedUsuarios = [];
   bool isLoading = false;
+  bool isLoadingDeleted = false;
   String? error;
+  bool showDeleted = false;
 
   UsuariosController();
-
-
 
   Future<void> fetchAll() async {
     isLoading = true;
     error = null;
     notifyListeners();
-
     try {
-      final resUsers = await ApiService.getUsers();
-      usuarios = resUsers;
-
-      final Map<String, dynamic> discoveredRoles = {};
-      for (var u in usuarios) {
-        if (u['Rol'] != null) {
-          final rid = u['Rol']['rolId']?.toString();
-          final rname = u['Rol']['nombre']?.toString();
-          if (rid != null && rname != null) {
-            discoveredRoles[rid] = {'rolId': rid, 'nombre': rname};
-          }
-        }
-      }
-
-      if (discoveredRoles.isNotEmpty) {
-        roles = discoveredRoles.values.toList();
-      }
+      final res = await ApiService.getUsers();
+      usuarios = res.cast<Map<String, dynamic>>();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -44,33 +27,38 @@ class UsuariosController extends ChangeNotifier {
     }
   }
 
-  Future<void> createUser(Map<String, dynamic> data) async {
+  Future<void> fetchDeleted() async {
+    isLoadingDeleted = true;
+    notifyListeners();
     try {
-      await ApiService.createUser(data);
-      await fetchAll();
+      final res = await ApiService.getDeletedUsers();
+      deletedUsuarios = res.cast<Map<String, dynamic>>();
     } catch (e) {
       error = e.toString();
-      rethrow;
+    } finally {
+      isLoadingDeleted = false;
+      notifyListeners();
     }
+  }
+
+  Future<void> createUser(Map<String, dynamic> data) async {
+    await ApiService.createUser(data);
+    await fetchAll();
   }
 
   Future<void> updateUser(String id, Map<String, dynamic> data) async {
-    try {
-      await ApiService.updateUser(id, data);
-      await fetchAll();
-    } catch (e) {
-      error = e.toString();
-      rethrow;
-    }
+    await ApiService.updateUser(id, data);
+    await fetchAll();
   }
 
   Future<void> deleteUser(String id) async {
-    try {
-      await ApiService.deleteUser(id);
-      await fetchAll();
-    } catch (e) {
-      error = e.toString();
-      rethrow;
-    }
+    await ApiService.deleteUser(id);
+    await fetchAll();
+  }
+
+  Future<void> restoreUser(String id) async {
+    await ApiService.restoreUser(id);
+    await fetchAll();
+    await fetchDeleted();
   }
 }

@@ -127,13 +127,11 @@ class LotesController extends ChangeNotifier {
       error = null;
       notifyListeners();
     } else {
-      if (!hasMore || isFetchingMore) return;
-      isFetchingMore = true;
-      notifyListeners();
+      return;
     }
 
     try {
-      final batchesList = await ApiService.getBatches(page: currentPage, limit: 999999);
+      final batchesList = await ApiService.getBatches(page: 1, limit: 999999);
 
       final newBatches = batchesList.cast<Map<String, dynamic>>().toList();
       

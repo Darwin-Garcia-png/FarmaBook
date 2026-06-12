@@ -1,15 +1,19 @@
 class Usuario {
   final String usuarioId;
   final String nombre;
+  final String email;
+  final String rolNombre;
+  final String? username;
   final bool activo;
-  final String? rolId;
   final DateTime? createdAt;
 
   Usuario({
     required this.usuarioId,
     required this.nombre,
+    required this.email,
+    required this.rolNombre,
+    this.username,
     this.activo = true,
-    this.rolId,
     this.createdAt,
   });
 
@@ -17,8 +21,10 @@ class Usuario {
     return Usuario(
       usuarioId: json['usuarioId']?.toString() ?? '',
       nombre: json['nombre']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      rolNombre: json['rolNombre']?.toString() ?? 'Personal',
+      username: json['username']?.toString(),
       activo: json['activo'] ?? true,
-      rolId: json['rolId']?.toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,

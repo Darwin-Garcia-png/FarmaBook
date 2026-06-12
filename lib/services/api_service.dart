@@ -440,6 +440,16 @@ class ApiService {
     }
   }
 
+  static Future<List<dynamic>> getDeletedUsers() async {
+    final r = await _get('/users/deleted');
+    return _listFromBody(r);
+  }
+
+  static Future<Map<String, dynamic>> restoreUser(String id) async {
+    final r = await _patch('/users/$id/restore');
+    return _parseBody(r);
+  }
+
   // ────────────────────────────────────────────────────────────────
   // ANALYTICS
   // ────────────────────────────────────────────────────────────────

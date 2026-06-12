@@ -518,7 +518,8 @@ class InventoryDialogs {
                                   prod,
                                   batchId,
                                   expiryDate,
-                                  selectedImage),
+                                  selectedImage,
+                                  prefillBatch?['productoId']?.toString() ?? prefillBatch?['productId']?.toString()),
                             ],
                           ),
                         ),
@@ -600,66 +601,59 @@ class InventoryDialogs {
       Function(String?) onCasa,
       {StateSetter? setDialogState}) {
     return Expanded(
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: AppTheme.ayanamiBlue.withOpacity(0.12)),
+          border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.1)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 12, offset: const Offset(0, 4))],
         ),
-        color: Theme.of(context).cardTheme.color,
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
+              const SizedBox(height: 20),
+              _formRow([
+                _formField(context, 'Código de Barras *', codigo, Icons.qr_code_scanner_rounded, req: true, readOnly: readOnly),
+                _formField(context, 'Nombre Comercial *', nombre, Icons.medication_rounded, req: true, readOnly: readOnly),
+              ]),
+              _formRow([
+                _formField(context, 'Nombre Genérico *', nombreGenerico, Icons.biotech_rounded, req: true, readOnly: readOnly),
+                _formField(context, 'Concentración *', concentracion, Icons.science_rounded, req: true, readOnly: readOnly),
+              ]),
+              _formField(context, 'Descripción / Notas', desc, Icons.notes_rounded, maxLines: 2, readOnly: readOnly),
+              const SizedBox(height: 8),
+              _sectionDivider(context),
+              const SizedBox(height: 12),
+              Row(children: [
+                Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.06), borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.category_rounded, size: 14, color: AppTheme.ayanamiBlue)),
+                const SizedBox(width: 10),
+                const Text('CLASIFICACIÓN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.2)),
+              ]),
+              const SizedBox(height: 12),
+              _formRow([
+                _premiumDropdown(context, 'Categoría *', catId, controller.categorias, 'categoriaId', 'nombre', onCat,
+                    readOnly: readOnly, controller: readOnly ? null : controller, setDialogState: setDialogState),
+                _premiumDropdown(context, 'Presentación *', presId, controller.presentaciones, 'presentacionId', 'nombre', onPres,
+                    readOnly: readOnly, controller: readOnly ? null : controller, setDialogState: setDialogState),
+              ]),
+              _premiumDropdown(context, 'Casa Farmacéutica *', casaId, controller.casas, 'casaId', 'nombre', onCasa,
+                  controller: readOnly ? null : controller, setDialogState: setDialogState),
               const SizedBox(height: 16),
               Center(
-                child: _buildImagePicker(context, currentImageUrl, selectedImage, onImage),
+                child: Container(
+                  width: 140, height: 140,
+                  decoration: BoxDecoration(
+                    color: AppTheme.ayanamiBlue.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.1)),
+                  ),
+                  child: _buildImagePicker(context, currentImageUrl, selectedImage, onImage),
+                ),
               ),
-              const SizedBox(height: 20),
-              _premiumField(context, 'Código de Barras *', codigo,
-                  Icons.qr_code_scanner_rounded,
-                  req: true, readOnly: readOnly),
-              _premiumField(
-                  context, 'Nombre Comercial *', nombre, Icons.medication_rounded,
-                  req: true, readOnly: readOnly),
-              _premiumField(
-                  context, 'Nombre Genérico *', nombreGenerico, Icons.biotech_rounded,
-                  req: true, readOnly: readOnly),
-              _premiumField(
-                  context, 'Concentración *', concentracion, Icons.science_rounded,
-                  req: true, readOnly: readOnly),
-              _premiumField(
-                  context, 'Descripción / Notas', desc, Icons.notes_rounded,
-                  maxLines: 2, readOnly: readOnly),
-              Row(
-                children: [
-                  Expanded(
-                      child: _premiumDropdown(context, 'Categoría', catId,
-                          controller.categorias, 'categoriaId', 'nombre', onCat,
-                          readOnly: readOnly,
-                          controller: readOnly ? null : controller,
-                          setDialogState: setDialogState)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _premiumDropdown(
-                          context,
-                          'Presentación',
-                          presId,
-                          controller.presentaciones,
-                          'presentacionId',
-                          'nombre',
-                          onPres,
-                          readOnly: readOnly,
-                          controller: readOnly ? null : controller,
-                          setDialogState: setDialogState)),
-                ],
-              ),
-              _premiumDropdown(context, 'Casa Farmacéutica *', casaId,
-                  controller.casas, 'casaId', 'nombre', onCasa,
-                  controller: readOnly ? null : controller,
-                  setDialogState: setDialogState),
             ],
           ),
         ),
@@ -718,73 +712,117 @@ class InventoryDialogs {
       DateTime? expiryDate,
       Function(String?) onProv,
       Function(DateTime?) onDate) {
-    return Expanded(
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: AppTheme.ayanamiBlue.withOpacity(0.12)),
-        ),
+    final batchContent = Container(
+      decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _subHeader(Icons.layers_outlined, 'DETALLES DEL LOTE'),
-              const SizedBox(height: 16),
-              _premiumField(
-                  context, 'Nombre/ID del Lote', batchName, Icons.tag_rounded,
-                  req: true),
-              if (!isBatchEdit)
-                _premiumDropdown(context, 'Proveedor', provId,
-                    controller.proveedores, 'proveedorId', 'nombre', onProv,
-                    controller: controller,
-                    setDialogState: setDialogState),
-              Row(
-                children: [
-                  Expanded(
-                      child: _premiumField(
-                          context, 'Precio Venta *', precio, Icons.sell_rounded,
-                          req: true, keyboard: TextInputType.number)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _premiumField(context, 'Costo Compra *', precioCompra,
-                          Icons.shopping_cart_rounded,
-                          req: true, keyboard: TextInputType.number)),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                      child: _premiumField(context, 'Stock Cantidad *', stock,
-                          Icons.warehouse_rounded,
-                          req: true, keyboard: TextInputType.number)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _premiumDatePicker(
-                          context, setDialogState, expiryDate, onDate)),
-                ],
-              ),
-            ],
-          ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.greenMetal.withOpacity(0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _subHeader(Icons.layers_outlined, 'DETALLES DEL LOTE'),
+            const SizedBox(height: 20),
+            _formField(context, 'Nombre/ID del Lote *', batchName, Icons.tag_rounded, req: true),
+            if (!isBatchEdit)
+              _premiumDropdown(context, 'Proveedor *', provId, controller.proveedores, 'proveedorId', 'nombre', onProv,
+                  controller: controller, setDialogState: setDialogState),
+            const SizedBox(height: 8),
+            _sectionDivider(context),
+            const SizedBox(height: 12),
+            Row(children: [
+              Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.greenMetal.withOpacity(0.06), borderRadius: BorderRadius.circular(8)),
+                child: const Icon(Icons.attach_money_rounded, size: 14, color: AppTheme.greenMetal)),
+              const SizedBox(width: 10),
+              const Text('PRECIOS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.2)),
+            ]),
+            const SizedBox(height: 12),
+            _formRow([
+              _formField(context, 'Precio Venta *', precio, Icons.sell_rounded, req: true, keyboard: TextInputType.number),
+              _formField(context, 'Costo Compra *', precioCompra, Icons.shopping_cart_rounded, req: true, keyboard: TextInputType.number),
+            ]),
+            const SizedBox(height: 8),
+            _sectionDivider(context),
+            const SizedBox(height: 12),
+            Row(children: [
+              Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.06), borderRadius: BorderRadius.circular(8)),
+                child: const Icon(Icons.inventory_rounded, size: 14, color: AppTheme.reiOrangeRed)),
+              const SizedBox(width: 10),
+              const Text('INVENTARIO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.2)),
+            ]),
+            const SizedBox(height: 12),
+            _formRow([
+              _formField(context, 'Stock *', stock, Icons.warehouse_rounded, req: true, keyboard: TextInputType.number),
+              _premiumDatePicker(context, setDialogState, expiryDate, onDate),
+            ]),
+          ],
         ),
       ),
     );
+    if (isBatchEdit) return batchContent;
+    return Expanded(child: batchContent);
   }
 
   static Widget _subHeader(IconData icon, String title) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppTheme.ayanamiBlue),
-        const SizedBox(width: 8),
-        Text(title,
-            style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: Colors.blueGrey,
-                letterSpacing: 1.2)),
+        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+          child: Icon(icon, size: 16, color: AppTheme.ayanamiBlue)),
+        const SizedBox(width: 10),
+        Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.2)),
       ],
+    );
+  }
+
+  static Widget _sectionDivider(BuildContext context) {
+    return Divider(height: 1, color: Colors.grey.withOpacity(0.08));
+  }
+
+  static Widget _formRow(List<Widget> children) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        for (int i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(width: 16),
+          Expanded(child: children[i]),
+        ],
+      ]),
+    );
+  }
+
+  static Widget _formField(BuildContext context, String label, TextEditingController ctrl, IconData icon,
+      {bool req = false, bool readOnly = false, int maxLines = 1, TextInputType keyboard = TextInputType.text}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: ctrl, readOnly: readOnly, maxLines: maxLines,
+        keyboardType: keyboard,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          labelText: label, isDense: true,
+          prefixIcon: Padding(padding: const EdgeInsets.only(right: 8),
+            child: Icon(icon, color: AppTheme.ayanamiBlue.withOpacity(0.6), size: 18)),
+          prefixIconConstraints: const BoxConstraints(minWidth: 36),
+          filled: true,
+          fillColor: readOnly ? Colors.grey.withOpacity(0.04) : AppTheme.ayanamiBlue.withOpacity(0.03),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppTheme.ayanamiBlue, width: 1.5)),
+          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700, fontSize: 12),
+        ),
+        validator: (v) {
+          if (req && (v == null || v.trim().isEmpty)) return 'Requerido';
+          return null;
+        },
+      ),
     );
   }
 
@@ -1210,74 +1248,58 @@ class InventoryDialogs {
     final DateTime firstDate = DateTime(2000);
     final DateTime lastDate =
         DateTime.now().add(const Duration(days: 365 * 10));
-    // Clamp initialDate safely (handles sentinel DateTime(9999) and null)
     final DateTime safeInitial =
         (date == null || date.year >= 9999 || date.isAfter(lastDate))
             ? DateTime.now().add(const Duration(days: 365))
             : (date.isBefore(firstDate) ? firstDate : date);
     final bool isLoading = date != null && date.year == 9999;
     return GestureDetector(
-      onTap: isLoading
-          ? null
-          : () async {
-              try {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: safeInitial,
-                  firstDate: firstDate,
-                  lastDate: lastDate,
-                  helpText: 'Fecha de Vencimiento',
-                  confirmText: 'ACEPTAR',
-                  cancelText: 'CANCELAR',
-                );
-                if (picked != null) onDate(picked);
-              } catch (e) {
-                debugPrint('DatePicker error: $e');
-              }
-            },
+      onTap: isLoading ? null : () async {
+        try {
+          final picked = await showDatePicker(
+            context: context, initialDate: safeInitial,
+            firstDate: firstDate, lastDate: lastDate,
+            helpText: 'Fecha de Vencimiento',
+            confirmText: 'ACEPTAR', cancelText: 'CANCELAR',
+          );
+          if (picked != null) onDate(picked);
+        } catch (e) { debugPrint('DatePicker error: $e'); }
+      },
       child: Container(
-        height: 56,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isLoading
-              ? Colors.grey.withOpacity(0.05)
-              : AppTheme.ayanamiBlue.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
+          color: isLoading ? Colors.grey.withOpacity(0.04) : AppTheme.ayanamiBlue.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: date == null
-                ? AppTheme.reiOrangeRed.withOpacity(0.5)
-                : AppTheme.ayanamiBlue.withOpacity(0.2),
+            color: date == null ? AppTheme.reiOrangeRed.withOpacity(0.5) : Colors.transparent,
             width: 1.5,
           ),
         ),
-        child: Row(
-          children: [
-            Icon(
-                isLoading ? Icons.hourglass_top : Icons.event_available_rounded,
-                color: isLoading ? Colors.grey : AppTheme.ayanamiBlue,
-                size: 20),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                isLoading
-                    ? 'Cargando fecha...'
-                    : date == null
-                        ? 'Seleccionar fecha *'
-                        : '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
-                style: TextStyle(
-                  color: isLoading
-                      ? Colors.grey
-                      : (date == null ? AppTheme.reiOrangeRed : null),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Fecha Venc. *',
+            prefixIcon: Padding(padding: const EdgeInsets.only(right: 8),
+              child: Icon(Icons.calendar_month_rounded, color: AppTheme.ayanamiBlue.withOpacity(0.6), size: 18)),
+            prefixIconConstraints: const BoxConstraints(minWidth: 36),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700, fontSize: 12),
+          ),
+          child: Row(children: [
+            Icon(isLoading ? Icons.hourglass_top : Icons.event_available_rounded,
+                color: isLoading ? Colors.grey : AppTheme.ayanamiBlue, size: 18),
+            const SizedBox(width: 10),
+            Expanded(child: Text(
+              isLoading ? 'Cargando...' : date == null
+                  ? 'Seleccionar fecha *'
+                  : '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+              style: TextStyle(
+                color: isLoading ? Colors.grey : (date == null ? AppTheme.reiOrangeRed : null),
+                fontWeight: FontWeight.w600, fontSize: 14),
+              overflow: TextOverflow.ellipsis)),
             if (!isLoading)
-              Icon(Icons.edit_calendar_outlined,
-                  color: AppTheme.ayanamiBlue.withOpacity(0.5), size: 16),
-          ],
+              Icon(Icons.edit_calendar_outlined, color: AppTheme.ayanamiBlue.withOpacity(0.5), size: 16),
+          ]),
         ),
       ),
     );
@@ -1308,7 +1330,8 @@ class InventoryDialogs {
       Map<String, dynamic>? prod,
       String? batchId,
       DateTime? expiryDate,
-      XFile? selectedImage) {
+      XFile? selectedImage,
+      [String? batchProductId]) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -1405,7 +1428,19 @@ class InventoryDialogs {
                   'nombreLote': batchName.text.trim(),
                   'cantidadDisponible': stockParsed,
                 };
+                if (pcParsed > 0) batchData['costoDeCompra'] = pcParsed;
+                if (expiryDate != null) {
+                  batchData['fechaDeVencimiento'] =
+                      DateTime.utc(expiryDate.year, expiryDate.month, expiryDate.day)
+                          .toIso8601String();
+                }
                 await lotesCtrl.updateBatch(batchId, batchData);
+                if (pParsed > 0 && batchProductId != null) {
+                  await controller.saveProduct(
+                      isEdit: true,
+                      productId: batchProductId,
+                      data: {'precioPorUnidad': pParsed});
+                }
               } else {
                 final Map<String, dynamic> batchData = {
                   'nombreLote': batchName.text.trim(),
