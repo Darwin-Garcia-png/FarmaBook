@@ -10,6 +10,7 @@ class VentasController extends ChangeNotifier {
   final TextEditingController barcodeController = TextEditingController();
   final TextEditingController searchController = TextEditingController();
   final TextEditingController clienteIdController = TextEditingController();
+  final TextEditingController clienteIdentificacionController = TextEditingController();
 
   List<Producto> productosEncontrados = [];
   final Map<String, Producto> cacheProductos = {};
@@ -38,7 +39,7 @@ class VentasController extends ChangeNotifier {
     isLoadingHistorial = true;
     notifyListeners();
     try {
-      ventasHistorial = await ApiService.getSales(limit: 30);
+      ventasHistorial = await ApiService.getSales(limit: 999999);
       await cargarPresentaciones();
     } catch (e) {
       error = 'Error al cargar historial: $e';
@@ -272,10 +273,11 @@ class VentasController extends ChangeNotifier {
         }
       });
 
-      final clienteId = clienteIdController.text.trim();
+      final clienteNombre = clienteIdController.text.trim();
+      final clienteIdentificacion = clienteIdentificacionController.text.trim();
       final result = await ApiService.registerSale(
         saleData: saleData,
-        clienteId: clienteId.isNotEmpty ? clienteId : null,
+        clienteId: clienteIdentificacion.isNotEmpty ? clienteIdentificacion : '0000000000',
       );
 
       final responseData = result['data'] as Map<String, dynamic>? ?? {};
@@ -301,6 +303,7 @@ class VentasController extends ChangeNotifier {
 
       ultimaVenta = {
         'ventaId': responseData['ventaId'] ?? responseData['id'] ?? 'N/A',
+        'numeroFactura': responseData['numeroFactura'],
         'total': responseData['total'] ?? total,
         'fechaDeVenta': responseData['fechaDeVenta'] ??
             responseData['fecha'] ??
@@ -314,15 +317,19 @@ class VentasController extends ChangeNotifier {
                         (responseData['detalles'] as List).isNotEmpty)
                     ? responseData['detalles']
                     : localDetalles,
-        'clienteId':
-            responseData['clienteId'] ?? clienteId,
+        'clienteNombre': clienteNombre,
+        'clienteIdentificacion': clienteIdentificacion,
       };
 
       carrito.clear();
       clienteIdController.clear();
+      clienteIdentificacionController.clear();
       mensaje =
           '¡Venta registrada correctamente! Total: \$${result['data']['total']}';
       productosEncontrados = [];
+      cacheProductos.clear();
+      _batchCache.clear();
+      presentacionMap.clear();
       notifyListeners();
       return result;
     } catch (e) {
@@ -341,6 +348,7 @@ class VentasController extends ChangeNotifier {
     barcodeController.dispose();
     searchController.dispose();
     clienteIdController.dispose();
+    clienteIdentificacionController.dispose();
     cacheProductos.clear();
     _batchCache.clear();
     ventasHistorial.clear();

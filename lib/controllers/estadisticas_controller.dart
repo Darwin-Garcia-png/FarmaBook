@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
@@ -11,10 +10,9 @@ DateTime _toBogota(DateTime utc) => utc.isUtc
     : utc.toUtc().subtract(const Duration(hours: 5));
 
 class EstadisticasController extends ChangeNotifier {
-  final Dio _dio = ApiService.dio;
   Timer? _autoClearTimer;
 
-  bool isLoading = false;
+  bool isLoading = true;
   String? error;
 
   @override
@@ -109,34 +107,32 @@ class EstadisticasController extends ChangeNotifier {
   Future<void> cargarEstadisticas() async {
     isLoading = true;
     error = null;
-    notifyListeners();
 
     try {
-      await ApiService.setAuthHeader();
-
+  
       // Peticiones paralelas a la API de analytics
       final results = await Future.wait([
-        _dio.get('/analytics/revenues/today'),
-        _dio.get('/analytics/revenues/month'),
-        _dio.get('/analytics/sales/today'),
-        _dio.get('/analytics/sales/month'),
-        _dio.get('/analytics/expenses'),
-        _dio.get('/analytics/balance'),
-        _dio.get('/analytics/products/top', queryParameters: {'limit': 10, 'period': 'today'}),
-        _dio.get('/analytics/products/top', queryParameters: {'limit': 10, 'period': 'month'}),
-        _dio.get('/analytics/products/top', queryParameters: {'limit': 10, 'period': 'all'}),
+        ApiService.getRevenueToday(),
+        ApiService.getRevenueMonth(),
+        ApiService.getSalesToday(),
+        ApiService.getSalesMonth(),
+        ApiService.getExpenses(),
+        ApiService.getBalance(),
+        ApiService.getTopProducts(),
+        ApiService.getTopProducts(),
+        ApiService.getTopProducts(),
       ]);
 
-      ingresosHoy = double.tryParse(results[0].data['data']?['ingresosDiarios']?.toString() ?? '0') ?? 0;
-      ingresosMes = double.tryParse(results[1].data['data']?['ingresosMensuales']?.toString() ?? '0') ?? 0;
-      ventasHoy   = (results[2].data['data']?['ventasDelDia'] as num? ?? 0).toInt();
-      ventasMes   = (results[3].data['data']?['ventasMensuales'] as num? ?? 0).toInt();
-      egresosMes  = double.tryParse(results[4].data['data']?['egresosMensuales']?.toString() ?? '0') ?? 0;
-      balanceMes  = double.tryParse(results[5].data['data']?['balanceMensual']?.toString() ?? '0') ?? 0;
+      ingresosHoy = double.tryParse(results[0]['data']?['ingresosDiarios']?.toString() ?? '0') ?? 0;
+      ingresosMes = double.tryParse(results[1]['data']?['ingresosMensuales']?.toString() ?? '0') ?? 0;
+      ventasHoy   = (results[2]['data']?['ventasDelDia'] as num? ?? 0).toInt();
+      ventasMes   = (results[3]['data']?['ventasMensuales'] as num? ?? 0).toInt();
+      egresosMes  = double.tryParse(results[4]['data']?['egresosMensuales']?.toString() ?? '0') ?? 0;
+      balanceMes  = double.tryParse(results[5]['data']?['balanceMensual']?.toString() ?? '0') ?? 0;
 
-      topProductosHoy    = results[6].data['data'] as List? ?? [];
-      topProductosMes    = results[7].data['data'] as List? ?? [];
-      topProductosGlobal = results[8].data['data'] as List? ?? [];
+      topProductosHoy    = results[6]['data'] as List? ?? [];
+      topProductosMes    = results[7]['data'] as List? ?? [];
+      topProductosGlobal = results[8]['data'] as List? ?? [];
 
       averageTicket = ventasHoy > 0 ? ingresosHoy / ventasHoy : 0;
 
@@ -163,13 +159,7 @@ class EstadisticasController extends ChangeNotifier {
       final now = DateTime.now();
       final todayStr = DateFormat('yyyy-MM-dd').format(now);
 
-      final res = await _dio.get('/sales', queryParameters: {
-        'fechaInicio': todayStr,
-        'fechaFin': todayStr,
-        'page': 1,
-        'limit': 200,
-      });
-      final List salesList = res.data['data'] ?? [];
+      final List salesList = await ApiService.getSales(limit: 200);
 
       double maxTicket = 0;
       double minTicket = double.infinity;
@@ -242,27 +232,22 @@ class EstadisticasController extends ChangeNotifier {
       final lastDay  = DateTime(now.year, now.month + 1, 0);
       final fmt      = DateFormat('yyyy-MM-dd');
 
-      final salesRes = await _dio.get('/sales', queryParameters: {
-        'fechaInicio': fmt.format(firstDay),
-        'fechaFin':    fmt.format(lastDay),
-        'page': 1, 'limit': 200,
-      });
-      final List salesList = salesRes.data['data'] ?? [];
+      final List salesList = await ApiService.getSales(limit: 200);
 
       // Categorías — mapa producto → categoría
       final Map<String, double> catMap = {};
       try {
-        final prodsRes = await _dio.get('/inventory/products', queryParameters: {'page': 1, 'limit': 100});
-        final catsRes  = await _dio.get('/inventory/categories', queryParameters: {'page': 1, 'limit': 100});
+        final rawProds = await ApiService.getProductos(page: 1, limit: 100);
+        final rawCats  = await ApiService.getCategories();
         final Map<String, String> prodToCat = {};
         final Map<String, String> catIdToName = {};
 
-        for (var p in (prodsRes.data['data'] ?? [])) {
+        for (var p in rawProds) {
           final pid = (p['productoId'] ?? '').toString();
           final cid = (p['categoriaId'] ?? '').toString();
           if (pid.isNotEmpty) prodToCat[pid] = cid;
         }
-        for (var c in (catsRes.data['data'] ?? [])) {
+        for (var c in rawCats) {
           final cid  = (c['categoriaId'] ?? '').toString();
           final name = (c['nombre'] ?? 'Otros').toString();
           if (cid.isNotEmpty) catIdToName[cid] = name;
@@ -363,16 +348,8 @@ class EstadisticasController extends ChangeNotifier {
 
   // ── Descarga de reporte PDF ────────────────────────────────────────
   Future<void> downloadPdfReport() async {
-    final token = await ApiService.getToken();
     try {
-      final response = await _dio.get(
-        '/analytics/report',
-        options: Options(
-          responseType: ResponseType.bytes,
-          headers: {'Authorization': 'Bearer $token', 'Accept': 'application/pdf'},
-        ),
-      );
-      final bytes = response.data as List<int>;
+      final bytes = await ApiService.getAnalyticsReportPdf();
       final ts = DateTime.now().millisecondsSinceEpoch;
       downloadBytes(bytes, 'reporte_farmabook_$ts.pdf');
     } catch (e) {

@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class PresentacionesController extends ChangeNotifier {
-  final Dio _dio = ApiService.dio;
-
-
   List<dynamic> presentaciones = [];
   bool isLoading = true;
   String? error;
@@ -33,9 +29,7 @@ class PresentacionesController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await ApiService.setAuthHeader();
-      final res = await _dio.get('/inventory/presentations');
-      presentaciones = res.data['data'] ?? [];
+      presentaciones = await ApiService.getPresentations();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -50,9 +44,8 @@ class PresentacionesController extends ChangeNotifier {
     }
 
     try {
-      await ApiService.setAuthHeader();
       
-      await _dio.post('/inventory/presentations', data: {
+      await ApiService.createPresentation({
         'nombre': nombreCtrl.text.trim(),
         'descripcion': descripcionCtrl.text.trim(),
       });
@@ -69,8 +62,7 @@ class PresentacionesController extends ChangeNotifier {
 
   Future<bool> actualizarPresentacion(dynamic id) async {
     try {
-      await ApiService.setAuthHeader();
-      await _dio.put('/inventory/presentations/$id', data: {
+      await ApiService.updatePresentation(id, {
         'nombre': nombreCtrl.text.trim(),
         'descripcion': descripcionCtrl.text.trim(),
       });
@@ -83,8 +75,7 @@ class PresentacionesController extends ChangeNotifier {
 
   Future<bool> eliminarPresentacion(dynamic id) async {
     try {
-      await ApiService.setAuthHeader();
-      await _dio.delete('/inventory/presentations/$id');
+      await ApiService.deletePresentation(id);
       await cargarPresentaciones();
       return true;
     } catch (e) {

@@ -22,8 +22,21 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    context.read<LotesController>().touch();
     _tabController = TabController(length: 5, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final lotesCtrl = context.read<LotesController>();
+        lotesCtrl.touch();
+        lotesCtrl.ensureLoaded();
+        // Safety: force stop loading after 30s
+        Future.delayed(const Duration(seconds: 30), () {
+          if (mounted && lotesCtrl.isLoading) {
+            lotesCtrl.isLoading = false;
+            lotesCtrl.notifyListeners();
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -47,7 +60,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               IconButton(
                 icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)),
-                onPressed: () => lotesCtrl.init(),
+                onPressed: () => lotesCtrl.refresh(),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),

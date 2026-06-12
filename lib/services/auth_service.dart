@@ -1,37 +1,35 @@
-import 'package:dio/dio.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'api_service.dart';
 import '../utils/app_constants.dart';
 
 class AuthService {
-  static Dio? _authDio;
+  static http.Client? _client;
 
-  static Dio _getDio() {
-    if (_authDio != null) return _authDio!;
-    final dio = Dio(BaseOptions(
-      baseUrl: AppConstants.baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
-    _authDio = dio;
-    return dio;
+  static http.Client get _http {
+    if (_client == null) _client = http.Client();
+    return _client!;
   }
+
+  static Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     ApiService.clearCachedToken();
     try {
-      final response = await _getDio().post(
-        '/auth/login',
-        data: {
-          'username': email.trim(),
-          'password': password,
-        },
-      );
+      final uri = Uri.parse('${AppConstants.baseUrl}/auth/login');
+      final response = await _http
+          .post(uri,
+              headers: _headers,
+              body: jsonEncode({
+                'username': email.trim(),
+                'password': password,
+              }))
+          .timeout(const Duration(seconds: 30));
 
-      final body = response.data as Map<String, dynamic>;
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
 
       String? token;
       token = body['data']?['token'] as String?;
@@ -47,24 +45,37 @@ class AuthService {
         'statusCode': response.statusCode,
         'body': body,
       };
-    } on DioException catch (e) {
+    } catch (e) {
+      if (e is http.ClientException) {
+        return {
+          'statusCode': 0,
+          'body': <String, dynamic>{},
+          'message': 'Error de conexión',
+          'error': true,
+        };
+      }
+      if (e is Exception && e.toString().contains('TimeoutException')) {
+        return {
+          'statusCode': 0,
+          'body': <String, dynamic>{},
+          'message': 'Tiempo de espera agotado',
+          'error': true,
+        };
+      }
       Map<String, dynamic> errorBody = {};
       String msg = 'Error de conexión';
-
-      if (e.response != null) {
-        errorBody = e.response!.data as Map<String, dynamic>? ?? {};
+      if (e is http.Response) {
+        try { errorBody = jsonDecode(e.body) as Map<String, dynamic>; } catch (_) {}
         msg = errorBody['error']?['message'] is List
             ? (errorBody['error']['message'] as List).join('\n')
             : errorBody['error']?['message'] ?? errorBody['message'] ?? msg;
+        return {
+          'statusCode': e.statusCode,
+          'body': errorBody,
+          'message': msg,
+          'error': true,
+        };
       }
-
-      return {
-        'statusCode': e.response?.statusCode ?? 0,
-        'body': errorBody,
-        'message': msg,
-        'error': true,
-      };
-    } catch (e) {
       return {
         'statusCode': 0,
         'body': <String, dynamic>{},

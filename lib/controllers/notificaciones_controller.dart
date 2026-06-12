@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 
 class NotificacionesController extends ChangeNotifier {
-  final Dio _dio = ApiService.dio;
-
   int unreadCount = 0;
   List<Map<String, dynamic>> notificaciones = [];
 
@@ -20,14 +17,13 @@ class NotificacionesController extends ChangeNotifier {
 
   Future<void> fetchAlerts() async {
     try {
-      await ApiService.setAuthHeader();
-      final res = await Future.wait([
-        _dio.get('/inventory/products', queryParameters: {'page': 1, 'limit': 100}),
-        _dio.get('/inventory/batches', queryParameters: {'page': 1, 'limit': 100}),
+        final res = await Future.wait([
+        ApiService.getProductos(page: 1, limit: 100),
+        ApiService.getBatches(page: 1, limit: 999999),
       ]);
 
-      final rawProds = res[0].data['data'] as List? ?? [];
-      final rawBatches = res[1].data['data'] as List? ?? [];
+      final rawProds = res[0] as List? ?? [];
+      final rawBatches = res[1] as List? ?? [];
 
       List<Map<String, dynamic>> nuevasNotifs = [];
 

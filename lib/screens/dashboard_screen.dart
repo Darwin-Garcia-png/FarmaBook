@@ -4,9 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/dashboard_controller.dart';
 import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
-import '../controllers/inicio_controller.dart';
 import '../controllers/ventas_controller.dart';
-import '../controllers/estadisticas_controller.dart';
 import '../controllers/notificaciones_controller.dart';
 import '../theme/app_theme.dart';
 import 'inicio_screen.dart';
@@ -85,7 +83,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      body: RepaintBoundary(child: _buildScreen()),
+      body: Stack(children: [
+        RepaintBoundary(child: _buildScreen()),
+        if (_controller.selectedIndex != 0)
+          Positioned(top: 88, left: 12,
+            child: FloatingActionButton.small(
+              heroTag: 'backBtn',
+              onPressed: () => _controller.onItemTapped(0),
+              backgroundColor: AppTheme.ayanamiBlue,
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            ),
+          ),
+      ]),
     );
   }
 
@@ -275,8 +284,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           context.read<AlmacenController>().clearData();
           context.read<LotesController>().clearData();
           context.read<VentasController>().clearData();
-          context.read<InicioController>().clearData();
-          context.read<EstadisticasController>().clearData();
           context.read<NotificacionesController>().clearData();
           
           await _controller.logout();

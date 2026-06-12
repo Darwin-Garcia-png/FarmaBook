@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 import '../utils/global_error_handler.dart';
 
 class LotesController extends ChangeNotifier {
-  final _dio = ApiService.dio;
   Timer? _autoClearTimer;
+  bool _autoInitDone = false;
 
   List<Map<String, dynamic>> allBatches = [];
   bool isLoading = false;
@@ -101,7 +100,22 @@ class LotesController extends ChangeNotifier {
   }
 
   Future<void> init() async {
+    if (_autoInitDone) return;
+    _autoInitDone = true;
     await fetchAllBatches(isRefresh: true);
+  }
+
+  /// Public refresh always fetches fresh data
+  Future<void> refresh() async {
+    await fetchAllBatches(isRefresh: true);
+  }
+
+  /// Call from screen to ensure init happens (safe to call multiple times)
+  void ensureLoaded() {
+    if (!_autoInitDone && !isLoading) {
+      _autoInitDone = true;
+      fetchAllBatches(isRefresh: true);
+    }
   }
 
   Future<void> fetchAllBatches({bool isRefresh = false}) async {
@@ -119,13 +133,7 @@ class LotesController extends ChangeNotifier {
     }
 
     try {
-      final batchesList = await ApiService.getBatches(page: currentPage, limit: 100);
-      
-      if (batchesList.length < 100) {
-        hasMore = false;
-      } else {
-        currentPage++;
-      }
+      final batchesList = await ApiService.getBatches(page: currentPage, limit: 999999);
 
       final newBatches = batchesList.cast<Map<String, dynamic>>().toList();
       
@@ -150,25 +158,22 @@ class LotesController extends ChangeNotifier {
     }
   }
 
-  Future<Response> createBatch(Map<String, dynamic> data) async {
-    await ApiService.setAuthHeader();
+  Future<Map<String, dynamic>> createBatch(Map<String, dynamic> data) async {
     try {
       final res = await ApiService.createBatch(data);
       await fetchAllBatches(isRefresh: true);
-      // El helper devuelve map, lo casteamos a Response para mantener compatibilidad si es necesario
-      return Response(requestOptions: RequestOptions(), data: res, statusCode: 200);
+      return res;
     } catch (e) {
       GlobalErrorHandler.showError('No se pudo crear el lote.');
       rethrow;
     }
   }
 
-  Future<Response> updateBatch(String id, Map<String, dynamic> data) async {
-    await ApiService.setAuthHeader();
+  Future<Map<String, dynamic>> updateBatch(String id, Map<String, dynamic> data) async {
     try {
       final res = await ApiService.updateBatch(id, data);
       await fetchAllBatches(isRefresh: true);
-      return Response(requestOptions: RequestOptions(), data: res, statusCode: 200);
+      return res;
     } catch (e) {
       GlobalErrorHandler.showError('No se pudo actualizar el lote.');
       rethrow;
@@ -176,12 +181,10 @@ class LotesController extends ChangeNotifier {
   }
 
   Future<void> deleteBatch(String id) async {
-    await ApiService.setAuthHeader();
     try {
-      await _dio.delete('/inventory/batches/$id');
+      await ApiService.deleteBatch(id);
       await fetchAllBatches(isRefresh: true);
     } catch (_) {
-      // Fallback: si DELETE no existe en backend, se asigna stock 0 via PATCH
       try {
         await ApiService.updateBatch(id, {'cantidadDisponible': 0});
         await fetchAllBatches(isRefresh: true);

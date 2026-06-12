@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../controllers/almacen_controller.dart';
@@ -15,25 +14,39 @@ class InventoryDialogs {
   static Future<void> showEditProduct(BuildContext context,
       AlmacenController controller,
       {required Map<String, dynamic> prod}) async {
+    final pId = prod['productoId']?.toString();
+    if (pId == null || pId.isEmpty) return;
+
+    Map<String, dynamic> fullProd = Map<String, dynamic>.from(prod);
+    try {
+      final detail = await ApiService.getProductByIdentifier(pId);
+      if (detail != null) fullProd = detail;
+    } catch (_) {}
+
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-    // Extraer precio de todos los campos posibles
     double foundPrice = 0.0;
     for (final f in ['precioPorUnidad', 'precioVenta', 'precio_venta', 'precio', 'pvp', 'precio_unidad', 'precioUnidad']) {
-      final val = prod[f];
+      final val = fullProd[f];
       if (val != null) {
         final pVal = double.tryParse(val.toString()) ?? 0.0;
         if (pVal > 0) { foundPrice = pVal; break; }
       }
     }
 
-    final codigoCtrl = TextEditingController(text: prod['codigoBarras']?.toString() ?? '');
-    final nombreCtrl = TextEditingController(text: prod['nombre']?.toString() ?? '');
-    final descCtrl = TextEditingController(text: prod['descripcion']?.toString() ?? '');
+    final codigoCtrl = TextEditingController(text: fullProd['codigoBarras']?.toString() ?? '');
+    final nombreCtrl = TextEditingController(text: fullProd['nombre']?.toString() ?? '');
+    final nombreGenericoCtrl = TextEditingController(text: fullProd['nombreGenerico']?.toString() ?? '');
+    final concentracionCtrl = TextEditingController(text: fullProd['concentracion']?.toString() ?? '');
+    final descCtrl = TextEditingController(text: fullProd['descripcion']?.toString() ?? '');
     final precioCtrl = TextEditingController(text: foundPrice > 0 ? foundPrice.toStringAsFixed(2) : '');
-    String? catId = prod['categoriaId']?.toString();
-    String? presId = prod['presentacionId']?.toString();
-    String? currentImageUrl = prod['imagenUrl']?.toString();
+    String? catId = fullProd['categoriaId']?.toString();
+    String? presId = fullProd['presentacionId']?.toString();
+    String? currentImageUrl = fullProd['imagenUrl']?.toString();
+    String? casaId;
+    if (fullProd['casasId'] != null && (fullProd['casasId'] as List).isNotEmpty) {
+      casaId = fullProd['casasId'][0]?.toString();
+    }
     XFile? selectedImage;
 
     showDialog(
@@ -78,37 +91,56 @@ class InventoryDialogs {
                         padding: const EdgeInsets.fromLTRB(32, 24, 32, 32),
                         child: Form(
                           key: formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
-                              const SizedBox(height: 16),
-                              _buildImagePicker(context, currentImageUrl, selectedImage,
-                                  (img) => setDialogState(() => selectedImage = img)),
-                              const SizedBox(height: 20),
-                              _premiumField(context, 'Código de Barras *', codigoCtrl, Icons.qr_code_scanner_rounded, req: true),
-                              _premiumField(context, 'Nombre Comercial *', nombreCtrl, Icons.medication_rounded, req: true),
-                              _premiumField(context, 'Descripción / Notas', descCtrl, Icons.notes_rounded, maxLines: 2),
-                              Row(
+                          child: Card(
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: AppTheme.ayanamiBlue.withOpacity(0.12)),
+                            ),
+                            color: Theme.of(context).cardTheme.color,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: _premiumDropdown(context, 'Categoría', catId,
-                                        controller.categorias, 'categoriaId', 'nombre',
-                                        (v) => setDialogState(() => catId = v),
-                                        controller: controller, setDialogState: setDialogState),
+                                  _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
+                                  const SizedBox(height: 16),
+                                  Center(
+                                    child: _buildImagePicker(context, currentImageUrl, selectedImage,
+                                        (img) => setDialogState(() => selectedImage = img)),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: _premiumDropdown(context, 'Presentación', presId,
-                                        controller.presentaciones, 'presentacionId', 'nombre',
-                                        (v) => setDialogState(() => presId = v),
-                                        controller: controller, setDialogState: setDialogState),
+                                  const SizedBox(height: 20),
+                                  _premiumField(context, 'Código de Barras *', codigoCtrl, Icons.qr_code_scanner_rounded, req: true),
+                                  _premiumField(context, 'Nombre Comercial *', nombreCtrl, Icons.medication_rounded, req: true),
+                                  _premiumField(context, 'Nombre Genérico *', nombreGenericoCtrl, Icons.biotech_rounded, req: true),
+                                  _premiumField(context, 'Concentración *', concentracionCtrl, Icons.science_rounded, req: true),
+                                  _premiumField(context, 'Descripción / Notas', descCtrl, Icons.notes_rounded, maxLines: 2),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _premiumDropdown(context, 'Categoría', catId,
+                                            controller.categorias, 'categoriaId', 'nombre',
+                                            (v) => setDialogState(() => catId = v),
+                                            controller: controller, setDialogState: setDialogState),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: _premiumDropdown(context, 'Presentación', presId,
+                                            controller.presentaciones, 'presentacionId', 'nombre',
+                                            (v) => setDialogState(() => presId = v),
+                                            controller: controller, setDialogState: setDialogState),
+                                      ),
+                                    ],
                                   ),
+                                  _premiumDropdown(context, 'Casa Farmacéutica', casaId,
+                                      controller.casas, 'casaId', 'nombre',
+                                      (v) => setDialogState(() => casaId = v),
+                                      controller: controller, setDialogState: setDialogState),
+                                  _premiumField(context, 'Precio de Venta *', precioCtrl, Icons.sell_rounded,
+                                      req: true, keyboard: TextInputType.number),
                                 ],
                               ),
-                              _premiumField(context, 'Precio de Venta *', precioCtrl, Icons.sell_rounded,
-                                  req: true, keyboard: TextInputType.number),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -136,34 +168,56 @@ class InventoryDialogs {
                               if (pId == null || pId.isEmpty) return;
 
                               try {
-                                String? uploadedUrl;
-                                if (selectedImage != null) {
-                                  uploadedUrl = await ApiService.uploadImage(selectedImage);
+                                final Map<String, dynamic> prodData = {};
+                                if (codigoCtrl.text.trim().isNotEmpty) prodData['codigoBarras'] = codigoCtrl.text.trim();
+                                if (nombreCtrl.text.trim().isNotEmpty) prodData['nombre'] = nombreCtrl.text.trim();
+                                if (nombreGenericoCtrl.text.trim().isNotEmpty) prodData['nombreGenerico'] = nombreGenericoCtrl.text.trim();
+                                if (concentracionCtrl.text.trim().isNotEmpty) prodData['concentracion'] = concentracionCtrl.text.trim();
+                                if (descCtrl.text.trim().isNotEmpty) prodData['descripcion'] = descCtrl.text.trim();
+                                if (catId != null) prodData['categoriaId'] = catId;
+                                if (presId != null) prodData['presentacionId'] = presId;
+                                if (precioCtrl.text.trim().isNotEmpty) prodData['precioPorUnidad'] = double.tryParse(precioCtrl.text.replaceAll(',', '.')) ?? 0.0;
+
+                                await controller.saveProduct(
+                                    isEdit: true, productId: pId, data: prodData, image: selectedImage);
+                                 Navigator.pop(dialogCtx);
+                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                     content: Text('Producto actualizado correctamente'),
+                                     backgroundColor: AppTheme.greenMetal));
+                                 controller.fetchProducts(isRefresh: true);
+                                } catch (e) {
+                                  String errMsg = e.toString();
+                                  String? serverBody;
+                                  if (e is ApiException) {
+                                    errMsg = e.message;
+                                    serverBody = e.serverBody?.toString();
+                                  }
+                                  showDialog(context: context, useRootNavigator: true, builder: (ctx2) => AlertDialog(
+                                    title: const Text('Error al guardar'),
+                                    content: SingleChildScrollView(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(errMsg, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                          const SizedBox(height: 8),
+                                          Text('Tipo: ${e.runtimeType}', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                                          if (serverBody != null) ...[
+                                            const SizedBox(height: 12),
+                                            Container(
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                                              child: SelectableText(serverBody, style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontFamily: 'monospace')),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    actions: [TextButton(
+                                      onPressed: () => Navigator.pop(ctx2),
+                                      child: const Text('OK'))],
+                                  ));
                                 }
-
-                                final Map<String, dynamic> prodData = {
-                                  'codigoBarras': codigoCtrl.text.trim(),
-                                  'nombre': nombreCtrl.text.trim(),
-                                  'descripcion': descCtrl.text.trim(),
-                                  'categoriaId': catId,
-                                  'presentacionId': presId,
-                                  'precioPorUnidad': double.tryParse(precioCtrl.text.replaceAll(',', '.')) ?? 0.0,
-                                };
-                                if (uploadedUrl != null) prodData['imagenUrl'] = uploadedUrl;
-
-                                await ApiService.updateProduct(pId, prodData);
-                                Navigator.pop(dialogCtx);
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                    content: Text('Producto actualizado correctamente'),
-                                    backgroundColor: AppTheme.greenMetal));
-                                controller.fetchProducts(isRefresh: true);
-                              } catch (e) {
-                                String errMsg = e.toString();
-                                try { final dioErr = e as dynamic; final serverMsg = dioErr?.response?.data?['message'] ?? dioErr?.response?.data?['error']; if (serverMsg != null) errMsg = serverMsg.toString(); } catch (_) {}
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text('Error: $errMsg'),
-                                    backgroundColor: AppTheme.reiOrangeRed));
-                              }
                             },
                             child: const Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                           ),
@@ -258,6 +312,10 @@ class InventoryDialogs {
         text: prod?['codigoBarras']?.toString() ?? prefillBatch?['codigoBarras']?.toString() ?? '');
     final nombre = TextEditingController(
         text: prod?['nombre']?.toString() ?? prefillBatch?['nombre']?.toString() ?? '');
+    final nombreGenerico = TextEditingController(
+        text: prod?['nombreGenerico']?.toString() ?? prefillBatch?['nombreGenerico']?.toString() ?? '');
+    final concentracion = TextEditingController(
+        text: prod?['concentracion']?.toString() ?? prefillBatch?['concentracion']?.toString() ?? '');
     final desc = TextEditingController(
         text: prod?['descripcion']?.toString() ?? prefillBatch?['descripcion']?.toString() ?? '');
     final precio = TextEditingController(
@@ -271,6 +329,7 @@ class InventoryDialogs {
     String? catId = prod?['categoriaId']?.toString() ?? prefillBatch?['categoriaId']?.toString();
     String? presId = prod?['presentacionId']?.toString() ?? prefillBatch?['presentacionId']?.toString();
     String? provId;
+    String? casaId;
     if (prod != null &&
         prod['proveedoresId'] != null &&
         (prod['proveedoresId'] as List).isNotEmpty) {
@@ -282,6 +341,14 @@ class InventoryDialogs {
       provId = prefillBatch['proveedoresId'][0]?.toString();
     } else if (prefillBatch != null && prefillBatch['proveedorId'] != null) {
       provId = prefillBatch['proveedorId']?.toString();
+    }
+    if (prod != null &&
+        prod['casasId'] != null &&
+        (prod['casasId'] as List).isNotEmpty) {
+      casaId = prod['casasId'][0]?.toString();
+    } else if (prefillBatch != null && prefillBatch['casasId'] != null &&
+        (prefillBatch['casasId'] as List).isNotEmpty) {
+      casaId = prefillBatch['casasId'][0]?.toString();
     }
 
     // ---------- Show dialog IMMEDIATELY (no await before this) ----------
@@ -366,6 +433,24 @@ class InventoryDialogs {
                           key: formKey,
                           child: Column(
                             children: [
+                              if (isBatchOnlyEdit) ...[
+                                _buildProductInfoHeader(nombre.text, codigo.text),
+                                const SizedBox(height: 16),
+                                _buildBatchCardSection(
+                                    ctx,
+                                    controller,
+                                    setDialogState,
+                                    isBatchOnlyEdit,
+                                    provId,
+                                    precio,
+                                    precioCompra,
+                                    stock,
+                                    batchName,
+                                    expiryDate,
+                                    (v) => setDialogState(() => provId = v),
+                                    (v) =>
+                                        setDialogState(() => expiryDate = v)),
+                              ] else ...[
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -375,15 +460,19 @@ class InventoryDialogs {
                       isNewBatchOnly || isBatchOnlyEdit,
                       codigo,
                       nombre,
+                      nombreGenerico,
+                      concentracion,
                       desc,
                       catId,
                       presId,
+                      casaId,
                       controller,
                       currentImageUrl,
                       selectedImage,
                       (img) => setDialogState(() => selectedImage = img),
                       (v) => setDialogState(() => catId = v),
                       (v) => setDialogState(() => presId = v),
+                      (v) => setDialogState(() => casaId = v),
                       setDialogState: setDialogState),
                                   const SizedBox(width: 24),
                                   _buildBatchCardSection(
@@ -402,6 +491,7 @@ class InventoryDialogs {
                                           setDialogState(() => expiryDate = v)),
                                 ],
                               ),
+                              ],
                               const SizedBox(height: 32),
                               _buildPremiumActions(
                                   context,
@@ -413,8 +503,11 @@ class InventoryDialogs {
                                   isNewBatchOnly,
                                   isBatchOnlyEdit,
                                   provId,
+                                  casaId,
                                   codigo,
                                   nombre,
+                                  nombreGenerico,
+                                  concentracion,
                                   desc,
                                   catId,
                                   presId,
@@ -492,55 +585,120 @@ class InventoryDialogs {
       bool readOnly,
       TextEditingController codigo,
       TextEditingController nombre,
+      TextEditingController nombreGenerico,
+      TextEditingController concentracion,
       TextEditingController desc,
       String? catId,
       String? presId,
+      String? casaId,
       AlmacenController controller,
       String? currentImageUrl,
       XFile? selectedImage,
       Function(XFile?) onImage,
       Function(String?) onCat,
       Function(String?) onPres,
+      Function(String?) onCasa,
       {StateSetter? setDialogState}) {
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
-          const SizedBox(height: 16),
-          _buildImagePicker(context, currentImageUrl, selectedImage, onImage),
-          const SizedBox(height: 20),
-          _premiumField(context, 'Código de Barras *', codigo,
-              Icons.qr_code_scanner_rounded,
-              req: true, readOnly: readOnly),
-          _premiumField(
-              context, 'Nombre Comercial *', nombre, Icons.medication_rounded,
-              req: true, readOnly: readOnly),
-          _premiumField(
-              context, 'Descripción / Notas', desc, Icons.notes_rounded,
-              maxLines: 2, readOnly: readOnly),
-          Row(
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppTheme.ayanamiBlue.withOpacity(0.12)),
+        ),
+        color: Theme.of(context).cardTheme.color,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                  child: _premiumDropdown(context, 'Categoría', catId,
-                      controller.categorias, 'categoriaId', 'nombre', onCat,
-                      readOnly: readOnly,
-                      controller: readOnly ? null : controller,
-                      setDialogState: setDialogState)),
-              const SizedBox(width: 16),
-              Expanded(
-                  child: _premiumDropdown(
-                      context,
-                      'Presentación',
-                      presId,
-                      controller.presentaciones,
-                      'presentacionId',
-                      'nombre',
-                      onPres,
-                      readOnly: readOnly,
-                      controller: readOnly ? null : controller,
-                      setDialogState: setDialogState)),
+              _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
+              const SizedBox(height: 16),
+              Center(
+                child: _buildImagePicker(context, currentImageUrl, selectedImage, onImage),
+              ),
+              const SizedBox(height: 20),
+              _premiumField(context, 'Código de Barras *', codigo,
+                  Icons.qr_code_scanner_rounded,
+                  req: true, readOnly: readOnly),
+              _premiumField(
+                  context, 'Nombre Comercial *', nombre, Icons.medication_rounded,
+                  req: true, readOnly: readOnly),
+              _premiumField(
+                  context, 'Nombre Genérico *', nombreGenerico, Icons.biotech_rounded,
+                  req: true, readOnly: readOnly),
+              _premiumField(
+                  context, 'Concentración *', concentracion, Icons.science_rounded,
+                  req: true, readOnly: readOnly),
+              _premiumField(
+                  context, 'Descripción / Notas', desc, Icons.notes_rounded,
+                  maxLines: 2, readOnly: readOnly),
+              Row(
+                children: [
+                  Expanded(
+                      child: _premiumDropdown(context, 'Categoría', catId,
+                          controller.categorias, 'categoriaId', 'nombre', onCat,
+                          readOnly: readOnly,
+                          controller: readOnly ? null : controller,
+                          setDialogState: setDialogState)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                      child: _premiumDropdown(
+                          context,
+                          'Presentación',
+                          presId,
+                          controller.presentaciones,
+                          'presentacionId',
+                          'nombre',
+                          onPres,
+                          readOnly: readOnly,
+                          controller: readOnly ? null : controller,
+                          setDialogState: setDialogState)),
+                ],
+              ),
+              _premiumDropdown(context, 'Casa Farmacéutica *', casaId,
+                  controller.casas, 'casaId', 'nombre', onCasa,
+                  controller: readOnly ? null : controller,
+                  setDialogState: setDialogState),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildProductInfoHeader(String productName, String productCode) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.ayanamiBlue.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.15)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.ayanamiBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.medication_rounded, color: AppTheme.ayanamiBlue, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(productName.isNotEmpty ? productName : 'Producto',
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
+                if (productCode.isNotEmpty)
+                  Text('Código: $productCode',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              ],
+            ),
           ),
         ],
       ),
@@ -561,45 +719,56 @@ class InventoryDialogs {
       Function(String?) onProv,
       Function(DateTime?) onDate) {
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _subHeader(Icons.layers_outlined, 'DETALLES DEL LOTE'),
-          const SizedBox(height: 16),
-          _premiumField(
-              context, 'Nombre/ID del Lote', batchName, Icons.tag_rounded,
-              req: true),
-          if (!isBatchEdit)
-            _premiumDropdown(context, 'Proveedor', provId,
-                controller.proveedores, 'proveedorId', 'nombre', onProv,
-                controller: controller,
-                setDialogState: setDialogState),
-          Row(
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppTheme.ayanamiBlue.withOpacity(0.12)),
+        ),
+        color: Theme.of(context).cardTheme.color,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                  child: _premiumField(
-                      context, 'Precio Venta *', precio, Icons.sell_rounded,
-                      req: true, keyboard: TextInputType.number)),
-              const SizedBox(width: 16),
-              Expanded(
-                  child: _premiumField(context, 'Costo Compra *', precioCompra,
-                      Icons.shopping_cart_rounded,
-                      req: true, keyboard: TextInputType.number)),
+              _subHeader(Icons.layers_outlined, 'DETALLES DEL LOTE'),
+              const SizedBox(height: 16),
+              _premiumField(
+                  context, 'Nombre/ID del Lote', batchName, Icons.tag_rounded,
+                  req: true),
+              if (!isBatchEdit)
+                _premiumDropdown(context, 'Proveedor', provId,
+                    controller.proveedores, 'proveedorId', 'nombre', onProv,
+                    controller: controller,
+                    setDialogState: setDialogState),
+              Row(
+                children: [
+                  Expanded(
+                      child: _premiumField(
+                          context, 'Precio Venta *', precio, Icons.sell_rounded,
+                          req: true, keyboard: TextInputType.number)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                      child: _premiumField(context, 'Costo Compra *', precioCompra,
+                          Icons.shopping_cart_rounded,
+                          req: true, keyboard: TextInputType.number)),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                      child: _premiumField(context, 'Stock Cantidad *', stock,
+                          Icons.warehouse_rounded,
+                          req: true, keyboard: TextInputType.number)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                      child: _premiumDatePicker(
+                          context, setDialogState, expiryDate, onDate)),
+                ],
+              ),
             ],
           ),
-          Row(
-            children: [
-              Expanded(
-                  child: _premiumField(context, 'Stock Cantidad *', stock,
-                      Icons.warehouse_rounded,
-                      req: true, keyboard: TextInputType.number)),
-              const SizedBox(width: 16),
-              Expanded(
-                  child: _premiumDatePicker(
-                      context, setDialogState, expiryDate, onDate)),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -682,12 +851,8 @@ class InventoryDialogs {
             }
           }
 
-          // Validación de letras donde solo van letras (si el usuario lo pidió explícitamente para nombres)
-          if (label.toLowerCase().contains('nombre') && !label.toLowerCase().contains('lote') && !label.toLowerCase().contains('comercial')) {
-             if (v != null && RegExp(r'[0-9]').hasMatch(v)) {
-               return 'No se permiten números en este campo';
-             }
-          }
+          // Solo bloquear números en campo "Nombre Comercial" del producto (no en genérico, ya que puede tener B12, Omega 3, etc.)
+          // No aplicar ninguna restricción de números por ahora para evitar falsos positivos.
 
           return null;
         },
@@ -711,7 +876,7 @@ class InventoryDialogs {
       child: IgnorePointer(
         ignoring: readOnly,
         child: (() {
-          final tipo = idK == 'categoriaId' ? 'categoria' : idK == 'presentacionId' ? 'presentacion' : 'proveedor';
+          final tipo = idK == 'categoriaId' ? 'categoria' : idK == 'presentacionId' ? 'presentacion' : idK == 'casaId' ? 'casa' : 'proveedor';
 
           final rawMapped = items.asMap().entries.map((entry) {
             final idx = entry.key;
@@ -767,7 +932,7 @@ class InventoryDialogs {
                   Icon(Icons.add_circle_rounded, color: AppTheme.greenMetal, size: 18),
                   const SizedBox(width: 10),
                   Text(
-                    'Nueva ${tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : 'proveedor'}',
+                    'Nueva ${tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : tipo == 'casa' ? 'casa' : 'proveedor'}',
                     style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w800, fontSize: 13),
                   ),
                 ]),
@@ -791,7 +956,9 @@ class InventoryDialogs {
             ],
             onChanged: (v) {
               if (v == createNewId) {
-                _showQuickCreateDialog(context, tipo, controller, setDialogState);
+                _showQuickCreateDialog(context, tipo, controller, setDialogState).then((newId) {
+                  if (newId != null) onChanged(newId);
+                });
               } else if (v != '__DIVIDER__') {
                 onChanged(v);
               }
@@ -803,12 +970,14 @@ class InventoryDialogs {
     );
   }
 
-  static Future<void> _showQuickCreateDialog(
+  /// Returns the newly created item's ID (or null if cancelled/failed).
+  static Future<String?> _showQuickCreateDialog(
     BuildContext parentContext,
     String tipo,
     AlmacenController? controller,
     StateSetter? setDialogState,
   ) async {
+    String? createdId;
     final nameCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     final telCtrl = TextEditingController();
@@ -816,7 +985,7 @@ class InventoryDialogs {
     final formKey = GlobalKey<FormState>();
     bool isCreating = false;
 
-    final tipoLabel = tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : 'proveedor';
+    final tipoLabel = tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : tipo == 'casa' ? 'casa' : 'proveedor';
 
     await showDialog(
       context: parentContext,
@@ -881,7 +1050,7 @@ class InventoryDialogs {
                         maxLines: 2,
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
-                          labelText: tipo == 'proveedor' ? 'Dirección (opcional)' : 'Descripción (opcional)',
+                          labelText: tipo == 'proveedor' ? 'Dirección (opcional)' : tipo == 'casa' ? 'País de Origen (opcional)' : 'Descripción (opcional)',
                           prefixIcon: Icon(
                               tipo == 'proveedor' ? Icons.location_on_rounded : Icons.description_rounded,
                               color: AppTheme.ayanamiBlue,
@@ -943,9 +1112,8 @@ class InventoryDialogs {
                             onPressed: isCreating
                                 ? null
                                 : () async {
-                                    if (!formKey.currentState!.validate()) return;
+                                     if (!formKey.currentState!.validate()) return;
                                     setSt(() => isCreating = true);
-
                                     try {
                                       Map<String, dynamic> data = {
                                         'nombre': nameCtrl.text.trim(),
@@ -961,18 +1129,34 @@ class InventoryDialogs {
                                         if (emailCtrl.text.trim().isNotEmpty) {
                                           data['email'] = emailCtrl.text.trim();
                                         }
+                                      } else if (tipo == 'casa') {
+                                        // La API de casas usa 'paisDeOrigen', no 'descripcion'
+                                        if (descCtrl.text.trim().isNotEmpty) {
+                                          data['paisDeOrigen'] = descCtrl.text.trim();
+                                        }
                                       } else {
                                         if (descCtrl.text.trim().isNotEmpty) {
                                           data['descripcion'] = descCtrl.text.trim();
                                         }
                                       }
 
+                                      Map<String, dynamic> res;
                                       if (tipo == 'categoria') {
-                                        await ApiService.createCategory(data);
+                                        res = await ApiService.createCategory(data);
+                                        createdId = (res['data']?['categoriaId'] ?? res['data']?['id'])?.toString();
+                                        await controller?.fetchCategorias();
                                       } else if (tipo == 'presentacion') {
-                                        await ApiService.createPresentation(data);
+                                        res = await ApiService.createPresentation(data);
+                                        createdId = (res['data']?['presentacionId'] ?? res['data']?['id'])?.toString();
+                                        await controller?.fetchPresentaciones();
+                                      } else if (tipo == 'casa') {
+                                        res = await ApiService.createHouse(data);
+                                        createdId = (res['data']?['casaId'] ?? res['data']?['id'])?.toString();
+                                        await controller?.fetchCasas();
                                       } else {
-                                        await ApiService.createSupplier(data);
+                                        res = await ApiService.createSupplier(data);
+                                        createdId = (res['data']?['proveedorId'] ?? res['data']?['id'])?.toString();
+                                        await controller?.fetchProveedores();
                                       }
 
                                       if (Navigator.of(ctx2).canPop()) {
@@ -982,13 +1166,7 @@ class InventoryDialogs {
                                             backgroundColor: AppTheme.greenMetal));
                                       }
 
-                                      if (tipo == 'categoria') {
-                                        controller?.fetchCategorias();
-                                      } else if (tipo == 'presentacion') {
-                                        controller?.fetchPresentaciones();
-                                      } else {
-                                        controller?.fetchProveedores();
-                                      }
+                                      // Trigger parent dialog rebuild so dropdown shows new item
                                       setDialogState?.call(() {});
                                     } catch (e) {
                                       String errMsg = e.toString();
@@ -1024,6 +1202,7 @@ class InventoryDialogs {
         );
       },
     );
+    return createdId;
   }
 
   static Widget _premiumDatePicker(BuildContext context,
@@ -1114,8 +1293,11 @@ class InventoryDialogs {
       bool isNewBatch,
       bool isBatchEdit,
       String? provId,
+      String? casaId,
       TextEditingController codigo,
       TextEditingController nombre,
+      TextEditingController nombreGenerico,
+      TextEditingController concentracion,
       TextEditingController desc,
       String? catId,
       String? presId,
@@ -1157,6 +1339,34 @@ class InventoryDialogs {
               return;
             }
 
+            // Validate dropdowns that are local vars (not caught by formKey)
+            if (!isEdit && !isNewBatch && !isBatchEdit) {
+              if (catId == null) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Debes seleccionar una categoría'),
+                    backgroundColor: Colors.redAccent));
+                return;
+              }
+              if (presId == null) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Debes seleccionar una presentación'),
+                    backgroundColor: Colors.redAccent));
+                return;
+              }
+              if (provId == null) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Debes seleccionar un proveedor'),
+                    backgroundColor: Colors.redAccent));
+                return;
+              }
+              if (casaId == null) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Debes seleccionar una casa farmacéutica'),
+                    backgroundColor: Colors.redAccent));
+                return;
+              }
+            }
+
             final pParsed =
                 double.tryParse(precio.text.replaceAll(',', '.')) ?? 0.0;
             final pcParsed =
@@ -1170,38 +1380,39 @@ class InventoryDialogs {
             try {
               String? finalProdId = prod?['productoId']?.toString();
 
-              // CLOUDINARY UPLOAD IF NEW IMAGE SELECTED
-              String? uploadedUrl;
-              if (selectedImage != null) {
-                uploadedUrl = await ApiService.uploadImage(selectedImage);
+                if (!isNewBatch && !isBatchEdit) {
+                final prodData = <String, dynamic>{};
+                if (codigo.text.trim().isNotEmpty) prodData['codigoBarras'] = codigo.text.trim();
+                if (nombre.text.trim().isNotEmpty) prodData['nombre'] = nombre.text.trim();
+                if (nombreGenerico.text.trim().isNotEmpty) prodData['nombreGenerico'] = nombreGenerico.text.trim();
+                if (concentracion.text.trim().isNotEmpty) prodData['concentracion'] = concentracion.text.trim();
+                if (desc.text.trim().isNotEmpty) prodData['descripcion'] = desc.text.trim();
+                if (catId != null) prodData['categoriaId'] = catId;
+                if (presId != null) prodData['presentacionId'] = presId;
+                if (pParsed > 0) prodData['precioPorUnidad'] = pParsed;
+                prodData['proveedores'] = [
+                  {'proveedorId': provId, 'costo': pcParsed}
+                ];
+                if (casaId != null) prodData['casas'] = [casaId];
+                final result = await controller.saveProduct(
+                    isEdit: isEdit, productId: finalProdId, data: prodData, image: selectedImage);
+                // result is already the product data object, not the full API response
+                finalProdId = result['productoId']?.toString() ?? result['id']?.toString();
               }
 
-              if (!isNewBatch && !isBatchEdit) {
-                final prodData = {
-                  'codigoBarras': codigo.text.trim(),
-                  'nombre': nombre.text.trim(),
-                  'descripcion': desc.text.trim(),
-                  'categoriaId': catId,
-                  'presentacionId': presId,
-                  'precioPorUnidad': pParsed,
-                };
-                if (uploadedUrl != null) prodData['imagenUrl'] = uploadedUrl;
-                if (!isEdit) prodData['proveedorId'] = provId;
-                final res = await controller.saveProduct(
-                    isEdit: isEdit, productId: finalProdId, data: prodData);
-                finalProdId = res.data['data']['productoId']?.toString();
-              }
-
-              final Map<String, dynamic> batchData = {
-                'nombreLote': batchName.text.trim(),
-                'fechaDeVencimiento': expStr,
-                'cantidadDisponible': stockParsed,
-                'costoDeCompra':
-                    pcParsed, // Correct field name (costoCompra rejected)
-              };
               if (isBatchEdit && batchId != null) {
+                final Map<String, dynamic> batchData = {
+                  'nombreLote': batchName.text.trim(),
+                  'cantidadDisponible': stockParsed,
+                };
                 await lotesCtrl.updateBatch(batchId, batchData);
               } else {
+                final Map<String, dynamic> batchData = {
+                  'nombreLote': batchName.text.trim(),
+                  'fechaDeVencimiento': expStr,
+                  'cantidadDisponible': stockParsed,
+                  'costoDeCompra': pcParsed,
+                };
                 if (finalProdId != null) batchData['productoId'] = finalProdId;
                 await lotesCtrl.createBatch(batchData);
               }
@@ -1213,17 +1424,54 @@ class InventoryDialogs {
               controller.fetchProducts(isRefresh: true);
             } catch (e) {
               String errMsg = e.toString();
-              // Try to extract server message from DioException
-              try {
-                final dioErr = e as dynamic;
-                final serverMsg = dioErr?.response?.data?['message'] ??
-                    dioErr?.response?.data?['error'];
-                if (serverMsg != null) errMsg = serverMsg.toString();
-                debugPrint('SERVER ERROR BODY: ${dioErr?.response?.data}');
-              } catch (_) {}
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Error: $errMsg'),
-                  backgroundColor: AppTheme.reiOrangeRed));
+              String? serverBody;
+              if (e is ApiException) {
+                errMsg = e.message;
+                serverBody = e.serverBody?.toString();
+              }
+              if (context.mounted) {
+                showDialog(
+                  context: context,
+                  useRootNavigator: true,
+                  builder: (ctx2) => AlertDialog(
+                    title: const Text('Error al guardar'),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(errMsg, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          Text('Tipo: ${e.runtimeType}', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                          if (serverBody != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: SelectableText(
+                                serverBody,
+                                style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontFamily: 'monospace'),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx2);
+                          // 401 handling removed — just show error
+                        },
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              }
             }
           },
           child: Text(isEdit || isBatchEdit ? 'GUARDAR CAMBIOS' : 'REGISTRAR',
@@ -1293,7 +1541,22 @@ class InventoryDialogs {
                               child: const Icon(Icons.edit,
                                   size: 16, color: AppTheme.ayanamiBlue),
                             ),
-                          )
+                          ),
+                          Positioned(
+                            left: 4,
+                            top: 4,
+                            child: GestureDetector(
+                              onTap: () => onImage(null),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle),
+                                child: const Icon(Icons.close,
+                                    size: 16, color: Colors.red),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
               ),

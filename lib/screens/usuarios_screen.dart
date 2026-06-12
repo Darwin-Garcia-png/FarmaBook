@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../controllers/usuarios_controller.dart';
 import '../theme/app_theme.dart';
-import '../widgets/premium_header.dart';
 import 'package:flutter/services.dart';
 
 class UsuariosScreen extends StatefulWidget {
@@ -13,6 +12,7 @@ class UsuariosScreen extends StatefulWidget {
 
 class _UsuariosScreenState extends State<UsuariosScreen> {
   final UsuariosController _controller = UsuariosController();
+  final TextEditingController _searchCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -24,6 +24,8 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
   @override
   void dispose() {
     _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -31,215 +33,253 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     if (mounted) setState(() {});
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PremiumHeader(
-        title: 'Gestión de Personal',
-        subtitle: 'Administra usuarios, cajeros y permisos',
-        icon: Icons.engineering_rounded,
-        baseColor: AppTheme.ayanamiBlue,
-        trailing: ElevatedButton.icon(
-          onPressed: () => _showAddEditUserDialog(),
-          icon: const Icon(Icons.person_add_rounded),
-          label: const Text('Nuevo Usuario', style: TextStyle(fontWeight: FontWeight.w900)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.ayanamiBlue,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            elevation: 8,
-            shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4),
-          ),
-        ),
-      ),
-      body: _controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildUserList(),
-    );
+  Color get _accent => AppTheme.ayanamiBlue;
+
+  List<Map<String, dynamic>> get _filtered {
+    final q = _searchCtrl.text.toLowerCase().trim();
+    if (q.isEmpty) return _controller.usuarios.cast<Map<String, dynamic>>();
+    return _controller.usuarios.cast<Map<String, dynamic>>().where((u) {
+      final name = (u['nombre'] ?? u['username'] ?? '').toString().toLowerCase();
+      final rol = (u['Rol']?['nombre'] ?? '').toString().toLowerCase();
+      return name.contains(q) || rol.contains(q);
+    }).toList();
   }
 
-  Widget _buildUserList() {
-    if (_controller.usuarios.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: AppTheme.ayanamiBlue.withOpacity(0.05),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.people_outline_rounded,
-                  size: 80, color: AppTheme.ayanamiBlue.withOpacity(0.5)),
-            ),
-            const SizedBox(height: 24),
-            const Text('Sin miembros en el equipo',
-                style: TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 8),
-            const Text('Comienza agregando a tu primer empleado',
-                style: TextStyle(color: Colors.grey, fontSize: 14)),
-          ],
-        ),
+  @override
+  Widget build(BuildContext context) {
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+    final text = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final card = Theme.of(context).cardTheme.color ?? Colors.white;
+    final accent = _accent;
+
+    if (_controller.isLoading) {
+      return Scaffold(
+        backgroundColor: bg,
+        body: Stack(children: [
+          Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+          const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue)),
+        ]),
       );
     }
 
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.all(32),
-          sliver: SliverToBoxAdapter(
-            child: _buildQuickStats(),
+    if (_controller.error != null) {
+      return Scaffold(
+        backgroundColor: bg,
+        body: Stack(children: [
+          Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+          Center(
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Icon(Icons.cloud_off_rounded, size: 80, color: AppTheme.reiOrangeRed),
+              const SizedBox(height: 16),
+              Text(_controller.error!, style: const TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+                onPressed: _controller.fetchAll,
+                style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
+              ),
+            ]),
+          ),
+        ]),
+      );
+    }
+
+    final list = _filtered;
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: Stack(children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(40, 100, 40, 60),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _buildSearchBar(accent, bg, text),
+            if (_controller.usuarios.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildQuickStats(text, card),
+            ],
+            const SizedBox(height: 20),
+            if (list.isEmpty)
+              _buildEmptyState(accent)
+            else
+              ...list.map((user) => _buildUserCard(user, accent, text, card)),
+          ]),
+        ),
+        Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+        Positioned(bottom: 24, right: 40,
+          child: FloatingActionButton(
+            backgroundColor: accent,
+            foregroundColor: Colors.white,
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            onPressed: () => _showAddEditUserDialog(),
+            child: const Icon(Icons.person_add_rounded, size: 28),
           ),
         ),
-        const SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: 32),
-          sliver: SliverToBoxAdapter(
-            child: Text('PERSONAL REGISTRADO', 
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.all(32),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 450,
-              mainAxisExtent: 200,
-              crossAxisSpacing: 24,
-              mainAxisSpacing: 24,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final user = _controller.usuarios[index];
-                final bool activo = user['activo'] ?? true;
-                final String rolName = user['Rol']?['nombre'] ?? 'Personal';
-                
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardTheme.color,
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
-                      children: [
-                        Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: AppTheme.ayanamiBlue.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text((user['nombre'] ?? user['username'] ?? 'U')[0].toUpperCase(),
-                                style: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w900, fontSize: 32)),
-                            ),
-                            Container(
-                              width: 22,
-                              height: 22,
-                              decoration: BoxDecoration(
-                                color: activo ? AppTheme.greenMetal : AppTheme.reiOrangeRed,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Theme.of(context).cardTheme.color!, width: 4),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(user['nombre'] ?? user['username'] ?? 'Usuario',
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5)),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.ayanamiBlue.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(rolName.toUpperCase(), 
-                                  style: const TextStyle(color: AppTheme.ayanamiBlue, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _actionButton(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showAddEditUserDialog(user: user)),
-                            const SizedBox(height: 12),
-                            _actionButton(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(user)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-              childCount: _controller.usuarios.length,
-            ),
-          ),
-        ),
-      ],
+      ]),
     );
   }
 
-  Widget _buildQuickStats() {
-    return Row(
-      children: [
-        _statCard('Total Personal', _controller.usuarios.length.toString(), Icons.people_rounded, AppTheme.ayanamiBlue),
-        const SizedBox(width: 20),
-        _statCard('Roles Activos', _controller.roles.length.toString(), Icons.admin_panel_settings_rounded, Colors.orange),
-      ],
+  Widget _buildHeader(Color bg, Color text, Color accent) {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.08)))),
+      child: Row(children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: accent.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+          child: const Icon(Icons.engineering_rounded, color: AppTheme.ayanamiBlue, size: 24),
+        ),
+        const SizedBox(width: 14),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text('PERSONAL', style: TextStyle(color: text, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+          Text('Administra usuarios y permisos', style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600)),
+        ]),
+      ]),
     );
   }
 
-  Widget _statCard(String label, String value, IconData icon, Color color) {
+  Widget _buildSearchBar(Color accent, Color bg, Color text) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: TextField(
+        controller: _searchCtrl,
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: 'Buscar personal...',
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+          prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+          suffixIcon: _searchCtrl.text.isNotEmpty
+              ? IconButton(icon: const Icon(Icons.clear, color: Colors.grey, size: 18), onPressed: () { _searchCtrl.clear(); setState(() {}); })
+              : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          filled: true,
+          fillColor: bg.withOpacity(0.3),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStats(Color text, Color card) {
+    return Row(children: [
+      _statCard('Total Personal', _controller.usuarios.length.toString(), Icons.people_rounded, _accent, text, card),
+      const SizedBox(width: 16),
+      _statCard('Roles Activos', _controller.roles.length.toString(), Icons.admin_panel_settings_rounded, const Color(0xFFF59E0B), text, card),
+    ]);
+  }
+
+  Widget _statCard(String label, String value, IconData icon, Color color, Color text, Color card) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(32),
+          color: card,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.1)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+        child: Row(children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -1, color: text)),
+            Text(label, style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 0.5)),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(Color accent) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(48),
+      decoration: BoxDecoration(color: _cardColor(context), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8))]),
+      child: Column(children: [
+        Icon(Icons.people_outline_rounded, size: 64, color: accent.withOpacity(0.3)),
+        const SizedBox(height: 16),
+        Text('Sin miembros en el equipo', style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        Text('Agrega a tu primer empleado', style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
+      ]),
+    );
+  }
+
+  Widget _buildUserCard(Map<String, dynamic> user, Color accent, Color text, Color card) {
+    final bool activo = user['activo'] ?? true;
+    final String rolName = user['Rol']?['nombre'] ?? 'Personal';
+    final String displayName = user['nombre'] ?? user['username'] ?? 'Usuario';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border(left: BorderSide(color: activo ? accent.withOpacity(0.4) : AppTheme.reiOrangeRed.withOpacity(0.4), width: 3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(children: [
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                width: 52, height: 52,
+                decoration: BoxDecoration(color: accent.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
+                alignment: Alignment.center,
+                child: Text(displayName[0].toUpperCase(),
+                  style: TextStyle(color: accent, fontWeight: FontWeight.w900, fontSize: 22)),
               ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
-                Text(label, style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
-              ],
-            )
-          ],
-        ),
+              Container(width: 14, height: 14,
+                decoration: BoxDecoration(
+                  color: activo ? AppTheme.greenMetal : AppTheme.reiOrangeRed,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: card, width: 3),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(displayName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3, color: text), maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 6),
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: accent.withOpacity(0.06), borderRadius: BorderRadius.circular(8)),
+                  child: Text(rolName.toUpperCase(), style: TextStyle(color: accent, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: activo ? AppTheme.greenMetal.withOpacity(0.08) : AppTheme.reiOrangeRed.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(activo ? 'ACTIVO' : 'INACTIVO',
+                    style: TextStyle(color: activo ? AppTheme.greenMetal : AppTheme.reiOrangeRed, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                ),
+              ]),
+            ]),
+          ),
+          Column(mainAxisSize: MainAxisSize.min, children: [
+            _actionButton(Icons.edit_rounded, accent, () => _showAddEditUserDialog(user: user)),
+            const SizedBox(height: 6),
+            _actionButton(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(user)),
+          ]),
+        ]),
       ),
     );
   }
@@ -247,14 +287,11 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
   Widget _actionButton(IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, size: 20, color: color),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, size: 18, color: color),
       ),
     );
   }
@@ -359,12 +396,12 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       decoration: BoxDecoration(
-        color: AppTheme.ayanamiBlue.withOpacity(0.1),
+        color: _accent.withOpacity(0.1),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Row(
         children: [
-          Icon(isEdit ? Icons.edit_note_rounded : Icons.person_add_alt_1_rounded, color: AppTheme.ayanamiBlue, size: 32),
+          Icon(isEdit ? Icons.edit_note_rounded : Icons.person_add_alt_1_rounded, color: _accent, size: 32),
           const SizedBox(width: 16),
           Text(isEdit ? 'Refinar Perfil' : 'Añadir al Equipo', 
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
@@ -388,7 +425,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-            prefixIcon: Icon(icon, size: 20, color: AppTheme.ayanamiBlue),
+            prefixIcon: Icon(icon, size: 20, color: _accent),
             filled: true,
             fillColor: Colors.grey.withOpacity(0.05),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -424,19 +461,19 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             width: 130,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.ayanamiBlue : AppTheme.ayanamiBlue.withOpacity(0.05),
+              color: isSelected ? _accent : _accent.withOpacity(0.05),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isSelected ? AppTheme.ayanamiBlue : Colors.transparent, width: 2),
+              border: Border.all(color: isSelected ? _accent : Colors.transparent, width: 2),
             ),
             child: Column(
               children: [
-                Icon(roleIcon, color: isSelected ? Colors.white : AppTheme.ayanamiBlue, size: 28),
+                Icon(roleIcon, color: isSelected ? Colors.white : _accent, size: 28),
                 const SizedBox(height: 8),
                 Text(r['nombre'], 
                   style: TextStyle(
                     fontSize: 12, 
                     fontWeight: FontWeight.bold, 
-                    color: isSelected ? Colors.white : AppTheme.ayanamiBlue
+                    color: isSelected ? Colors.white : _accent
                   ),
                 textAlign: TextAlign.center),
               ],
@@ -489,7 +526,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.ayanamiBlue,
+                backgroundColor: _accent,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 elevation: 0,
@@ -523,4 +560,6 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       ),
     );
   }
+
+  Color _cardColor(BuildContext context) => Theme.of(context).cardTheme.color ?? Colors.white;
 }

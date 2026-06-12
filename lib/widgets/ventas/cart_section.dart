@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../controllers/ventas_controller.dart';
@@ -203,14 +204,14 @@ class CartSection extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: controller.carrito.isEmpty || controller.isLoading || controller.clienteIdController.text.trim().isEmpty
+              onPressed: controller.carrito.isEmpty || controller.isLoading
                   ? null
                   : () async {
                       final result = await controller.registrarVenta();
                       if (result != null && context.mounted) {
                         showDialog(
                           context: context,
-                          builder: (ctx) => ReceiptDialog(sale: result['data']),
+                          builder: (ctx) => ReceiptDialog(sale: controller.ultimaVenta ?? result['data']),
                         );
                       }
                     },
@@ -239,31 +240,64 @@ class CartSection extends StatelessWidget {
   }
 
   Widget _buildConsumidorField(BuildContext context, VentasController controller) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.ayanamiBlue.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: Row(
-        children: [
-          Icon(Icons.person_outline_rounded, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 16),
-          const SizedBox(width: 8),
-          Expanded(
-              child: TextField(
-              controller: controller.clienteIdController,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              decoration: const InputDecoration(
-                hintText: 'Nombre del Cliente',
-                hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 6),
-              ),
-            ),
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.ayanamiBlue.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Row(
+            children: [
+              Icon(Icons.person_outline_rounded, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: TextField(
+                  controller: controller.clienteIdController,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  decoration: const InputDecoration(
+                    hintText: 'Nombre del Cliente',
+                    hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.ayanamiBlue.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Row(
+            children: [
+              Icon(Icons.badge_outlined, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: TextField(
+                  controller: controller.clienteIdentificacionController,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    hintText: 'Cédula / ID del Cliente',
+                    hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

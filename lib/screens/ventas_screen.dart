@@ -224,13 +224,23 @@ class _VentasScreenState extends State<VentasScreen> {
           leading: CircleAvatar(
               backgroundColor: AppTheme.ayanamiBlue.withOpacity(0.1),
               child: const Icon(Icons.shopping_cart, color: AppTheme.ayanamiBlue)),
-          title: Text('Venta #${sale['ventaId']}',
+          title: Text('Venta #${sale['numeroFactura'] ?? sale['ventaId']}',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).textTheme.bodyLarge?.color)),
-          subtitle: Text(
-              '${_formatDate(_getSafeDate(sale))} ${_formatTime(_getSafeDate(sale))}',
-              style: const TextStyle(color: Colors.grey)),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_formatDate(_getSafeDate(sale))} ${_formatTime(_getSafeDate(sale))}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+              Text(
+                _clienteDisplay(sale),
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+              ),
+            ],
+          ),
           trailing: Text('\$${sale['total']}',
               style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.greenMetal)),
         );
@@ -279,7 +289,7 @@ class _VentasScreenState extends State<VentasScreen> {
                   ],
                 ),
                 const Spacer(),
-                Text('Factura #${sale['ventaId']}',
+                Text('Factura #${sale['numeroFactura'] ?? sale['ventaId']}',
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -287,6 +297,12 @@ class _VentasScreenState extends State<VentasScreen> {
                 const SizedBox(height: 4),
                 Text(_formatDate(_getSafeDate(sale)),
                     style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                Text(
+                  _clienteDisplay(sale),
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 9),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
@@ -342,5 +358,15 @@ class _VentasScreenState extends State<VentasScreen> {
       }
     }
     return "2000-01-01T00:00:00Z"; 
+  }
+
+  String _clienteDisplay(Map<String, dynamic> sale) {
+    String get(String k) => sale[k]?.toString()?.trim() ?? '';
+    final n = get('clienteNombre') ?? get('nombreCliente') ?? sale['cliente']?['nombre']?.toString()?.trim() ?? '';
+    final id = get('clienteIdentificacion') ?? get('identificacionCliente') ?? sale['cliente']?['identificacion']?.toString()?.trim() ?? get('clienteId') ?? '';
+    if (n.isNotEmpty && id.isNotEmpty) return 'Cliente: $n ($id)';
+    if (n.isNotEmpty) return 'Cliente: $n';
+    if (id.isNotEmpty) return 'Cliente: $id';
+    return 'Cliente: Consumidor Final';
   }
 }

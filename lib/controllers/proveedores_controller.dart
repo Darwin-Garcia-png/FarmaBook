@@ -1,10 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class ProveedoresController extends ChangeNotifier {
-  final Dio _dio = ApiService.dio;
-
   List<dynamic> proveedores = [];
   List<dynamic> _filteredCache = [];
   bool isLoading = true;
@@ -56,9 +53,7 @@ class ProveedoresController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await ApiService.setAuthHeader();
-      final res = await _dio.get('/inventory/suppliers');
-      proveedores = res.data['data'] ?? [];
+      proveedores = await ApiService.getSuppliers();
       _applyLocalFilter();
     } catch (e) {
       error = e.toString();
@@ -72,9 +67,8 @@ class ProveedoresController extends ChangeNotifier {
     if (nombreCtrl.text.trim().isEmpty) return false;
 
     try {
-      await ApiService.setAuthHeader();
       
-      await _dio.post('/inventory/suppliers', data: {
+      await ApiService.createSupplier({
         'nombre': nombreCtrl.text.trim(),
         'direccion': direccionCtrl.text.trim(),
         'telefono': telefonoCtrl.text.trim(),
@@ -92,8 +86,7 @@ class ProveedoresController extends ChangeNotifier {
 
   Future<bool> actualizarProveedor(String id, Map<String, dynamic> data) async {
     try {
-      await ApiService.setAuthHeader();
-      await _dio.put('/inventory/suppliers/$id', data: data);
+      await ApiService.updateSupplier(id, data);
       await cargarProveedores();
       return true;
     } catch (e) {
@@ -104,8 +97,7 @@ class ProveedoresController extends ChangeNotifier {
 
   Future<bool> eliminarProveedor(String id) async {
     try {
-      await ApiService.setAuthHeader();
-      await _dio.delete('/inventory/suppliers/$id');
+      await ApiService.deleteSupplier(id);
       await cargarProveedores();
       return true;
     } catch (e) {

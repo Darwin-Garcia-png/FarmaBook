@@ -41,11 +41,11 @@ class ReceiptDialog extends StatelessWidget {
                   height: 40,
                   thickness: 1,
                   color: Theme.of(context).dividerColor),
-              _receiptRow(context, 'ID Venta:', '#${sale['ventaId']}'),
+              _receiptRow(context, 'Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
-                if (_getConsumidor().isNotEmpty)
-                _receiptRow(context, 'Cliente:', _getConsumidor()),
+              _receiptRow(context, 'Cliente:', _clienteName()),
+              _receiptRow(context, 'Cédula:', _clienteId()),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text('PRODUCTOS',
@@ -171,8 +171,42 @@ class ReceiptDialog extends StatelessWidget {
     );
   }
 
-  String _getConsumidor() {
-    return sale['clienteId']?.toString() ?? '';
+  String _getClienteNombre() {
+    final v = sale['clienteNombre']?.toString() ??
+        sale['nombreCliente']?.toString() ??
+        sale['cliente']?['nombre']?.toString() ??
+        sale['cliente']?['nombreCompleto']?.toString() ??
+        sale['cliente']?['razonSocial']?.toString() ??
+        sale['cliente_nombre']?.toString() ??
+        sale['nombre']?.toString() ??
+        sale['clienteName']?.toString() ??
+        '';
+    return v.trim();
+  }
+
+  String _getClienteIdentificacion() {
+    final v = sale['clienteIdentificacion']?.toString() ??
+        sale['identificacionCliente']?.toString() ??
+        sale['cliente']?['identificacion']?.toString() ??
+        sale['cliente']?['cedula']?.toString() ??
+        sale['cliente']?['ruc']?.toString() ??
+        sale['clienteId']?.toString() ??
+        sale['cliente_id']?.toString() ??
+        sale['cedulaCliente']?.toString() ??
+        sale['clienteCedula']?.toString() ??
+        sale['idCliente']?.toString() ??
+        '';
+    return v.trim();
+  }
+
+  String _clienteName() {
+    final n = _getClienteNombre();
+    return n.isNotEmpty ? n : 'Consumidor Final';
+  }
+
+  String _clienteId() {
+    final id = _getClienteIdentificacion();
+    return id.isNotEmpty ? id : '—';
   }
 
   Future<void> _printTicket(BuildContext context) async {
@@ -208,11 +242,11 @@ class ReceiptDialog extends StatelessWidget {
               pw.SizedBox(height: 6),
               pw.Divider(thickness: 1),
               pw.SizedBox(height: 6),
-              _row('ID:', '#${sale['ventaId']}'),
+              _row('Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
               _row('Fecha:', _formatDate(_getSafeDate(sale))),
               _row('Hora:', _formatTime(_getSafeDate(sale))),
-              if (_getConsumidor().isNotEmpty)
-                _row('Cliente:', _getConsumidor()),
+              _row('Cliente:', _clienteName()),
+              _row('Cédula:', _clienteId()),
               pw.SizedBox(height: 6),
               pw.Divider(thickness: 1),
               pw.SizedBox(height: 4),

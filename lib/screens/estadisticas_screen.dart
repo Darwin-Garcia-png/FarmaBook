@@ -3,7 +3,6 @@ import 'package:fl_chart/fl_chart.dart';
 import '../controllers/estadisticas_controller.dart';
 import '../utils/price_formatter.dart';
 import '../theme/app_theme.dart';
-import '../widgets/premium_header.dart';
 
 class EstadisticasScreen extends StatefulWidget {
   const EstadisticasScreen({super.key});
@@ -26,301 +25,348 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
   @override
   void dispose() { _c.dispose(); super.dispose(); }
 
-  // ─────────────── HELPERS ────────────────────────────────────────
   static const _colors = [AppTheme.ayanamiBlue, AppTheme.greenMetal, Color(0xFFF59E0B), AppTheme.reiOrangeRed, Color(0xFF8B5CF6)];
 
   String _fmt(double v) => formatCop(v);
 
-  Widget _card({required Widget child, Color? accent}) => Container(
-    padding: const EdgeInsets.all(28),
-    decoration: BoxDecoration(
-      color: Theme.of(context).cardTheme.color,
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: (accent ?? Colors.grey).withOpacity(0.12)),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 24, offset: const Offset(0, 8))],
-    ),
-    child: child,
-  );
-
-  Widget _kpi(String label, String value, IconData icon, Color color, {String? sub}) => _card(
-    accent: color,
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)), child: Icon(icon, color: color, size: 24)),
-      const SizedBox(height: 20),
-      Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-      const SizedBox(height: 4),
-      Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -1)),
-      if (sub != null) ...[const SizedBox(height: 4), Text(sub, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w700))],
-    ]),
-  );
-
-  Widget _section(String label, {required Widget child}) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Row(children: [
-      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
-      const SizedBox(width: 16),
-      Expanded(child: Divider(color: Colors.grey.withOpacity(0.15))),
-    ]),
-    const SizedBox(height: 20),
-    child,
-  ]);
-
-  // ─────────────── BUILD ──────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PremiumHeader(
-        title: 'Análisis Estratégico',
-        subtitle: 'Inteligencia de negocio en tiempo real',
-        icon: Icons.insights_rounded,
-        baseColor: AppTheme.ayanamiBlue,
-        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          ElevatedButton.icon(
-            icon: _isPdf ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.picture_as_pdf_rounded, size: 16),
-            label: const Text('PDF', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).cardTheme.color,
+        elevation: 0, scrolledUnderElevation: 0.5,
+        title: Row(children: [
+          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+            child: const Icon(Icons.insights_rounded, color: AppTheme.ayanamiBlue, size: 22)),
+          const SizedBox(width: 14),
+          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('ESTADÍSTICAS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.3)),
+            Text('Análisis completo de rendimiento', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+          ]),
+        ]),
+        actions: [
+          IconButton(icon: Icon(_isPdf ? Icons.hourglass_top : Icons.picture_as_pdf_rounded, color: AppTheme.reiOrangeRed, size: 22),
             onPressed: _isPdf ? null : () async {
               setState(() => _isPdf = true);
-              try { await _c.downloadPdfReport(); } catch (_) {} finally { if (mounted) setState(() => _isPdf = false); }
-            },
-          ),
-          const SizedBox(width: 10),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.summarize_rounded, size: 16),
-            label: const Text('RESUMEN', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
-            onPressed: () => _showSummary(),
-          ),
-          const SizedBox(width: 10),
-          IconButton(icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)), onPressed: _c.cargarEstadisticas),
-        ]),
+              try {
+                await _c.downloadPdfReport();
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF guardado en Descargas')));
+              } catch (_) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al guardar PDF'), backgroundColor: AppTheme.reiOrangeRed));
+              } finally { if (mounted) setState(() => _isPdf = false); }
+            }),
+          IconButton(icon: const Icon(Icons.summarize_rounded, color: AppTheme.ayanamiBlue, size: 22), onPressed: _showSummary),
+          IconButton(icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500, size: 22), onPressed: _c.cargarEstadisticas),
+        ],
       ),
       body: _c.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.all(32),
-                sliver: SliverList(delegate: SliverChildListDelegate([
-                  if (_c.error != null) _errorBanner(),
-                  _section('MÉTRICAS DE HOY', child: _todayGrid()),
-                  const SizedBox(height: 40),
-                  _section('INGRESOS POR HORA — HOY', child: _hourlyChart()),
-                  const SizedBox(height: 40),
-                  _section('RENDIMIENTO MENSUAL', child: _monthlyGrid()),
-                  const SizedBox(height: 40),
-                  _section('TENDENCIA DIARIA DEL MES', child: _trendChart()),
-                  const SizedBox(height: 40),
-                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Expanded(flex: 3, child: _section('RANKINGS DE PRODUCTOS', child: _rankingsRow())),
-                    const SizedBox(width: 24),
-                    Expanded(flex: 2, child: _section('VENTAS POR CATEGORÍA', child: _donut())),
-                  ]),
-                  const SizedBox(height: 60),
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (_c.error != null) _errorBanner(),
+
+                // ── HOY ──
+                _sectionH('RESUMEN DEL DÍA'),
+                const SizedBox(height: 16),
+                _card(Column(children: [
+                  _row2(
+                    _kpi('Ingresos Hoy', _fmt(_c.ingresosHoy), Icons.payments_rounded, AppTheme.ayanamiBlue),
+                    _kpi('Ventas Hoy', '${_c.ventasHoy} facturas', Icons.receipt_long_rounded, AppTheme.greenMetal),
+                  ),
+                  const SizedBox(height: 16),
+                  _row2(
+                    _kpi('Ticket Promedio', _fmt(_c.averageTicket), Icons.analytics_rounded, const Color(0xFF8B5CF6)),
+                    _kpi('Unidades', '${_c.totalUnidadesHoy} uds', Icons.inventory_2_rounded, AppTheme.reiOrangeRed),
+                  ),
+                  const SizedBox(height: 16),
+                  _row2(
+                    _kpi('Ticket Máximo', _fmt(_c.ticketMaximo), Icons.arrow_upward_rounded, AppTheme.greenMetal, sub: 'Venta más alta'),
+                    _kpi('Ticket Mínimo', _fmt(_c.ticketMinimo), Icons.arrow_downward_rounded, Colors.orange, sub: 'Venta más baja'),
+                  ),
+                  const SizedBox(height: 16),
+                  _row2(
+                    _kpi('Hora Pico', '${_c.peakHour.toString().padLeft(2, '0')}:00', Icons.schedule_rounded, AppTheme.ayanamiBlue, sub: '${_c.peakHourCount} ventas'),
+                    _kpi('Horario', '${_c.primeraVentaHora} – ${_c.ultimaVentaHora}', Icons.access_time_filled_rounded, Colors.blueGrey, sub: 'Primera → Última'),
+                  ),
                 ])),
-              ),
-            ]),
+                const SizedBox(height: 28),
+
+                // ── GRÁFICA POR HORA ──
+                _sectionH('VENTAS POR HORA'),
+                const SizedBox(height: 16),
+                _card(
+                  SizedBox(height: 220, child: _hourlyChart()),
+                ),
+                const SizedBox(height: 28),
+
+                // ── MES ──
+                _sectionH('RENDIMIENTO MENSUAL'),
+                const SizedBox(height: 16),
+                _card(Column(children: [
+                  _row2(
+                    _kpi('Ingresos del Mes', _fmt(_c.ingresosMes), Icons.calendar_month_rounded, AppTheme.ayanamiBlue),
+                    _kpi('Ventas del Mes', '${_c.ventasMes} facturas', Icons.shopping_bag_rounded, AppTheme.greenMetal),
+                  ),
+                  const SizedBox(height: 16),
+                  _row2(
+                    _kpi('Egresos (Inv.)', _fmt(_c.egresosMes), Icons.trending_down_rounded, AppTheme.reiOrangeRed),
+                    _kpi('Balance Neto', _fmt(_c.balanceMes), Icons.account_balance_wallet_rounded, const Color(0xFF8B5CF6)),
+                  ),
+                  const SizedBox(height: 16),
+                  _row2(
+                    _kpi('Promedio/día', _fmt(_c.promedioVentaDiaria), Icons.bar_chart_rounded, Colors.orange, sub: 'Ingreso diario medio'),
+                    _kpi('Mejor Día', 'Día ${_c.mejorDiaMes}', Icons.workspace_premium_rounded, AppTheme.greenMetal, sub: _fmt(_c.mejorDiaIngresos)),
+                  ),
+                  const SizedBox(height: 16),
+                  _row2(
+                    _kpi('Días con Ventas', '${_c.diasConVentas} días', Icons.event_available_rounded, AppTheme.ayanamiBlue),
+                    _kpi('Margen', _c.ingresosMes > 0 ? '${((_c.balanceMes / _c.ingresosMes) * 100).toStringAsFixed(1)}%' : '--', Icons.percent_rounded, const Color(0xFF8B5CF6), sub: 'Balance / Ingresos'),
+                  ),
+                ])),
+                const SizedBox(height: 28),
+
+                // ── TENDENCIA DIARIA ──
+                if (_c.dailyTrend.isNotEmpty) ...[
+                  _sectionH('TENDENCIA DIARIA DEL MES'),
+                  const SizedBox(height: 16),
+                  _card(
+                    SizedBox(height: 260, child: _trendChart()),
+                  ),
+                  const SizedBox(height: 28),
+                ],
+
+                // ── RANKINGS + DONUT ──
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(flex: 3, child: Column(children: [
+                    _sectionH('TOP PRODUCTOS'),
+                    const SizedBox(height: 16),
+                    _card(Column(children: [
+                      _rankBlock('HOY', _c.topProductosHoy, Icons.bolt_rounded),
+                      const Divider(height: 24),
+                      _rankBlock('MES', _c.topProductosMes, Icons.calendar_today_rounded),
+                      const Divider(height: 24),
+                      _rankBlock('GLOBAL', _c.topProductosGlobal, Icons.workspace_premium_rounded),
+                    ])),
+                  ])),
+                  const SizedBox(width: 24),
+                  Expanded(flex: 2, child: Column(children: [
+                    _sectionH('CATEGORÍAS'),
+                    const SizedBox(height: 16),
+                    _donut(),
+                  ])),
+                ]),
+                const SizedBox(height: 40),
+              ]),
+            ),
     );
   }
 
-  // ─────────────── SECCIONES ──────────────────────────────────────
-  Widget _todayGrid() => SizedBox(height: 350, child: GridView.count(
-    physics: const NeverScrollableScrollPhysics(),
-    crossAxisCount: 4, childAspectRatio: 1.25, mainAxisSpacing: 20, crossAxisSpacing: 20,
-    children: [
-      _kpi('Ingresos Hoy', _fmt(_c.ingresosHoy), Icons.payments_rounded, AppTheme.ayanamiBlue),
-      _kpi('Ventas Realizadas', '${_c.ventasHoy} facturas', Icons.receipt_long_rounded, AppTheme.greenMetal),
-      _kpi('Ticket Promedio', _fmt(_c.averageTicket), Icons.analytics_rounded, const Color(0xFF8B5CF6)),
-      _kpi('Ticket Máximo', _fmt(_c.ticketMaximo), Icons.arrow_upward_rounded, AppTheme.greenMetal, sub: 'Venta más grande del día'),
-      _kpi('Ticket Mínimo', _fmt(_c.ticketMinimo), Icons.arrow_downward_rounded, Colors.orange, sub: 'Venta más pequeña del día'),
-      _kpi('Unidades Vendidas', '${_c.totalUnidadesHoy} uds', Icons.inventory_2_rounded, AppTheme.reiOrangeRed),
-      _kpi('Hora Pico', '${_c.peakHour.toString().padLeft(2,'0')}:00', Icons.schedule_rounded, AppTheme.ayanamiBlue, sub: '${_c.peakHourCount} ventas esa hora'),
-      _kpi('Horario Activo', '${_c.primeraVentaHora} – ${_c.ultimaVentaHora}', Icons.access_time_filled_rounded, Colors.blueGrey, sub: 'Primera → Última venta'),
-    ],
-  ));
+  Widget _sectionH(String t) => Row(children: [
+    Text(t, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
+    const SizedBox(width: 16), Expanded(child: Divider(color: Colors.grey.withOpacity(0.15))),
+  ]);
 
-  Widget _hourlyChart() {
-    final hours = List.generate(24, (i) => i);
-    final maxVal = _c.ingresosPorHora.values.fold(0.0, (m, v) => v > m ? v : m);
+  Widget _card(Widget c) => Container(
+    width: double.infinity, padding: const EdgeInsets.all(24),
+    decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: Colors.grey.withOpacity(0.08))),
+    child: c,
+  );
 
-    return _card(child: SizedBox(
-      height: 200,
-      child: BarChart(BarChartData(
-        maxY: maxVal > 0 ? maxVal * 1.2 : 10,
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 2, getTitlesWidget: (v, _) => Text('${v.toInt()}h', style: const TextStyle(fontSize: 9, color: Colors.grey)))),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        barGroups: hours.map((h) {
-          final val = _c.ingresosPorHora[h] ?? 0;
-          final isPeak = h == _c.peakHour && val > 0;
-          return BarChartGroupData(x: h, barRods: [
-            BarChartRodData(toY: val, width: 12, borderRadius: BorderRadius.circular(4),
-              color: isPeak ? AppTheme.ayanamiBlue : AppTheme.ayanamiBlue.withOpacity(0.25)),
-          ]);
-        }).toList(),
-      )),
-    ));
+  Widget _row2(Widget a, Widget b) => Row(children: [
+    Expanded(child: a), const SizedBox(width: 16), Expanded(child: b),
+  ]);
+
+  Widget _kpi(String l, String v, IconData ic, Color c, {String? sub}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.withOpacity(0.1))),
+      child: Row(children: [
+        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          child: Icon(ic, color: c, size: 18)),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(v, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: c, letterSpacing: -0.3)),
+          Text(l, style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+          if (sub != null) Text(sub, style: TextStyle(fontSize: 9, color: c.withOpacity(0.7), fontWeight: FontWeight.w600, fontStyle: FontStyle.italic)),
+        ])),
+      ]),
+    );
   }
 
-  Widget _monthlyGrid() => SizedBox(height: 350, child: GridView.count(
-    physics: const NeverScrollableScrollPhysics(),
-    crossAxisCount: 4, childAspectRatio: 1.25, mainAxisSpacing: 20, crossAxisSpacing: 20,
-    children: [
-      _kpi('Ingresos del Mes', _fmt(_c.ingresosMes), Icons.calendar_month_rounded, AppTheme.ayanamiBlue),
-      _kpi('Ventas del Mes', '${_c.ventasMes} facturas', Icons.shopping_bag_rounded, AppTheme.greenMetal),
-      _kpi('Egresos (Inventario)', _fmt(_c.egresosMes), Icons.trending_down_rounded, AppTheme.reiOrangeRed),
-      _kpi('Balance Neto', _fmt(_c.balanceMes), Icons.account_balance_wallet_rounded, const Color(0xFF8B5CF6)),
-      _kpi('Promedio Diario', _fmt(_c.promedioVentaDiaria), Icons.bar_chart_rounded, Colors.orange, sub: 'Ingreso medio por día'),
-      _kpi('Mejor Día del Mes', 'Día ${_c.mejorDiaMes}', Icons.workspace_premium_rounded, AppTheme.greenMetal, sub: _fmt(_c.mejorDiaIngresos)),
-      _kpi('Días con Ventas', '${_c.diasConVentas} días', Icons.event_available_rounded, AppTheme.ayanamiBlue),
-      _kpi('Margen Operativo', _c.ingresosMes > 0 ? '${((_c.balanceMes / _c.ingresosMes) * 100).toStringAsFixed(1)}%' : '--%', Icons.percent_rounded, const Color(0xFF8B5CF6), sub: 'Balance / Ingresos mes'),
-    ],
-  ));
-
-  Widget _trendChart() => _card(child: SizedBox(
-    height: 280,
-    child: LineChart(LineChartData(
-      gridData: FlGridData(drawVerticalLine: false, getDrawingHorizontalLine: (_) => FlLine(color: Colors.grey.withOpacity(0.06), strokeWidth: 1)),
+  Widget _hourlyChart() {
+    final maxVal = _c.ingresosPorHora.values.fold(0.0, (m, v) => v > m ? v : m);
+    return BarChart(BarChartData(
+      maxY: maxVal > 0 ? maxVal * 1.2 : 10,
+      gridData: const FlGridData(show: false),
       borderData: FlBorderData(show: false),
       titlesData: FlTitlesData(
-        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 5, getTitlesWidget: (v, _) => Padding(padding: const EdgeInsets.only(top: 8), child: Text('${v.toInt()}', style: const TextStyle(fontSize: 10, color: Colors.grey))))),
-        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 48, getTitlesWidget: (v, _) => Text('\$${v.toInt()}', style: const TextStyle(fontSize: 9, color: Colors.grey)))),
+        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 2,
+          getTitlesWidget: (v, _) => Text('${v.toInt()}h', style: const TextStyle(fontSize: 8, color: Colors.grey)))),
+        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
-      lineBarsData: [LineChartBarData(
-        spots: _c.dailyTrend.map((e) => FlSpot(e['day'].toDouble(), e['total'] as double)).toList(),
-        isCurved: true, color: AppTheme.ayanamiBlue, barWidth: 5, isStrokeCapRound: true,
-        dotData: FlDotData(show: true, getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(radius: spot.y > 0 ? 3 : 0, color: AppTheme.ayanamiBlue, strokeWidth: 0)),
-        belowBarData: BarAreaData(show: true, gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppTheme.ayanamiBlue.withOpacity(0.18), Colors.transparent])),
-      )],
-    )),
-  ));
+      barGroups: List.generate(24, (h) {
+        final val = _c.ingresosPorHora[h] ?? 0;
+        return BarChartGroupData(x: h, barRods: [
+          BarChartRodData(toY: val, width: 8, borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+            color: h == _c.peakHour && val > 0 ? AppTheme.ayanamiBlue : AppTheme.ayanamiBlue.withOpacity(0.2)),
+        ]);
+      }),
+    ));
+  }
 
-  Widget _rankingsRow() => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Expanded(child: _rankList('Top Hoy', _c.topProductosHoy, Icons.bolt_rounded)),
-    const SizedBox(width: 16),
-    Expanded(child: _rankList('Top Mes', _c.topProductosMes, Icons.calendar_today_rounded)),
-    const SizedBox(width: 16),
-    Expanded(child: _rankList('Top Global', _c.topProductosGlobal, Icons.workspace_premium_rounded)),
-  ]);
+  Widget _trendChart() {
+    final spots = _c.dailyTrend.map((e) => FlSpot((e['day'] as num).toDouble(), (e['total'] as num).toDouble())).toList();
+    if (spots.isEmpty) return const SizedBox();
+    final maxSpot = spots.reduce((a, b) => a.y > b.y ? a : b);
+    final avg = spots.map((s) => s.y).reduce((a, b) => a + b) / spots.length;
+    return LineChart(LineChartData(
+      gridData: FlGridData(drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(
+        color: v == 0 || v == maxSpot.y ? Colors.grey.withOpacity(0.12) : Colors.grey.withOpacity(0.06),
+        strokeWidth: v == 0 ? 1 : 0.5, dashArray: v == 0 ? null : [4, 4])),
+      borderData: FlBorderData(show: false),
+      minY: 0,
+      titlesData: FlTitlesData(
+        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 3,
+          getTitlesWidget: (v, _) => Padding(padding: const EdgeInsets.only(top: 8),
+            child: Text('Día ${v.toInt()}', style: TextStyle(fontSize: 9, color: Colors.grey.shade500, fontWeight: FontWeight.w600))))),
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 48,
+          getTitlesWidget: (v, _) => Text( _fmt(v), style: TextStyle(fontSize: 8, color: Colors.grey.shade400, fontWeight: FontWeight.w600)))),
+        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      ),
+      lineBarsData: [
+        LineChartBarData(
+          spots: spots,
+          isCurved: true, color: AppTheme.ayanamiBlue, barWidth: 3, isStrokeCapRound: true,
+          dotData: FlDotData(show: true, getDotPainter: (spot, _, __, ___) =>
+            FlDotCirclePainter(
+              radius: spot == maxSpot ? 6 : (spot.y > 0 ? 3 : 0),
+              color: Colors.white, strokeWidth: spot == maxSpot ? 3 : 2,
+              strokeColor: spot == maxSpot ? const Color(0xFF8B5CF6) : AppTheme.ayanamiBlue.withOpacity(0.5))),
+          belowBarData: BarAreaData(show: true,
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
+              colors: [AppTheme.ayanamiBlue.withOpacity(0.2), const Color(0xFF8B5CF6).withOpacity(0.05), Colors.transparent])),
+        ),
+        if (avg > 0)
+          LineChartBarData(
+            spots: [FlSpot(spots.first.x, avg), FlSpot(spots.last.x, avg)],
+            isCurved: false, color: Colors.orange.withOpacity(0.5), barWidth: 1.5, dashArray: [6, 4],
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(show: false),
+          ),
+      ],
+      extraLinesData: ExtraLinesData(horizontalLines: avg > 0 ? [
+        HorizontalLine(y: avg, color: Colors.orange.withOpacity(0.5), strokeWidth: 1.5, dashArray: [6, 4],
+          label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+            style: TextStyle(color: Colors.orange.shade400, fontSize: 9, fontWeight: FontWeight.w700),
+            labelResolver: (_) => 'Prom ${_fmt(avg)}'))
+      ] : []),
+    ));
+  }
 
-  Widget _rankList(String title, List items, IconData icon) => _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Row(children: [Icon(icon, color: AppTheme.ayanamiBlue, size: 16), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5))]),
-    const SizedBox(height: 16),
-    if (items.isEmpty) const Text('Sin datos', style: TextStyle(color: Colors.grey, fontSize: 12))
-    else ...items.take(5).toList().asMap().entries.map((entry) {
-      final i = entry.key; final p = entry.value;
-      return Padding(padding: const EdgeInsets.only(bottom: 12), child: Row(children: [
-        Container(width: 24, height: 24, decoration: BoxDecoration(color: _colors[i % _colors.length].withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
-          child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: _colors[i % _colors.length])))),
-        const SizedBox(width: 10),
-        Expanded(child: Text(p['nombre'] ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis)),
-        Text('${p['unidadesVendidas']} u', style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
-      ]));
-    }),
-  ]));
+  Widget _rankBlock(String t, List items, IconData ic) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [Icon(ic, color: AppTheme.ayanamiBlue, size: 14), const SizedBox(width: 6), Text(t, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12))]),
+      const SizedBox(height: 10),
+      if (items.isEmpty) const Padding(padding: EdgeInsets.only(bottom: 4), child: Text('Sin datos', style: TextStyle(color: Colors.grey, fontSize: 11)))
+      else ...items.take(5).toList().asMap().entries.map((e) {
+        final i = e.key; final p = e.value;
+        return Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
+          Container(width: 20, height: 20, decoration: BoxDecoration(color: _colors[i % _colors.length].withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
+            child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: _colors[i % _colors.length])))),
+          const SizedBox(width: 8),
+          Expanded(child: Text(p['nombre'] ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Text('${p['unidadesVendidas']}', style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+        ]));
+      }),
+    ]);
+  }
 
   Widget _donut() {
     final entries = _c.categoryData.entries.take(5).toList();
     final total = entries.fold(0.0, (s, e) => s + e.value);
-    final sections = entries.indexed.map(((int, MapEntry<String, double>) rec) {
-      final (i, e) = rec;
-      return PieChartSectionData(color: _colors[i % _colors.length], value: e.value, title: '', radius: 28);
-    }).toList();
-
-    return _card(child: Column(children: [
-      SizedBox(height: 180, child: PieChart(PieChartData(sections: sections.isEmpty ? [PieChartSectionData(color: Colors.grey.shade200, value: 1, title: '')] : sections, centerSpaceRadius: 45, sectionsSpace: 2))),
-      const SizedBox(height: 20),
-      if (entries.isEmpty) const Text('Sin datos de categorías', style: TextStyle(color: Colors.grey, fontSize: 12))
-      else ...entries.indexed.map(((int, MapEntry<String, double>) rec) {
-        final (i, e) = rec;
-        final pct = total > 0 ? (e.value / total * 100).toStringAsFixed(1) : '0';
-        return Padding(padding: const EdgeInsets.only(bottom: 10), child: Row(children: [
-          Container(width: 10, height: 10, decoration: BoxDecoration(color: _colors[i % _colors.length], borderRadius: BorderRadius.circular(3))),
-          const SizedBox(width: 10),
-          Expanded(child: Text(e.key, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-          Text('$pct%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: _colors[i % _colors.length])),
+    return _card(Column(children: [
+      SizedBox(height: 150, child: PieChart(PieChartData(
+        sections: entries.isEmpty
+          ? [PieChartSectionData(color: Colors.grey.shade200, value: 1, title: '')]
+          : entries.indexed.map(((int, MapEntry<String, double>) r) {
+              final (i, e) = r;
+              return PieChartSectionData(color: _colors[i % _colors.length], value: e.value, title: '', radius: 26);
+            }).toList(),
+        centerSpaceRadius: 38, sectionsSpace: 2,
+      ))),
+      const SizedBox(height: 16),
+      if (entries.isEmpty) const Text('Sin datos de categorías', style: TextStyle(color: Colors.grey, fontSize: 11))
+      else ...entries.indexed.map(((int, MapEntry<String, double>) r) {
+        final (i, e) = r;
+        final pct = total > 0 ? '${(e.value / total * 100).toStringAsFixed(1)}%' : '0%';
+        return Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
+          Container(width: 8, height: 8, decoration: BoxDecoration(color: _colors[i % _colors.length], borderRadius: BorderRadius.circular(2))),
+          const SizedBox(width: 8),
+          Expanded(child: Text(e.key, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+          Text(pct, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: _colors[i % _colors.length])),
         ]));
       }),
     ]));
   }
 
   Widget _errorBanner() => Container(
-    padding: const EdgeInsets.all(16), margin: const EdgeInsets.only(bottom: 24),
-    decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.reiOrangeRed.withOpacity(0.3))),
-    child: Row(children: [const Icon(Icons.warning_amber_rounded, color: AppTheme.reiOrangeRed), const SizedBox(width: 12), Expanded(child: Text(_c.error!, style: const TextStyle(color: AppTheme.reiOrangeRed)))]),
+    width: double.infinity, padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.reiOrangeRed.withOpacity(0.3))),
+    child: Row(children: [const Icon(Icons.warning_amber_rounded, color: AppTheme.reiOrangeRed, size: 18), const SizedBox(width: 10), Expanded(child: Text(_c.error!, style: const TextStyle(color: AppTheme.reiOrangeRed, fontSize: 12)))]),
   );
 
-  // ─────────────── MODAL RESUMEN DEL DÍA ──────────────────────────
+  // ── SUMMARY DIALOG ──
   void _showSummary() {
     final s = _c.dailySummary;
     if (s.isEmpty) return;
-
     showDialog(context: context, builder: (ctx) => Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        width: 580,
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
-        decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(32)),
+        width: 540, constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
+        decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(28)),
         child: Column(children: [
-          // Header
-          Container(padding: const EdgeInsets.all(28), decoration: BoxDecoration(gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withOpacity(0.8)]), borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
+          Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withOpacity(0.8)]), borderRadius: const BorderRadius.vertical(top: Radius.circular(28))),
             child: Row(children: [
-              const Icon(Icons.auto_graph_rounded, color: Colors.white, size: 28),
-              const SizedBox(width: 16),
+              const Icon(Icons.auto_graph_rounded, color: Colors.white, size: 24),
+              const SizedBox(width: 14),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('CIERRE DE CAJA', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                Text('${s['fecha']}  •  Generado: ${s['hora']} hrs', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                const Text('CIERRE DE CAJA', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                Text('${s['fecha']}  •  ${s['hora']} hrs', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
               ])),
-              IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+              IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(ctx)),
             ]),
           ),
-          // Content
-          Flexible(child: SingleChildScrollView(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-            _modalSection('💰 RESUMEN FINANCIERO', [
-              _modalRow('Ingresos Brutos', _fmt(s['ingresos']), bold: true, color: AppTheme.greenMetal),
-              _modalRow('Ventas Totales', '${s['ventas']} facturas emitidas'),
-              _modalRow('Ticket Promedio', _fmt(s['ticketPromedio'])),
-              _modalRow('Ticket Más Alto', _fmt(s['ticketMaximo']), color: AppTheme.greenMetal),
-              _modalRow('Ticket Más Bajo', _fmt(s['ticketMinimo']), color: Colors.orange),
+          Flexible(child: SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _modalS('FINANCIERO', [
+              _modalR('Ingresos Brutos', _fmt(s['ingresos']), bold: true, color: AppTheme.greenMetal),
+              _modalR('Ventas Totales', '${s['ventas']} facturas'),
+              _modalR('Ticket Promedio', _fmt(s['ticketPromedio'])),
+              _modalR('Ticket Máximo', _fmt(s['ticketMaximo']), color: AppTheme.greenMetal),
+              _modalR('Ticket Mínimo', _fmt(s['ticketMinimo']), color: Colors.orange),
             ]),
-            const SizedBox(height: 20),
-
-            _modalSection('📦 ACTIVIDAD OPERATIVA', [
-              _modalRow('Unidades Despachadas', '${s['totalUnidades']} unidades en total'),
-              _modalRow('Primera Venta del Día', '${s['primeraVenta']} hrs'),
-              _modalRow('Última Venta del Día', '${s['ultimaVenta']} hrs'),
-              _modalRow('Hora Pico', '${s['horaPico']}  (${s['horaPicoVentas']} ventas)'),
-              _modalRow('Producto Estrella', '${s['productoEstrella']} — ${s['unidadesEstrella']} uds'),
+            const SizedBox(height: 16),
+            _modalS('OPERATIVO', [
+              _modalR('Unidades Despachadas', '${s['totalUnidades']} uds'),
+              _modalR('Primera Venta', '${s['primeraVenta']} hrs'),
+              _modalR('Última Venta', '${s['ultimaVenta']} hrs'),
+              _modalR('Hora Pico', '${s['horaPico']} (${s['horaPicoVentas']} ventas)'),
+              _modalR('Producto Estrella', '${s['productoEstrella']}'),
             ]),
-            const SizedBox(height: 20),
-
-            if ((s['top5Hoy'] as List).isNotEmpty) ...[
-              _modalSection('🏆 TOP 5 PRODUCTOS HOY', (s['top5Hoy'] as List).map<Widget>((p) =>
-                Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
-                  const Icon(Icons.fiber_manual_record, size: 8, color: AppTheme.ayanamiBlue),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(p['nombre'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
-                  Text('${p['unidades']} unidades', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppTheme.ayanamiBlue)),
-                ])),
-              ).toList()),
-              const SizedBox(height: 20),
-            ],
-
-            _modalSection('📅 CONTEXTO MENSUAL', [
-              _modalRow('Ingresos del Mes', _fmt(s['ingresosMes']), bold: true),
-              _modalRow('Ventas del Mes', '${s['ventasMes']} facturas'),
-              _modalRow('Promedio Diario', _fmt(s['promedioDiario'])),
-              _modalRow('Mejor Día del Mes', 'Día ${s['mejorDia']}  →  ${_fmt(s['mejorDiaTotal'])}', color: AppTheme.greenMetal),
-              _modalRow('Días con Actividad', '${s['diasConVentas']} días con ventas'),
-              _modalRow('Egresos (Inventario)', _fmt(s['egresosMes']), color: AppTheme.reiOrangeRed),
-              _modalRow('Balance Neto', _fmt(s['balanceMes']), bold: true, color: s['balanceMes'] >= 0 ? AppTheme.greenMetal : AppTheme.reiOrangeRed),
+            const SizedBox(height: 16),
+            _modalS('CONTEXTO MENSUAL', [
+              _modalR('Ingresos del Mes', _fmt(s['ingresosMes']), bold: true),
+              _modalR('Ventas del Mes', '${s['ventasMes']} facturas'),
+              _modalR('Promedio Diario', _fmt(s['promedioDiario'])),
+              _modalR('Mejor Día', 'Día ${s['mejorDia']} → ${_fmt(s['mejorDiaTotal'])}', color: AppTheme.greenMetal),
+              _modalR('Días con Ventas', '${s['diasConVentas']} días'),
+              _modalR('Balance Neto', _fmt(s['balanceMes']), bold: true, color: (s['balanceMes'] ?? 0) >= 0 ? AppTheme.greenMetal : AppTheme.reiOrangeRed),
             ]),
           ]))),
         ]),
@@ -328,24 +374,17 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
     ));
   }
 
-  Widget _modalSection(String title, List<Widget> rows) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.5)),
-    const SizedBox(height: 12),
-    Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(16)), child: Column(children: rows)),
+  Widget _modalS(String t, List<Widget> rows) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Text(t, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.5)),
+    const SizedBox(height: 8),
+    Container(width: double.infinity, padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(14)), child: Column(children: rows)),
   ]);
 
-  Widget _modalRow(String label, String value, {bool bold = false, Color? color}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
+  Widget _modalR(String l, String v, {bool bold = false, Color? color}) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
     child: Row(children: [
-      Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500))),
-      Text(value, style: TextStyle(fontSize: 14, fontWeight: bold ? FontWeight.w900 : FontWeight.w700, color: color)),
+      Expanded(child: Text(l, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500))),
+      Text(v, style: TextStyle(fontSize: 13, fontWeight: bold ? FontWeight.w900 : FontWeight.w700, color: color)),
     ]),
   );
-}
-
-extension IndexedIterable<T> on Iterable<T> {
-  Iterable<(int, T)> get indexed sync* {
-    int i = 0;
-    for (final v in this) yield (i++, v);
-  }
 }

@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../controllers/almacen_controller.dart';
 import '../../controllers/lotes_controller.dart';
+import '../../services/api_service.dart';
 import '../../utils/inventory_dialogs.dart';
 import '../../utils/price_formatter.dart';
 import 'batch_details_modal.dart';
 
-class ProductCard extends StatelessWidget {
-  final dynamic p;
+class ProductCard extends StatefulWidget {
+  final Map<String, dynamic> p;
   final AlmacenController controller;
   final LotesController lotesCtrl;
 
@@ -19,62 +20,163 @@ class ProductCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final int stock = p['cantidadDisponible'] ?? 0;
-    final bool lowStock = stock < 30;
-    final List lotes = p['lotes'] is List ? p['lotes'] : [];
-    final String? imageUrl = p['imagenUrl'] ?? p['imagen'] ?? p['secure_url'];
+  State<ProductCard> createState() => _ProductCardState();
+}
 
-    DateTime? nearestExpiry;
-    for (var lote in lotes) {
-      final dateStr = lote['fechaDeVencimiento'] ?? lote['fechaVencimiento'];
-      final d = DateTime.tryParse(dateStr?.toString() ?? '');
-      if (d != null) {
-        if (nearestExpiry == null || d.isBefore(nearestExpiry)) {
-          nearestExpiry = d;
+class _ProductCardState extends State<ProductCard> {
+  String? _casaNombre;
+  String? _categoriaNombre;
+  String? _presentacionNombre;
+  bool _loadingDetail = false;
+  int _stockFromBatches = -1; // -1 = not computed yet
+
+  // Cache removed — always fetch fresh data to avoid stale display after edits
+
+  Map<String, dynamic> get p => widget.p;
+  AlmacenController get controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDetail();
+  }
+
+  Future<void> _fetchDetail() async {
+    final pid = p['productoId']?.toString();
+    if (pid == null || _loadingDetail) return;
+    _loadingDetail = true;
+    try {
+      // Fetch batches to compute real stock
+      List<dynamic> batches;
+      try {
+        batches = await ApiService.getBatchesByProduct(pid);
+      } catch (_) {
+        batches = [];
+      }
+      int batchSum = 0;
+      for (final b in batches) {
+        batchSum += int.tryParse(b['cantidadDisponible']?.toString() ?? '0') ?? 0;
+      }
+      _stockFromBatches = batchSum;
+      // Also update p['lotes'] so batchCount/expiry use real data
+      if (batches.isNotEmpty) p['lotes'] = batches;
+
+      // Fetch product detail for casa/categoria/presentacion
+      try {
+        final detail = await ApiService.getProductByIdentifier(pid);
+        if (detail != null && mounted) {
+          final casaId = detail['casasId'] is List && (detail['casasId'] as List).isNotEmpty
+              ? (detail['casasId'] as List).first?.toString()
+              : null;
+          final catId = detail['categoriaId']?.toString();
+          final presId = detail['presentacionId']?.toString();
+
+          if (detail['imagenUrl'] != null) p['imagenUrl'] = detail['imagenUrl'];
+          _casaNombre = _findName(controller.casas, 'casaId', casaId);
+          _categoriaNombre = _findName(controller.categorias, 'categoriaId', catId);
+          _presentacionNombre = _findName(controller.presentaciones, 'presentacionId', presId);
         }
+      } catch (_) {}
+
+      if (mounted) setState(() {});
+    } catch (_) {}
+    if (mounted) setState(() => _loadingDetail = false);
+  }
+
+  String? _findName(List<dynamic> list, String idField, String? id) {
+    if (id == null) return null;
+    for (final item in list) {
+      if (item is Map && item[idField]?.toString() == id) {
+        return item['nombre']?.toString();
       }
     }
-    
-    bool isExpired = false;
-    bool isNear = false;
-    if (nearestExpiry != null) {
-      isExpired = nearestExpiry.isBefore(DateTime.now());
-      isNear = !isExpired && nearestExpiry.isBefore(DateTime.now().add(const Duration(days: 60)));
+    return null;
+  }
+
+  int _totalStock() {
+    if (_stockFromBatches >= 0) return _stockFromBatches;
+    for (final f in ['cantidadDisponible', 'stock', 'existencia', 'cantidad', 'totalStock', 'total_stock']) {
+      final v = int.tryParse(p[f]?.toString() ?? '');
+      if (v != null) return v;
     }
+    return 0;
+  }
+
+  String? _imageUrl() {
+    return p['imagenUrl']?.toString() ??
+        p['imagen']?.toString() ??
+        p['secure_url']?.toString() ??
+        p['imagen_url']?.toString() ??
+        p['fotoUrl']?.toString();
+  }
+
+  DateTime? _nearestExpiry() {
+    final lotes = p['lotes'] is List ? p['lotes'] as List : <dynamic>[];
+    DateTime? nearest;
+    for (final l in lotes) {
+      final ds = l['fechaDeVencimiento'] ?? l['fechaVencimiento'];
+      final d = DateTime.tryParse(ds?.toString() ?? '');
+      if (d != null && (nearest == null || d.isBefore(nearest))) nearest = d;
+    }
+    return nearest;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stock = _totalStock();
+    final lowStock = stock > 0 && stock < 30;
+    final sinStock = stock == 0;
+    final imageUrl = _imageUrl();
+    final nearestExpiry = _nearestExpiry();
+    final isExpired = nearestExpiry != null && nearestExpiry.isBefore(DateTime.now());
+    final isNear = nearestExpiry != null && !isExpired && nearestExpiry.isBefore(DateTime.now().add(const Duration(days: 60)));
+    final lotes = p['lotes'] is List ? p['lotes'] as List : <dynamic>[];
+    final batchCount = lotes.length;
+
+    Color statusColor = AppTheme.greenMetal;
+    String statusText = 'DISPONIBLE';
+    if (sinStock) { statusColor = Colors.grey; statusText = 'SIN STOCK'; }
+    else if (lowStock) { statusColor = AppTheme.reiPurple; statusText = 'BAJO STOCK'; }
+    if (isExpired) { statusColor = AppTheme.reiOrangeRed; statusText = 'VENCIDO'; }
+    else if (isNear) { statusColor = Colors.orange; statusText = 'PRÓXIMO VENCER'; }
+
+    final genericName = (p['nombreGenerico']?.toString() ?? '').isNotEmpty
+        ? p['nombreGenerico'].toString()
+        : null;
+    final concentration = (p['concentracion']?.toString() ?? '').isNotEmpty
+        ? p['concentracion'].toString()
+        : null;
 
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-              color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.08) : Colors.black.withOpacity(0.03),
-              blurRadius: 30,
-              offset: const Offset(0, 10)),
+            color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.06) : Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
         ],
         border: Border.all(
-          color: isExpired 
-            ? AppTheme.reiOrangeRed.withOpacity(0.5) 
-            : Theme.of(context).dividerColor.withOpacity(0.2),
-          width: 1.5,
+          color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.3) : Theme.of(context).dividerColor.withOpacity(0.1),
         ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(24),
           onTap: () {
-            if (lotes.length > 1) {
+            if (batchCount > 1) {
               showModalBottomSheet(
                 context: context,
                 backgroundColor: Colors.transparent,
                 isScrollControlled: true,
                 builder: (ctx) => BatchDetailsModal(
                   p: Map<String, dynamic>.from(p),
-                  lotes: lotes,
+                  lotes: lotes.cast<Map<String, dynamic>>(),
                   controller: controller,
-                  lotesCtrl: lotesCtrl,
+                  lotesCtrl: widget.lotesCtrl,
                 ),
               );
             } else {
@@ -83,188 +185,214 @@ class ProductCard extends StatelessWidget {
                   prod: Map<String, dynamic>.from(p));
             }
           },
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          borderRadius: BorderRadius.circular(20),
-                          image: (imageUrl != null && imageUrl.isNotEmpty)
-                              ? DecorationImage(
-                                  image: NetworkImage(imageUrl),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: (imageUrl == null || imageUrl.isEmpty)
-                            ? _buildIconPlaceholder(lowStock)
-                            : null,
-                      ),
-                      Positioned(
-                        top: -8,
-                        right: -8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: lowStock ? AppTheme.reiOrangeRed : AppTheme.greenMetal,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [BoxShadow(color: (lowStock ? AppTheme.reiOrangeRed : AppTheme.greenMetal).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 12),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$stock',
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900),
-                              ),
-                            ],
-                          ),
-                        ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Image at top - full width with overlay buttons
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    child: SizedBox(
+                      height: 220,
+                      width: double.infinity,
+                      child: imageUrl != null && imageUrl.isNotEmpty
+                          ? Image.network(imageUrl, fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => _iconPlaceholder())
+                          : _iconPlaceholder(),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () {
+                          InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
+                        }),
+                        const SizedBox(width: 6),
+                        _actionIcon(Icons.delete_rounded, AppTheme.reiOrangeRed, () {
+                          _confirmDelete(context);
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              // Content below image
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p['nombre'] ?? 'Sin nombre',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: -0.3),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (genericName != null || concentration != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        [if (genericName != null) genericName, if (concentration != null) concentration].join(' - '),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  flex: 6,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(p['nombre'] ?? 'Sin nombre',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: -0.5),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 6),
-                      Text(p['descripcion'] ?? 'No hay descripción disponible para este producto.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500, height: 1.3),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                      const Spacer(),
-                      if (nearestExpiry != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.1) : (isNear ? Colors.orange.withOpacity(0.1) : Colors.grey.withOpacity(0.05)),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(isExpired ? Icons.warning_rounded : Icons.calendar_month_rounded, 
-                                size: 12, 
-                                color: isExpired ? AppTheme.reiOrangeRed : (isNear ? Colors.orange : Colors.grey)
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                isExpired 
-                                  ? 'Vencido el ${nearestExpiry.day}/${nearestExpiry.month}/${nearestExpiry.year}'
-                                  : 'Vence: ${nearestExpiry.day}/${nearestExpiry.month}/${nearestExpiry.year}',
-                                style: TextStyle(
-                                  fontSize: 11, 
-                                  fontWeight: FontWeight.w800,
-                                  color: isExpired ? AppTheme.reiOrangeRed : (isNear ? Colors.orange : Colors.grey)
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.only(top: 16),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.3), width: 1)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('PRECIO UNITARIO', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                          Text(
-                            formatCop(_getSafePrice(p)),
-                            style: const TextStyle(
-                                color: AppTheme.ayanamiBlue,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -1),
-                          ),
-                        ],
+                    const SizedBox(height: 14),
+                    _stockBar(stock, statusColor, statusText),
+                    const SizedBox(height: 10),
+                    if (_categoriaNombre != null)
+                      _infoRow(Icons.category_rounded, _categoriaNombre!),
+                    if (_casaNombre != null)
+                      _infoRow(Icons.business_rounded, _casaNombre!),
+                    if (_presentacionNombre != null)
+                      _infoRow(Icons.medication_liquid_rounded, _presentacionNombre!),
+                    if (nearestExpiry != null)
+                      _infoRow(
+                        isExpired ? Icons.error_outline_rounded : Icons.event_rounded,
+                        isExpired
+                            ? 'Vencido ${nearestExpiry.day}/${nearestExpiry.month}/${nearestExpiry.year}'
+                            : 'Vence ${nearestExpiry.day}/${nearestExpiry.month}/${nearestExpiry.year}',
+                        color: isExpired ? AppTheme.reiOrangeRed : (isNear ? Colors.orange : Colors.grey.shade500),
                       ),
-                      Row(
-                        children: [
-                          _actionButton(context, Icons.edit_rounded, AppTheme.ayanamiBlue, () {
-                            InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
-                          }),
-                          const SizedBox(width: 8),
-                          _actionButton(context, Icons.delete_rounded, AppTheme.reiOrangeRed, () {
-                            _confirmarBorrado(context);
-                          }),
-                        ],
-                      )
-                    ],
-                  ),
+                    if (batchCount > 0)
+                      _infoRow(Icons.layers_outlined, '$batchCount lote${batchCount > 1 ? 's' : ''}'),
+                    if (_loadingDetail)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.ayanamiBlue.withOpacity(0.5)),
+                        ),
+                      ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                child: Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('PRECIO UNIT.', style: TextStyle(fontSize: 9, color: Colors.grey.shade500, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.attach_money_rounded, size: 16, color: AppTheme.ayanamiBlue),
+                            Text(
+                              formatCop(_getSafePrice(p)),
+                              style: const TextStyle(color: AppTheme.ayanamiBlue, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -1),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _actionButton(BuildContext context, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+  Widget _stockBar(int stock, Color color, String statusText) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.inventory_2_rounded, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text('Stock: $stock',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: color)),
+            const Spacer(),
+            _statusChip(statusText, color),
+          ],
         ),
-        child: Icon(icon, size: 18, color: color),
-      ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: stock > 0 ? (stock > 100 ? 1.0 : stock / 100.0) : 0.0,
+            backgroundColor: color.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation(color),
+            minHeight: 6,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildIconPlaceholder(bool lowStock) {
+  Widget _iconPlaceholder() {
     return Center(
-      child: Icon(
-        Icons.medication_rounded,
-        size: 40,
-        color: lowStock ? AppTheme.reiOrangeRed.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+      child: Icon(Icons.medication_rounded, size: 64, color: Colors.grey.withOpacity(0.2)),
+    );
+  }
+
+  Widget _statusChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 9, letterSpacing: 0.5)),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color ?? Colors.grey.shade400),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(text, style: TextStyle(fontSize: 12, color: color ?? Colors.grey.shade600, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _confirmarBorrado(BuildContext context) async {
+  Widget _actionIcon(IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: Colors.white,
+      elevation: 4,
+      shadowColor: Colors.black26,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          child: Icon(icon, size: 18, color: color),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Producto'),
-        content: Text('¿Eliminar "${p['nombre']}"?'),
+        content: Text('�Eliminar "${p['nombre']}"?'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
           ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.reiOrangeRed),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Eliminar',
-                  style: TextStyle(color: Colors.white))),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
@@ -276,17 +404,9 @@ class ProductCard extends StatelessWidget {
   num _getSafePrice(dynamic p) {
     if (p == null) return 0.0;
     final List<String> fields = [
-      'precioVenta',
-      'precio_venta',
-      'precioPorUnidad',
-      'pvp',
-      'precio_unidad',
-      'precioUnidad',
-      'precio',
-      'costoCompra',
-      'precioCompra'
+      'precioPorUnidad', 'precioVenta', 'precio_venta', 'pvp', 'precio_unidad', 'precioUnidad', 'precio', 'costoCompra', 'precioCompra'
     ];
-    for (var f in fields) {
+    for (final f in fields) {
       final val = p[f];
       if (val != null) {
         final pVal = double.tryParse(val.toString()) ?? 0.0;

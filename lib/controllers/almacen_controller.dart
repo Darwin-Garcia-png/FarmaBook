@@ -1,16 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 
 class AlmacenController extends ChangeNotifier {
-  final Dio _dio = ApiService.dio;
   Timer? _autoClearTimer;
 
   List<Map<String, dynamic>> productos = [];
   List<dynamic> categorias = [];
   List<dynamic> presentaciones = [];
   List<dynamic> proveedores = [];
+  List<dynamic> casas = [];
 
   bool isLoadingInitial = false;
   bool isFetchingMore = false;
@@ -39,6 +41,7 @@ class AlmacenController extends ChangeNotifier {
     if (categorias.isEmpty) fetchCategorias();
     if (presentaciones.isEmpty) fetchPresentaciones();
     if (proveedores.isEmpty) fetchProveedores();
+    if (casas.isEmpty) fetchCasas();
     await fetchProducts(isRefresh: true);
   }
 
@@ -59,6 +62,13 @@ class AlmacenController extends ChangeNotifier {
   Future<void> fetchProveedores() async {
     try {
       proveedores = await ApiService.getSuppliers();
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> fetchCasas() async {
+    try {
+      casas = await ApiService.getHouses();
     } catch (_) {}
     notifyListeners();
   }
@@ -127,16 +137,16 @@ class AlmacenController extends ChangeNotifier {
     }
   }
 
-  Future<Response> saveProduct(
-      {required bool isEdit,
-      required String? productId,
-      required Map<String, dynamic> data}) async {
-    await ApiService.setAuthHeader();
-    if (isEdit) {
-      return await _dio.patch('/inventory/products/$productId', data: data);
-    } else {
-      return await _dio.post('/inventory/products', data: data);
+  Future<Map<String, dynamic>> saveProduct({
+    required bool isEdit,
+    required String? productId,
+    required Map<String, dynamic> data,
+    XFile? image,
+  }) async {
+    if (isEdit && productId != null) {
+      return await ApiService.updateProductMultipart(productId, data, imageFile: image);
     }
+    return await ApiService.createProductMultipart(data, imageFile: image);
   }
 
   Future<void> deleteProduct(String productId) async {
@@ -161,6 +171,7 @@ class AlmacenController extends ChangeNotifier {
     categorias.clear();
     presentaciones.clear();
     proveedores.clear();
+    casas.clear();
     currentPage = 1;
     notifyListeners();
   }

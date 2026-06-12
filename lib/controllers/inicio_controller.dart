@@ -1,26 +1,23 @@
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class InicioController extends ChangeNotifier {
-  final Dio _dio = ApiService.dio;
   Timer? _autoClearTimer;
 
   double ingresos = 0;
   double egresos = 0;
   double balance = 0;
-  
-  // Porcentajes para anillos radiales (0.0 a 1.0)
-  double marginPercent = 0.0; 
-  double expensePercent = 0.0; 
-  double stockHealthPercent = 0.0; 
+
+  double marginPercent = 0.0;
+  double expensePercent = 0.0;
+  double stockHealthPercent = 0.0;
 
   List<dynamic> topProducts = [];
   List<dynamic> alertsVencimiento = [];
   List<dynamic> alertsStock = [];
   List<dynamic> recentSales = [];
-  
+
   bool isLoading = true;
   String? error;
 
@@ -63,31 +60,27 @@ class InicioController extends ChangeNotifier {
   Future<void> cargarDatos() async {
     isLoading = true;
     error = null;
-    notifyListeners();
 
     try {
-      await ApiService.setAuthHeader();
 
-      // 1. Datos Financieros y Ventas en Paralelo
       try {
         final res = await Future.wait([
-          _dio.get('/analytics/revenues/month'),
-          _dio.get('/analytics/expenses'),
-          _dio.get('/analytics/balance'),
-          _dio.get('/sales'),
-          _dio.get('/analytics/products/top', queryParameters: {'limit': 5, 'period': 'month'}),
-        ]);
-        
-        ingresos = double.tryParse(res[0].data['data']?['ingresosMensuales']?.toString() ?? '0') ?? 0;
-        egresos = double.tryParse(res[1].data['data']?['egresosMensuales']?.toString() ?? '0') ?? 0;
-        balance = double.tryParse(res[2].data['data']?['balanceMensual']?.toString() ?? '0') ?? 0;
-        
-        // Calcular Porcentajes (Margen y Ratio de Gasto)
+          ApiService.getRevenueMonth(),
+          ApiService.getExpenses(),
+          ApiService.getBalance(),
+          ApiService.getSales(limit: 100),
+          ApiService.getTopProducts(),
+        ]).timeout(const Duration(seconds: 15));
+
+        ingresos = double.tryParse((res[0] as Map)['data']?['ingresosMensuales']?.toString() ?? '0') ?? 0;
+        egresos = double.tryParse((res[1] as Map)['data']?['egresosMensuales']?.toString() ?? '0') ?? 0;
+        balance = double.tryParse((res[2] as Map)['data']?['balanceMensual']?.toString() ?? '0') ?? 0;
+
         if (ingresos > 0) {
           marginPercent = (ingresos - egresos) / ingresos;
           if (marginPercent < 0) marginPercent = 0;
           if (marginPercent > 1) marginPercent = 1;
-          
+
           expensePercent = egresos / ingresos;
           if (expensePercent > 1) expensePercent = 1;
         } else {
@@ -95,26 +88,23 @@ class InicioController extends ChangeNotifier {
           expensePercent = 0;
         }
 
-        final allSales = res[3].data['data'] as List? ?? [];
-        // Ordenar por fecha si es posible y tomar las últimas
+        final allSales = res[3] as List? ?? [];
         recentSales = allSales.take(10).toList();
-        
-        topProducts = res[4].data['data'] as List? ?? [];
+
+        topProducts = (res[4] as Map)['data'] as List? ?? [];
       } catch (e) {
         debugPrint('Error en analíticas: $e');
       }
 
-      // 2. Salud de Inventario y Alertas
       try {
         final res = await Future.wait([
-          _dio.get('/inventory/products', queryParameters: {'page': 1, 'limit': 100}),
-          _dio.get('/inventory/batches'),
-        ]);
-        
-        final rawProds = res[0].data['data'] as List? ?? [];
-        final rawBatches = res[1].data['data'] as List? ?? [];
+          ApiService.getProductos(page: 1, limit: 100),
+          ApiService.getBatches(page: 1, limit: 999999),
+        ]).timeout(const Duration(seconds: 15));
 
-        // Vencimientos (Próximos 60 días)
+        final rawProds = res[0] as List? ?? [];
+        final rawBatches = res[1] as List? ?? [];
+
         final now = DateTime.now();
         final threshold = now.add(const Duration(days: 60));
         alertsVencimiento = rawBatches.where((b) {
@@ -123,13 +113,11 @@ class InicioController extends ChangeNotifier {
           return exp != null && exp.isBefore(threshold);
         }).toList();
 
-        // Stock Bajo - usar datos de productos directamente SIN fetch individual
         alertsStock = rawProds.where((p) {
           final stock = (p['cantidadDisponible'] as num? ?? 0).toInt();
           return stock > 0 && stock < 30;
         }).toList();
 
-        // Salud de Stock (Ratio de productos saludables)
         final healthyCount = rawProds.where((p) {
           return (p['cantidadDisponible'] as num? ?? 0).toInt() >= 30;
         }).length;

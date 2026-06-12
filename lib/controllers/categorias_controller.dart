@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class CategoriasController extends ChangeNotifier {
-  final Dio _dio = ApiService.dio;
-
-
   List<dynamic> categorias = [];
   bool isLoading = true;
   String? error;
@@ -33,9 +29,7 @@ class CategoriasController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await ApiService.setAuthHeader();
-      final res = await _dio.get('/inventory/categories');
-      categorias = res.data['data'] ?? [];
+            categorias = await ApiService.getCategories();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -50,9 +44,8 @@ class CategoriasController extends ChangeNotifier {
     }
 
     try {
-      await ApiService.setAuthHeader();
-      
-      await _dio.post('/inventory/categories', data: {
+            
+      await ApiService.createCategory({
         'nombre': nombreCtrl.text.trim(),
         'descripcion': descripcionCtrl.text.trim(),
       });
@@ -69,8 +62,7 @@ class CategoriasController extends ChangeNotifier {
 
   Future<bool> actualizarCategoria(dynamic id) async {
     try {
-      await ApiService.setAuthHeader();
-      await _dio.patch('/inventory/categories/$id', data: {
+            await ApiService.updateCategory(id, {
         'nombre': nombreCtrl.text.trim(),
         'descripcion': descripcionCtrl.text.trim(),
       });
@@ -83,8 +75,7 @@ class CategoriasController extends ChangeNotifier {
 
   Future<bool> eliminarCategoria(dynamic id) async {
     try {
-      await ApiService.setAuthHeader();
-      await _dio.delete('/inventory/categories/$id');
+            await ApiService.deleteCategory(id);
       await cargarCategorias();
       return true;
     } catch (e) {

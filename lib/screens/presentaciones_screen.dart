@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../controllers/presentaciones_controller.dart';
 import '../theme/app_theme.dart';
-import '../widgets/premium_header.dart';
 import 'package:flutter/services.dart';
 
 class PresentacionesScreen extends StatefulWidget {
@@ -13,6 +12,7 @@ class PresentacionesScreen extends StatefulWidget {
 
 class _PresentacionesScreenState extends State<PresentacionesScreen> {
   final PresentacionesController _controller = PresentacionesController();
+  final TextEditingController _searchCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -25,11 +25,23 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
   void dispose() {
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
   void _onControllerChanged() {
     if (mounted) setState(() {});
+  }
+
+  Color get _accent => AppTheme.greenMetal;
+
+  List<Map<String, dynamic>> get _filtered {
+    final q = _searchCtrl.text.toLowerCase().trim();
+    if (q.isEmpty) return _controller.presentaciones.cast<Map<String, dynamic>>();
+    return _controller.presentaciones.cast<Map<String, dynamic>>().where((p) {
+      return (p['nombre'] ?? '').toString().toLowerCase().contains(q) ||
+             (p['descripcion'] ?? '').toString().toLowerCase().contains(q);
+    }).toList();
   }
 
   Future<void> _showAddEditDialog({Map<String, dynamic>? pres}) async {
@@ -77,7 +89,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
                     const SizedBox(width: 16),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.ayanamiBlue,
+                        backgroundColor: _accent,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -162,7 +174,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
         ],
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue),
+          prefixIcon: Icon(icon, color: _accent),
           alignLabelWithHint: maxLines > 1,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           filled: true,
@@ -182,134 +194,183 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PremiumHeader(
-        title: 'Presentaciones',
-        subtitle: 'Formatos, empaques y envases',
-        icon: Icons.local_pharmacy_rounded,
-        baseColor: AppTheme.ayanamiBlue,
-        trailing: ElevatedButton.icon(
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Nueva Presentación', style: TextStyle(fontWeight: FontWeight.w900)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.ayanamiBlue,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            elevation: 8,
-            shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4),
-          ),
-          onPressed: () => _showAddEditDialog(),
-        ),
-      ),
-      body: _controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildCategoryGrid(),
-    );
-  }
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+    final text = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final card = Theme.of(context).cardTheme.color ?? Colors.white;
+    final accent = _accent;
 
-  Widget _buildCategoryGrid() {
-    if (_controller.error != null) {
-      return Center(child: Text(_controller.error!, style: const TextStyle(color: AppTheme.reiOrangeRed)));
-    }
-    
-    if (_controller.presentaciones.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.local_pharmacy_outlined, size: 80, color: Colors.grey.withOpacity(0.3)),
-            const SizedBox(height: 16),
-            const Text('No hay presentaciones registradas', style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w600)),
-          ],
-        ),
+    if (_controller.isLoading) {
+      return Scaffold(
+        backgroundColor: bg,
+        body: Stack(children: [
+          Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+          const Center(child: CircularProgressIndicator(color: AppTheme.greenMetal)),
+        ]),
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(32),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 400,
-        mainAxisExtent: 210,
-        crossAxisSpacing: 24,
-        mainAxisSpacing: 24,
-      ),
-      itemCount: _controller.presentaciones.length,
-      itemBuilder: (context, i) {
-        final pres = _controller.presentaciones[i];
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
+    if (_controller.error != null) {
+      return Scaffold(
+        backgroundColor: bg,
+        body: Stack(children: [
+          Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+          Center(
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Icon(Icons.cloud_off_rounded, size: 80, color: AppTheme.reiOrangeRed),
+              const SizedBox(height: 16),
+              Text(_controller.error!, style: const TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+                onPressed: _controller.cargarPresentaciones,
+                style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
               ),
-            ],
+            ]),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.ayanamiBlue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(Icons.local_pharmacy_rounded, color: AppTheme.ayanamiBlue, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(pres['nombre'] ?? 'Sin nombre',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  pres['descripcion']?.isEmpty ?? true ? 'Sin descripción provista' : pres['descripcion'],
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13, height: 1.4),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _actionButton(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showAddEditDialog(pres: pres)),
-                    const SizedBox(width: 8),
-                    _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(pres)),
-                  ],
-                )
-              ],
-            ),
+        ]),
+      );
+    }
+
+    final list = _filtered;
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: Stack(children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(40, 100, 40, 60),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _buildSearchBar(accent, bg, text),
+            const SizedBox(height: 24),
+            if (list.isEmpty)
+              _buildEmptyState(accent)
+            else
+              ...list.map((pres) => _buildCard(pres, accent, text, card)),
+          ]),
+        ),
+        Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+        Positioned(bottom: 24, right: 40,
+          child: FloatingActionButton(
+            backgroundColor: accent,
+            foregroundColor: Colors.white,
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            onPressed: () => _showAddEditDialog(),
+            child: const Icon(Icons.add_rounded, size: 28),
           ),
-        );
-      },
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildHeader(Color bg, Color text, Color accent) {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.08)))),
+      child: Row(children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: accent.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+          child: const Icon(Icons.local_pharmacy_rounded, color: AppTheme.greenMetal, size: 24),
+        ),
+        const SizedBox(width: 14),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text('PRESENTACIONES', style: TextStyle(color: text, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+          Text('Formatos, empaques y envases', style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600)),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _buildSearchBar(Color accent, Color bg, Color text) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: TextField(
+        controller: _searchCtrl,
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: 'Buscar presentaciones...',
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+          prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+          suffixIcon: _searchCtrl.text.isNotEmpty
+              ? IconButton(icon: const Icon(Icons.clear, color: Colors.grey, size: 18), onPressed: () { _searchCtrl.clear(); setState(() {}); })
+              : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          filled: true,
+          fillColor: bg.withOpacity(0.3),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(Color accent) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(48),
+      decoration: BoxDecoration(color: _cardColor(context), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8))]),
+      child: Column(children: [
+        Icon(Icons.local_pharmacy_outlined, size: 64, color: accent.withOpacity(0.3)),
+        const SizedBox(height: 16),
+        Text('No hay presentaciones registradas', style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        Text('Agrega una nueva presentación', style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
+      ]),
+    );
+  }
+
+  Widget _buildCard(Map<String, dynamic> pres, Color accent, Color text, Color card) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border(left: BorderSide(color: accent.withOpacity(0.4), width: 3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: accent.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+            child: Icon(Icons.local_pharmacy_rounded, color: accent, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(pres['nombre'] ?? 'Sin nombre', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3, color: text), maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              Text(pres['descripcion']?.isEmpty ?? true ? 'Sin descripción provista' : pres['descripcion'],
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
+            ]),
+          ),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            _actionButton(Icons.edit_rounded, accent, () => _showAddEditDialog(pres: pres)),
+            const SizedBox(width: 4),
+            _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(pres)),
+          ]),
+        ]),
+      ),
     );
   }
 
   Widget _actionButton(IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, size: 18, color: color),
       ),
     );
   }
+
+  Color _cardColor(BuildContext context) => Theme.of(context).cardTheme.color ?? Colors.white;
 }

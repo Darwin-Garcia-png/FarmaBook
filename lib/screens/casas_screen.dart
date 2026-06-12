@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../controllers/casas_controller.dart';
 import '../theme/app_theme.dart';
-import '../widgets/premium_header.dart';
 import 'package:flutter/services.dart';
 
 class CasasScreen extends StatefulWidget {
@@ -13,6 +12,7 @@ class CasasScreen extends StatefulWidget {
 
 class _CasasScreenState extends State<CasasScreen> {
   final CasasController _controller = CasasController();
+  final TextEditingController _searchCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -25,11 +25,21 @@ class _CasasScreenState extends State<CasasScreen> {
   void dispose() {
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
   void _onControllerChanged() {
     if (mounted) setState(() {});
+  }
+
+  List<Map<String, dynamic>> get _filtered {
+    final q = _searchCtrl.text.toLowerCase().trim();
+    if (q.isEmpty) return _controller.casas.cast<Map<String, dynamic>>();
+    return _controller.casas.cast<Map<String, dynamic>>().where((c) {
+      return (c['nombre'] ?? '').toString().toLowerCase().contains(q) ||
+             (c['paisDeOrigen'] ?? '').toString().toLowerCase().contains(q);
+    }).toList();
   }
 
   Future<void> _showAddEditDialog({Map<String, dynamic>? casa}) async {
@@ -182,138 +192,187 @@ class _CasasScreenState extends State<CasasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PremiumHeader(
-        title: 'Casas',
-        subtitle: 'Gestiona las casas farmacéuticas de tu inventario',
-        icon: Icons.business_rounded,
-        baseColor: AppTheme.ayanamiBlue,
-        trailing: ElevatedButton.icon(
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Nueva Casa', style: TextStyle(fontWeight: FontWeight.w900)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.ayanamiBlue,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            elevation: 8,
-            shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4),
-          ),
-          onPressed: () => _showAddEditDialog(),
-        ),
-      ),
-      body: _controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildHouseGrid(),
-    );
-  }
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+    final text = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final card = Theme.of(context).cardTheme.color ?? Colors.white;
+    final accent = AppTheme.ayanamiBlue;
 
-  Widget _buildHouseGrid() {
-    if (_controller.error != null) {
-      return Center(child: Text(_controller.error!, style: const TextStyle(color: AppTheme.reiOrangeRed)));
-    }
-
-    if (_controller.casas.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.business_outlined, size: 80, color: Colors.grey.withOpacity(0.3)),
-            const SizedBox(height: 16),
-            const Text('No hay casas registradas', style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w600)),
-          ],
-        ),
+    if (_controller.isLoading) {
+      return Scaffold(
+        backgroundColor: bg,
+        body: Stack(children: [
+          Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+          const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue)),
+        ]),
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(32),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 400,
-        mainAxisExtent: 210,
-        crossAxisSpacing: 24,
-        mainAxisSpacing: 24,
-      ),
-      itemCount: _controller.casas.length,
-      itemBuilder: (context, i) {
-        final casa = _controller.casas[i];
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
+    if (_controller.error != null) {
+      return Scaffold(
+        backgroundColor: bg,
+        body: Stack(children: [
+          Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+          Center(
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Icon(Icons.cloud_off_rounded, size: 80, color: AppTheme.reiOrangeRed),
+              const SizedBox(height: 16),
+              Text(_controller.error!, style: const TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+                onPressed: _controller.cargarCasas,
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white),
               ),
-            ],
+            ]),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.ayanamiBlue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(Icons.business_rounded, color: AppTheme.ayanamiBlue, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(casa['nombre'] ?? 'Sin nombre',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Icon(Icons.public_rounded, size: 16, color: Colors.grey.shade500),
-                    const SizedBox(width: 6),
-                    Text(
-                      casa['paisDeOrigen']?.isEmpty ?? true ? 'País no especificado' : casa['paisDeOrigen'],
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13, height: 1.4),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _actionButton(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showAddEditDialog(casa: casa)),
-                    const SizedBox(width: 8),
-                    _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(casa)),
-                  ],
-                )
-              ],
-            ),
+        ]),
+      );
+    }
+
+    final list = _filtered;
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: Stack(children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(40, 100, 40, 60),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _buildSearchBar(accent, bg, text),
+            const SizedBox(height: 24),
+            if (list.isEmpty)
+              _buildEmptyState(accent)
+            else
+              ...list.map((casa) => _buildCard(casa, accent, text, card)),
+          ]),
+        ),
+        Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+        Positioned(bottom: 24, right: 40,
+          child: FloatingActionButton(
+            backgroundColor: accent,
+            foregroundColor: Colors.white,
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            onPressed: () => _showAddEditDialog(),
+            child: const Icon(Icons.add_rounded, size: 28),
           ),
-        );
-      },
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildHeader(Color bg, Color text, Color accent) {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.08)))),
+      child: Row(children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: accent.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+          child: const Icon(Icons.business_rounded, color: AppTheme.ayanamiBlue, size: 24),
+        ),
+        const SizedBox(width: 14),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text('CASAS', style: TextStyle(color: text, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+          Text('Gestiona las casas farmacéuticas', style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600)),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _buildSearchBar(Color accent, Color bg, Color text) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: TextField(
+        controller: _searchCtrl,
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: 'Buscar casas...',
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+          prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+          suffixIcon: _searchCtrl.text.isNotEmpty
+              ? IconButton(icon: const Icon(Icons.clear, color: Colors.grey, size: 18), onPressed: () { _searchCtrl.clear(); setState(() {}); })
+              : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          filled: true,
+          fillColor: bg.withOpacity(0.3),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(Color accent) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(48),
+      decoration: BoxDecoration(color: cardColor(context), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8))]),
+      child: Column(children: [
+        Icon(Icons.business_outlined, size: 64, color: accent.withOpacity(0.3)),
+        const SizedBox(height: 16),
+        Text('No hay casas registradas', style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        Text('Agrega una nueva casa farmacéutica', style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
+      ]),
+    );
+  }
+
+  Widget _buildCard(Map<String, dynamic> casa, Color accent, Color text, Color card) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border(left: BorderSide(color: accent.withOpacity(0.4), width: 3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: accent.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+            child: Icon(Icons.business_rounded, color: accent, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(casa['nombre'] ?? 'Sin nombre', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3, color: text), maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              Row(children: [
+                Icon(Icons.public_rounded, size: 12, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Text(casa['paisDeOrigen']?.isEmpty ?? true ? 'País no especificado' : casa['paisDeOrigen'],
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+              ]),
+            ]),
+          ),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            _actionButton(Icons.edit_rounded, accent, () => _showAddEditDialog(casa: casa)),
+            const SizedBox(width: 4),
+            _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(casa)),
+          ]),
+        ]),
+      ),
     );
   }
 
   Widget _actionButton(IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, size: 18, color: color),
       ),
     );
   }
+
+  Color cardColor(BuildContext context) => Theme.of(context).cardTheme.color ?? Colors.white;
 }
