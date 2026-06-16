@@ -6,6 +6,7 @@ import '../controllers/inicio_controller.dart';
 import '../utils/price_formatter.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/error_display.dart';
 
 class InicioScreen extends StatefulWidget {
   const InicioScreen({super.key});
@@ -388,12 +389,8 @@ class _InicioScreenState extends State<InicioScreen> {
     );
   }
 
-  Widget _errorView() => Scaffold(body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-    const Icon(Icons.cloud_off_rounded, size: 80, color: AppTheme.reiOrangeRed),
-    const SizedBox(height: 16),
-    Text(_ctrl.error!, style: const TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.bold)),
-    const SizedBox(height: 24),
-    ElevatedButton.icon(icon: const Icon(Icons.refresh), label: const Text('Reintentar'), onPressed: _ctrl.cargarDatos,
-      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white)),
-  ])));
+  Widget _errorView() => Scaffold(body: ErrorDisplay.fullScreen(
+    message: _ctrl.error!,
+    onRetry: _ctrl.cargarDatos,
+  ));
 }

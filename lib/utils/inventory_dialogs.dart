@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
+import '../widgets/error_display.dart';
 
 class InventoryDialogs {
   /// Diálogo solo para EDITAR producto (sin sección de lote).
@@ -178,46 +179,18 @@ class InventoryDialogs {
                                 if (presId != null) prodData['presentacionId'] = presId;
                                 if (precioCtrl.text.trim().isNotEmpty) prodData['precioPorUnidad'] = double.tryParse(precioCtrl.text.replaceAll(',', '.')) ?? 0.0;
 
-                                await controller.saveProduct(
-                                    isEdit: true, productId: pId, data: prodData, image: selectedImage);
-                                 Navigator.pop(dialogCtx);
-                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                     content: Text('Producto actualizado correctamente'),
-                                     backgroundColor: AppTheme.greenMetal));
-                                 controller.fetchProducts(isRefresh: true);
-                                } catch (e) {
-                                  String errMsg = e.toString();
-                                  String? serverBody;
-                                  if (e is ApiException) {
-                                    errMsg = e.message;
-                                    serverBody = e.serverBody?.toString();
-                                  }
-                                  showDialog(context: context, useRootNavigator: true, builder: (ctx2) => AlertDialog(
-                                    title: const Text('Error al guardar'),
-                                    content: SingleChildScrollView(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(errMsg, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                          const SizedBox(height: 8),
-                                          Text('Tipo: ${e.runtimeType}', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-                                          if (serverBody != null) ...[
-                                            const SizedBox(height: 12),
-                                            Container(
-                                              padding: const EdgeInsets.all(12),
-                                              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                                              child: SelectableText(serverBody, style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontFamily: 'monospace')),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    actions: [TextButton(
-                                      onPressed: () => Navigator.pop(ctx2),
-                                      child: const Text('OK'))],
-                                  ));
-                                }
+                                 await controller.saveProduct(
+                                     isEdit: true, productId: pId, data: prodData, image: selectedImage);
+                                  Navigator.pop(dialogCtx);
+                                  ErrorDisplay.successSnackBar(context: context, message: 'Producto actualizado correctamente');
+                                  controller.fetchProducts(isRefresh: true);
+                                 } catch (e) {
+                                   final errMsg = e is ApiException ? e.message : e.toString();
+                                   final hint = ErrorDisplay.hintFromMessage(errMsg);
+                                   if (context.mounted) {
+                                     ErrorDisplay.dialog(context: context, message: errMsg, hint: hint, title: 'Error al guardar');
+                                   }
+                                 }
                             },
                             child: const Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                           ),
@@ -1356,36 +1329,26 @@ class InventoryDialogs {
           onPressed: () async {
             if (!formKey.currentState!.validate()) return;
             if (expiryDate == null || expiryDate.year >= 9999) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content:
-                      Text('Por favor, selecciona una fecha de vencimiento')));
+              ErrorDisplay.snackBar(context: context, message: 'Selecciona una fecha de vencimiento', hint: 'Toca el campo de fecha para abrir el calendario.');
               return;
             }
 
             // Validate dropdowns that are local vars (not caught by formKey)
             if (!isEdit && !isNewBatch && !isBatchEdit) {
               if (catId == null) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Debes seleccionar una categoría'),
-                    backgroundColor: Colors.redAccent));
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una categoría', hint: 'Elige una categoría de la lista desplegable.');
                 return;
               }
               if (presId == null) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Debes seleccionar una presentación'),
-                    backgroundColor: Colors.redAccent));
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una presentación', hint: 'Elige una presentación de la lista desplegable.');
                 return;
               }
               if (provId == null) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Debes seleccionar un proveedor'),
-                    backgroundColor: Colors.redAccent));
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar un proveedor', hint: 'Elige un proveedor de la lista desplegable.');
                 return;
               }
               if (casaId == null) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Debes seleccionar una casa farmacéutica'),
-                    backgroundColor: Colors.redAccent));
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una casa farmacéutica', hint: 'Elige una casa de la lista desplegable.');
                 return;
               }
             }
@@ -1458,54 +1421,10 @@ class InventoryDialogs {
                   backgroundColor: AppTheme.greenMetal));
               controller.fetchProducts(isRefresh: true);
             } catch (e) {
-              String errMsg = e.toString();
-              String? serverBody;
-              if (e is ApiException) {
-                errMsg = e.message;
-                serverBody = e.serverBody?.toString();
-              }
+              final errMsg = e is ApiException ? e.message : e.toString();
+              final hint = ErrorDisplay.hintFromMessage(errMsg);
               if (context.mounted) {
-                showDialog(
-                  context: context,
-                  useRootNavigator: true,
-                  builder: (ctx2) => AlertDialog(
-                    title: const Text('Error al guardar'),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(errMsg, style: const TextStyle(fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
-                          Text('Tipo: ${e.runtimeType}', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-                          if (serverBody != null) ...[
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: SelectableText(
-                                serverBody,
-                                style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontFamily: 'monospace'),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(ctx2);
-                          // 401 handling removed — just show error
-                        },
-                        child: const Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
+                ErrorDisplay.dialog(context: context, message: errMsg, hint: hint, title: 'Error al guardar');
               }
             }
           },

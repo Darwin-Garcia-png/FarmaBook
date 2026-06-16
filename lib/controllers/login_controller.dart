@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/auth_service.dart';
 import '../router/app_router.dart';
+import '../widgets/error_display.dart';
 
 class LoginController extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -21,20 +22,8 @@ class LoginController extends ChangeNotifier {
   void _showError(String message, {int? statusCode}) {
     final ctx = navigatorKey.currentContext;
     if (ctx == null) return;
-    showDialog(
-      context: ctx,
-      barrierDismissible: true,
-      builder: (context) => AlertDialog(
-        title: Text(statusCode != null ? 'Error ($statusCode)' : 'Error'),
-        content: SingleChildScrollView(child: Text(message)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    final hint = ErrorDisplay.hintFromMessage(message);
+    ErrorDisplay.dialog(context: ctx, message: message, hint: hint, title: statusCode != null ? 'Error ($statusCode)' : 'Error');
   }
 
   Future<bool> login() async {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../controllers/usuarios_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
+import '../widgets/error_display.dart';
 
 class UsuariosScreen extends StatefulWidget {
   const UsuariosScreen({super.key});
@@ -652,12 +653,11 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                   }
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('¡Operación realizada con éxito!'), backgroundColor: AppTheme.greenMetal));
+                    ErrorDisplay.successSnackBar(context: context, message: '¡Operación realizada con éxito!');
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    ErrorDisplay.snackBar(context: context, message: '$e');
                   }
                 }
               },

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../theme/app_theme.dart';
 import '../router/app_router.dart';
+import '../widgets/error_display.dart';
 
-// Ya no usamos ScaffoldMessenger, pero dejamos la llave por si se usaba en main.dart
 final GlobalKey<ScaffoldMessengerState> globalScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class GlobalErrorHandler {
@@ -13,25 +13,27 @@ class GlobalErrorHandler {
     final overlayState = navigatorKey.currentState?.overlay;
     if (overlayState == null) return;
 
-    String title = 'Error del Sistema';
+    String title = 'Error';
     if (statusCode != null) {
-      if (statusCode == 404) title = 'Recurso No Encontrado (404)';
-      else if (statusCode == 401 || statusCode == 403) title = 'Problema de Autenticación ($statusCode)';
-      else if (statusCode >= 500) title = 'Error del Servidor ($statusCode)';
-      else title = 'Error HTTP ($statusCode)';
+      if (statusCode == 404) title = 'Recurso No Encontrado';
+      else if (statusCode == 401 || statusCode == 403) title = 'Problema de Autenticación';
+      else if (statusCode >= 500) title = 'Error del Servidor';
+      else title = 'Error HTTP $statusCode';
     }
 
     _currentEntry?.remove();
     _currentEntry = null;
 
+    final hint = ErrorDisplay.hintFromMessage(message);
+
     final entry = OverlayEntry(
       builder: (context) => Positioned(
-        top: 60, // Aparece por encima de todo, en la parte superior
+        top: 60,
         left: 24,
         right: 24,
         child: Material(
           color: Colors.transparent,
-          child: _AnimatedErrorCard(title: title, message: message),
+          child: _AnimatedErrorCard(title: title, message: message, hint: hint),
         ),
       ),
     );
@@ -39,7 +41,7 @@ class GlobalErrorHandler {
     _currentEntry = entry;
     overlayState.insert(entry);
 
-    Timer(const Duration(seconds: 4), () {
+    Timer(const Duration(seconds: 5), () {
       if (_currentEntry == entry) {
         _currentEntry?.remove();
         _currentEntry = null;
@@ -51,7 +53,8 @@ class GlobalErrorHandler {
 class _AnimatedErrorCard extends StatefulWidget {
   final String title;
   final String message;
-  const _AnimatedErrorCard({required this.title, required this.message});
+  final String? hint;
+  const _AnimatedErrorCard({required this.title, required this.message, this.hint});
 
   @override
   State<_AnimatedErrorCard> createState() => _AnimatedErrorCardState();
@@ -73,7 +76,6 @@ class _AnimatedErrorCardState extends State<_AnimatedErrorCard> with SingleTicke
         .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutExpo));
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0)
         .animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
-    
     _animController.forward();
   }
 
@@ -94,13 +96,7 @@ class _AnimatedErrorCardState extends State<_AnimatedErrorCard> with SingleTicke
           decoration: BoxDecoration(
             color: AppTheme.reiOrangeRed,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.reiOrangeRed.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              )
-            ],
+            boxShadow: [BoxShadow(color: AppTheme.reiOrangeRed.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
             border: Border.all(color: Colors.white.withOpacity(0.2)),
           ),
           child: Row(
@@ -108,10 +104,7 @@ class _AnimatedErrorCardState extends State<_AnimatedErrorCard> with SingleTicke
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
                 child: const Icon(Icons.error_outline_rounded, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 16),
@@ -120,17 +113,26 @@ class _AnimatedErrorCardState extends State<_AnimatedErrorCard> with SingleTicke
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
-                    ),
+                    Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
                     const SizedBox(height: 4),
-                    Text(
-                      widget.message,
-                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    Text(widget.message, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13), maxLines: 3, overflow: TextOverflow.ellipsis),
+                    if (widget.hint != null) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                        child: Row(
+                          children: [
+                            Icon(Icons.lightbulb_outline_rounded, size: 12, color: Colors.white.withOpacity(0.7)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(widget.hint!,
+                                style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.85), fontStyle: FontStyle.italic, height: 1.3)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

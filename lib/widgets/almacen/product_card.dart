@@ -164,6 +164,7 @@ class _ProductCardState extends State<ProductCard> {
       ),
       child: Material(
         color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: () {

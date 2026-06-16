@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controllers/casas_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/error_display.dart';
 import 'package:flutter/services.dart';
 
 class CasasScreen extends StatefulWidget {
@@ -104,14 +105,11 @@ class _CasasScreenState extends State<CasasScreen> {
 
                         if (mounted) {
                           Navigator.pop(diaCtx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(success ? (isEdit ? 'Casa actualizada' : 'Casa registrada') : 'Error en la operación'),
-                              backgroundColor: success ? AppTheme.greenMetal : AppTheme.reiOrangeRed,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          );
+                          if (success) {
+                            ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Casa actualizada' : 'Casa registrada');
+                          } else {
+                            ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
+                          }
                         }
                       },
                       child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Casa', style: const TextStyle(fontWeight: FontWeight.w900)),
@@ -147,13 +145,11 @@ class _CasasScreenState extends State<CasasScreen> {
     if (confirm == true) {
       final success = await _controller.eliminarCasa(casa['casaId']);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success ? 'Casa eliminada' : 'Error al eliminar'),
-            backgroundColor: success ? AppTheme.greenMetal : AppTheme.reiOrangeRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        if (success) {
+          ErrorDisplay.successSnackBar(context: context, message: 'Casa eliminada');
+        } else {
+          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar', hint: 'Es posible que la casa tenga productos asociados.');
+        }
       }
     }
   }
@@ -212,19 +208,9 @@ class _CasasScreenState extends State<CasasScreen> {
         backgroundColor: bg,
         body: Stack(children: [
           Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
-          Center(
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Icon(Icons.cloud_off_rounded, size: 80, color: AppTheme.reiOrangeRed),
-              const SizedBox(height: 16),
-              Text(_controller.error!, style: const TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
-                onPressed: _controller.cargarCasas,
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white),
-              ),
-            ]),
+          ErrorDisplay.fullScreen(
+            message: _controller.error!,
+            onRetry: _controller.cargarCasas,
           ),
         ]),
       );

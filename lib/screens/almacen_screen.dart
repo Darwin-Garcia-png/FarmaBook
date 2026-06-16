@@ -6,6 +6,7 @@ import '../controllers/lotes_controller.dart';
 import '../utils/inventory_dialogs.dart';
 import '../widgets/almacen/product_card.dart';
 import '../widgets/premium_header.dart';
+import '../widgets/error_display.dart';
 
 class AlmacenScreen extends StatefulWidget {
   const AlmacenScreen({super.key});
@@ -40,20 +41,20 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
       builder: (context, controller, lotesCtrl, child) {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: PremiumHeader(
+            title: 'Almacén Central', 
+            subtitle: 'Inventario general de medicamentos', 
+            icon: Icons.inventory_2_rounded, 
+            baseColor: AppTheme.ayanamiBlue,
+            trailing: IconButton(
+              icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)),
+              onPressed: () => controller.init(),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ),
           body: Column(
             children: [
-              PremiumHeader(
-                title: 'Almacén Central', 
-                subtitle: 'Inventario general de medicamentos', 
-                icon: Icons.inventory_2_rounded, 
-                baseColor: AppTheme.ayanamiBlue,
-                trailing: IconButton(
-                  icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)),
-                  onPressed: () => controller.init(),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ),
               _buildHeader(context, controller),
               _buildMainContent(context, controller, lotesCtrl),
             ],
@@ -223,10 +224,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
     }
 
     if (controller.error != null && controller.productos.isEmpty) {
-      return Expanded(
-          child: Center(
-              child: Text(controller.error!,
-                  style: const TextStyle(fontSize: 18, color: Colors.red))));
+      return Expanded(child: ErrorDisplay.inline(message: controller.error!, onDismiss: () => controller.error = null));
     }
 
     if (controller.productos.isEmpty) {
@@ -244,7 +242,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
             padding: const EdgeInsets.only(left: 32, right: 32, top: 32, bottom: 80),
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 300,
-                childAspectRatio: 0.75,
+                childAspectRatio: 0.58,
                 crossAxisSpacing: 24,
                 mainAxisSpacing: 24),
             itemCount: controller.productos.length,

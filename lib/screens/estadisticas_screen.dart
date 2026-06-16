@@ -3,6 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import '../controllers/estadisticas_controller.dart';
 import '../utils/price_formatter.dart';
 import '../theme/app_theme.dart';
+import '../widgets/error_display.dart';
+import '../widgets/premium_header.dart';
 
 class EstadisticasScreen extends StatefulWidget {
   const EstadisticasScreen({super.key});
@@ -33,32 +35,25 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).cardTheme.color,
-        elevation: 0, scrolledUnderElevation: 0.5,
-        title: Row(children: [
-          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-            child: const Icon(Icons.insights_rounded, color: AppTheme.ayanamiBlue, size: 22)),
-          const SizedBox(width: 14),
-          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('ESTADÍSTICAS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.3)),
-            Text('Análisis completo de rendimiento', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
-          ]),
-        ]),
-        actions: [
+      appBar: PremiumHeader(
+        title: 'Estadísticas',
+        subtitle: 'Análisis completo de rendimiento',
+        icon: Icons.insights_rounded,
+        baseColor: AppTheme.ayanamiBlue,
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
           IconButton(icon: Icon(_isPdf ? Icons.hourglass_top : Icons.picture_as_pdf_rounded, color: AppTheme.reiOrangeRed, size: 22),
             onPressed: _isPdf ? null : () async {
               setState(() => _isPdf = true);
               try {
                 await _c.downloadPdfReport();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF guardado en Descargas')));
+                if (mounted) ErrorDisplay.successSnackBar(context: context, message: 'PDF guardado en Descargas');
               } catch (_) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al guardar PDF'), backgroundColor: AppTheme.reiOrangeRed));
+                if (mounted) ErrorDisplay.snackBar(context: context, message: 'Error al guardar PDF', hint: 'Verifica que la carpeta Descargas exista y tengas permisos de escritura.');
               } finally { if (mounted) setState(() => _isPdf = false); }
             }),
           IconButton(icon: const Icon(Icons.summarize_rounded, color: AppTheme.ayanamiBlue, size: 22), onPressed: _showSummary),
           IconButton(icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500, size: 22), onPressed: _c.cargarEstadisticas),
-        ],
+        ]),
       ),
       body: _c.isLoading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue))
@@ -316,10 +311,9 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
     ]));
   }
 
-  Widget _errorBanner() => Container(
-    width: double.infinity, padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.reiOrangeRed.withOpacity(0.3))),
-    child: Row(children: [const Icon(Icons.warning_amber_rounded, color: AppTheme.reiOrangeRed, size: 18), const SizedBox(width: 10), Expanded(child: Text(_c.error!, style: const TextStyle(color: AppTheme.reiOrangeRed, fontSize: 12)))]),
+  Widget _errorBanner() => ErrorDisplay.inline(
+    message: _c.error!,
+    onDismiss: () => _c.error = null,
   );
 
   // ── SUMMARY DIALOG ──
