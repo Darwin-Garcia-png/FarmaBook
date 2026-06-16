@@ -51,7 +51,7 @@ void main() {
       expect(find.text('Crear Cuenta'), findsOneWidget);
     });
 
-    testWidgets('register dialog has form fields and role dropdown', (tester) async {
+    testWidgets('register dialog has form fields', (tester) async {
       await tester.pumpWidget(createLoginScreen());
       await tester.pump();
 
@@ -61,7 +61,6 @@ void main() {
       expect(find.text('Usuario *'), findsOneWidget);
       expect(find.text('Email *'), findsOneWidget);
       expect(find.text('Contraseña *'), findsOneWidget);
-      expect(find.text('ROL'), findsOneWidget);
     });
 
     testWidgets('register dialog can be cancelled', (tester) async {
