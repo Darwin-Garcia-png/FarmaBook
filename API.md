@@ -1349,7 +1349,7 @@ Busca usuarios activos por coincidencia parcial de nombre, paginado.
 ---
 
 #### `POST /users`
-Crea un nuevo usuario con rol `Administrador` (por diseño no se exponen otros roles).
+Crea un nuevo usuario con rol `Empleado` (por diseño no se exponen otros roles).
 
 **Body:**
 ```json

@@ -216,7 +216,7 @@ class ReceiptDialog extends StatelessWidget {
         [];
 
     final pdf = pw.Document();
-    final margen = 4.0;
+    const margen = 4.0;
 
     pdf.addPage(
       pw.Page(
@@ -327,7 +327,7 @@ class ReceiptDialog extends StatelessWidget {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(label,
-              style: pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
+              style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
           pw.Text(value,
               style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
         ],
