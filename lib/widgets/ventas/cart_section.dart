@@ -21,11 +21,11 @@ class CartSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 30,
               offset: const Offset(-10, 0))
         ],
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -44,15 +44,15 @@ class CartSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.ayanamiBlue.withOpacity(0.05),
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+        color: AppTheme.ayanamiBlue.withValues(alpha: 0.05),
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.ayanamiBlue.withOpacity(0.1),
+              color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.shopping_bag_rounded, color: AppTheme.ayanamiBlue, size: 18),
@@ -99,16 +99,16 @@ class CartSection extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+            color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.08)),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.08)),
           ),
           child: Row(
             children: [
               Container(
                 width: 32, height: 32,
                 decoration: BoxDecoration(
-                  color: AppTheme.ayanamiBlue.withOpacity(0.1),
+                  color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.medication_rounded, color: AppTheme.ayanamiBlue, size: 16),
@@ -131,7 +131,7 @@ class CartSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardTheme.color,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                  border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -179,7 +179,7 @@ class CartSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -220,7 +220,7 @@ class CartSection extends StatelessWidget {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 4,
-                shadowColor: AppTheme.greenMetal.withOpacity(0.3),
+                shadowColor: AppTheme.greenMetal.withValues(alpha: 0.3),
               ),
               child: controller.isLoading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -244,13 +244,13 @@ class CartSection extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppTheme.ayanamiBlue.withOpacity(0.04),
+            color: AppTheme.ayanamiBlue.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Row(
             children: [
-              Icon(Icons.person_outline_rounded, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 16),
+              Icon(Icons.person_outline_rounded, color: AppTheme.ayanamiBlue.withValues(alpha: 0.7), size: 16),
               const SizedBox(width: 8),
               Expanded(
                   child: TextField(
@@ -271,13 +271,13 @@ class CartSection extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppTheme.ayanamiBlue.withOpacity(0.04),
+            color: AppTheme.ayanamiBlue.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Row(
             children: [
-              Icon(Icons.badge_outlined, color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 16),
+              Icon(Icons.badge_outlined, color: AppTheme.ayanamiBlue.withValues(alpha: 0.7), size: 16),
               const SizedBox(width: 8),
               Expanded(
                   child: TextField(

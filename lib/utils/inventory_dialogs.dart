@@ -69,13 +69,13 @@ class InventoryDialogs {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withOpacity(0.8)]),
+                        gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.8)]),
                       ),
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
                             child: const Icon(Icons.edit_rounded, color: Colors.white, size: 28),
                           ),
                           const SizedBox(width: 18),
@@ -96,7 +96,7 @@ class InventoryDialogs {
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: AppTheme.ayanamiBlue.withOpacity(0.12)),
+                              side: BorderSide(color: AppTheme.ayanamiBlue.withValues(alpha: 0.12)),
                             ),
                             color: Theme.of(context).cardTheme.color,
                             child: Padding(
@@ -162,7 +162,7 @@ class InventoryDialogs {
                                 backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                elevation: 8, shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4)),
+                                elevation: 8, shadowColor: AppTheme.ayanamiBlue.withValues(alpha: 0.4)),
                             onPressed: () async {
                               if (!formKey.currentState!.validate()) return;
                               final pId = prod['productoId']?.toString();
@@ -522,14 +522,14 @@ class InventoryDialogs {
       decoration: BoxDecoration(
           gradient: LinearGradient(colors: [
         AppTheme.ayanamiBlue,
-        AppTheme.ayanamiBlue.withOpacity(0.8)
+        AppTheme.ayanamiBlue.withValues(alpha: 0.8)
       ])),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
             child: Icon(
                 isEdit || isBatchEdit
                     ? Icons.edit_rounded
@@ -578,8 +578,8 @@ class InventoryDialogs {
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.1)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 12, offset: const Offset(0, 4))],
+          border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 12, offset: const Offset(0, 4))],
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -601,7 +601,7 @@ class InventoryDialogs {
               _sectionDivider(context),
               const SizedBox(height: 12),
               Row(children: [
-                Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.06), borderRadius: BorderRadius.circular(8)),
+                Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(8)),
                   child: const Icon(Icons.category_rounded, size: 14, color: AppTheme.ayanamiBlue)),
                 const SizedBox(width: 10),
                 const Text('CLASIFICACIÓN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.2)),
@@ -620,9 +620,9 @@ class InventoryDialogs {
                 child: Container(
                   width: 140, height: 140,
                   decoration: BoxDecoration(
-                    color: AppTheme.ayanamiBlue.withOpacity(0.03),
+                    color: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.1)),
+                    border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1)),
                   ),
                   child: _buildImagePicker(context, currentImageUrl, selectedImage, onImage),
                 ),
@@ -639,16 +639,16 @@ class InventoryDialogs {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.ayanamiBlue.withOpacity(0.05),
+        color: AppTheme.ayanamiBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.15)),
+        border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.ayanamiBlue.withOpacity(0.1),
+              color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.medication_rounded, color: AppTheme.ayanamiBlue, size: 24),
@@ -689,8 +689,8 @@ class InventoryDialogs {
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.greenMetal.withOpacity(0.1)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 12, offset: const Offset(0, 4))],
+        border: Border.all(color: AppTheme.greenMetal.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -707,7 +707,7 @@ class InventoryDialogs {
             _sectionDivider(context),
             const SizedBox(height: 12),
             Row(children: [
-              Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.greenMetal.withOpacity(0.06), borderRadius: BorderRadius.circular(8)),
+              Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(8)),
                 child: const Icon(Icons.attach_money_rounded, size: 14, color: AppTheme.greenMetal)),
               const SizedBox(width: 10),
               const Text('PRECIOS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.2)),
@@ -721,7 +721,7 @@ class InventoryDialogs {
             _sectionDivider(context),
             const SizedBox(height: 12),
             Row(children: [
-              Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.06), borderRadius: BorderRadius.circular(8)),
+              Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(8)),
                 child: const Icon(Icons.inventory_rounded, size: 14, color: AppTheme.reiOrangeRed)),
               const SizedBox(width: 10),
               const Text('INVENTARIO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.2)),
@@ -742,7 +742,7 @@ class InventoryDialogs {
   static Widget _subHeader(IconData icon, String title) {
     return Row(
       children: [
-        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
           child: Icon(icon, size: 16, color: AppTheme.ayanamiBlue)),
         const SizedBox(width: 10),
         Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.2)),
@@ -751,7 +751,7 @@ class InventoryDialogs {
   }
 
   static Widget _sectionDivider(BuildContext context) {
-    return Divider(height: 1, color: Colors.grey.withOpacity(0.08));
+    return Divider(height: 1, color: Colors.grey.withValues(alpha: 0.08));
   }
 
   static Widget _formRow(List<Widget> children) {
@@ -778,10 +778,10 @@ class InventoryDialogs {
         decoration: InputDecoration(
           labelText: label, isDense: true,
           prefixIcon: Padding(padding: const EdgeInsets.only(right: 8),
-            child: Icon(icon, color: AppTheme.ayanamiBlue.withOpacity(0.6), size: 18)),
+            child: Icon(icon, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 18)),
           prefixIconConstraints: const BoxConstraints(minWidth: 36),
           filled: true,
-          fillColor: readOnly ? Colors.grey.withOpacity(0.04) : AppTheme.ayanamiBlue.withOpacity(0.03),
+          fillColor: readOnly ? Colors.grey.withValues(alpha: 0.04) : AppTheme.ayanamiBlue.withValues(alpha: 0.03),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
@@ -830,11 +830,11 @@ class InventoryDialogs {
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon,
-              color: AppTheme.ayanamiBlue.withOpacity(0.7), size: 20),
+              color: AppTheme.ayanamiBlue.withValues(alpha: 0.7), size: 20),
           filled: true,
           fillColor: readOnly
-              ? Colors.grey.withOpacity(0.05)
-              : AppTheme.ayanamiBlue.withOpacity(0.03),
+              ? Colors.grey.withValues(alpha: 0.05)
+              : AppTheme.ayanamiBlue.withValues(alpha: 0.03),
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none),
@@ -930,8 +930,8 @@ class InventoryDialogs {
               labelText: label,
               filled: true,
               fillColor: readOnly
-                  ? Colors.grey.withOpacity(0.05)
-                  : AppTheme.ayanamiBlue.withOpacity(0.03),
+                  ? Colors.grey.withValues(alpha: 0.05)
+                  : AppTheme.ayanamiBlue.withValues(alpha: 0.03),
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none),
@@ -1020,7 +1020,7 @@ class InventoryDialogs {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppTheme.greenMetal.withOpacity(0.1),
+                              color: AppTheme.greenMetal.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Icon(Icons.add_circle_rounded, color: AppTheme.greenMetal, size: 24),
@@ -1044,7 +1044,7 @@ class InventoryDialogs {
                           labelText: 'Nombre *',
                           prefixIcon: const Icon(Icons.label_rounded, color: AppTheme.ayanamiBlue, size: 20),
                           filled: true,
-                          fillColor: AppTheme.ayanamiBlue.withOpacity(0.03),
+                          fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none),
@@ -1067,7 +1067,7 @@ class InventoryDialogs {
                               color: AppTheme.ayanamiBlue,
                               size: 20),
                           filled: true,
-                          fillColor: AppTheme.ayanamiBlue.withOpacity(0.03),
+                          fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none),
@@ -1083,7 +1083,7 @@ class InventoryDialogs {
                             labelText: 'Teléfono (opcional)',
                             prefixIcon: const Icon(Icons.phone_rounded, color: AppTheme.ayanamiBlue, size: 20),
                             filled: true,
-                            fillColor: AppTheme.ayanamiBlue.withOpacity(0.03),
+                            fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none),
@@ -1098,7 +1098,7 @@ class InventoryDialogs {
                             labelText: 'Email (opcional)',
                             prefixIcon: const Icon(Icons.email_rounded, color: AppTheme.ayanamiBlue, size: 20),
                             filled: true,
-                            fillColor: AppTheme.ayanamiBlue.withOpacity(0.03),
+                            fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none),
@@ -1241,10 +1241,10 @@ class InventoryDialogs {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isLoading ? Colors.grey.withOpacity(0.04) : AppTheme.ayanamiBlue.withOpacity(0.03),
+          color: isLoading ? Colors.grey.withValues(alpha: 0.04) : AppTheme.ayanamiBlue.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: date == null ? AppTheme.reiOrangeRed.withOpacity(0.5) : Colors.transparent,
+            color: date == null ? AppTheme.reiOrangeRed.withValues(alpha: 0.5) : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -1252,7 +1252,7 @@ class InventoryDialogs {
           decoration: InputDecoration(
             labelText: 'Fecha Venc. *',
             prefixIcon: Padding(padding: const EdgeInsets.only(right: 8),
-              child: Icon(Icons.calendar_month_rounded, color: AppTheme.ayanamiBlue.withOpacity(0.6), size: 18)),
+              child: Icon(Icons.calendar_month_rounded, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 18)),
             prefixIconConstraints: const BoxConstraints(minWidth: 36),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -1271,7 +1271,7 @@ class InventoryDialogs {
                 fontWeight: FontWeight.w600, fontSize: 14),
               overflow: TextOverflow.ellipsis)),
             if (!isLoading)
-              Icon(Icons.edit_calendar_outlined, color: AppTheme.ayanamiBlue.withOpacity(0.5), size: 16),
+              Icon(Icons.edit_calendar_outlined, color: AppTheme.ayanamiBlue.withValues(alpha: 0.5), size: 16),
           ]),
         ),
       ),
@@ -1325,7 +1325,7 @@ class InventoryDialogs {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
               elevation: 8,
-              shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4)),
+              shadowColor: AppTheme.ayanamiBlue.withValues(alpha: 0.4)),
           onPressed: () async {
             if (!formKey.currentState!.validate()) return;
             if (expiryDate == null || expiryDate.year >= 9999) {
@@ -1451,10 +1451,10 @@ class InventoryDialogs {
                 width: 140,
                 height: 140,
                 decoration: BoxDecoration(
-                  color: AppTheme.ayanamiBlue.withOpacity(0.05),
+                  color: AppTheme.ayanamiBlue.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: AppTheme.ayanamiBlue.withOpacity(0.2), width: 2),
+                      color: AppTheme.ayanamiBlue.withValues(alpha: 0.2), width: 2),
                   image: selected != null
                       ? DecorationImage(
                           image: FileImage(File(selected.path)),
@@ -1472,7 +1472,7 @@ class InventoryDialogs {
                         children: [
                           Icon(Icons.add_a_photo_rounded,
                               color:
-                                  AppTheme.ayanamiBlue.withOpacity(0.5),
+                                  AppTheme.ayanamiBlue.withValues(alpha: 0.5),
                               size: 40),
                           const SizedBox(height: 8),
                           const Text('Añadir foto',
@@ -1552,10 +1552,10 @@ class _WebImagePreviewState extends State<_WebImagePreview> {
       width: 140,
       height: 140,
       decoration: BoxDecoration(
-        color: AppTheme.ayanamiBlue.withOpacity(0.05),
+        color: AppTheme.ayanamiBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: AppTheme.ayanamiBlue.withOpacity(0.2), width: 2),
+            color: AppTheme.ayanamiBlue.withValues(alpha: 0.2), width: 2),
         image: hasImage
             ? DecorationImage(image: MemoryImage(_bytes!), fit: BoxFit.cover)
             : hasUrl
@@ -1569,7 +1569,7 @@ class _WebImagePreviewState extends State<_WebImagePreview> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.add_a_photo_rounded,
-                    color: AppTheme.ayanamiBlue.withOpacity(0.5), size: 40),
+                    color: AppTheme.ayanamiBlue.withValues(alpha: 0.5), size: 40),
                 const SizedBox(height: 8),
                 const Text('Añadir foto',
                     style: TextStyle(

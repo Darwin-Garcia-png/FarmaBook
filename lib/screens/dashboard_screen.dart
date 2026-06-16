@@ -46,11 +46,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Container(
           margin: const EdgeInsets.fromLTRB(16, 16, 0, 16),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color?.withOpacity(0.95),
+            color: Theme.of(context).cardTheme.color?.withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 40,
                 offset: const Offset(10, 0),
               ),
@@ -163,7 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.ayanamiBlue.withOpacity(0.1),
+              color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(Icons.local_pharmacy_rounded, size: 32, color: AppTheme.ayanamiBlue),
@@ -204,7 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: isSelected ? [
               BoxShadow(
-                color: AppTheme.ayanamiBlue.withOpacity(0.3),
+                color: AppTheme.ayanamiBlue.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               )
@@ -219,7 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 16),
               Text(title,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7), 
+                  color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.7), 
                   fontSize: 15, 
                   fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
                   letterSpacing: isSelected ? 0.2 : 0,
@@ -246,7 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.ayanamiBlue.withOpacity(0.1) : Colors.transparent,
+            color: isSelected ? AppTheme.ayanamiBlue.withValues(alpha: 0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -258,7 +258,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 12),
               Text(title,
                 style: TextStyle(
-                  color: isSelected ? AppTheme.ayanamiBlue : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.6), 
+                  color: isSelected ? AppTheme.ayanamiBlue : Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.6), 
                   fontSize: 14, 
                   fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
                 ),

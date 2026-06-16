@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     showDialog(
       context: context,
-      barrierColor: Colors.black87.withOpacity(0.8),
+      barrierColor: Colors.black87.withValues(alpha: 0.8),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDState) {
@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardTheme.color,
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 40)],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 40)],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -99,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16)),
                             child: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 28),
                           ),
                           const SizedBox(width: 16),
@@ -170,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: () => Navigator.pop(ctx),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.blueGrey,
-                                side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                                side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
                                 padding: const EdgeInsets.symmetric(vertical: 18),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               ),
@@ -263,16 +263,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 24,
                             offset: const Offset(0, 12),
                           ),
                         ],
-                        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
                       ),
                       child: const Icon(
                         Icons.local_pharmacy_rounded,
@@ -293,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Gestión de Farmacia',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white.withOpacity(0.75),
+                        color: Colors.white.withValues(alpha: 0.75),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -307,9 +307,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(40),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(32),
-                            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
                           ),
                           child: Form(
                             key: _controller.formKey,
@@ -351,7 +351,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text('¿No tienes cuenta? ',
-                                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+                                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
                                       GestureDetector(
                                         onTap: _showRegisterDialog,
                                         child: const Text('Registrarse',
@@ -392,13 +392,13 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-        prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue.withOpacity(0.6), size: 20),
+        prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 20),
         suffixIcon: suffix,
         filled: true,
-        fillColor: Colors.white.withOpacity(0.05),
+        fillColor: Colors.white.withValues(alpha: 0.05),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -428,15 +428,15 @@ class _LoginScreenState extends State<LoginScreen> {
               hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
               prefixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: Icon(icon, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.6)),
+                child: Icon(icon, size: 20, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6)),
               ),
               prefixIconConstraints: const BoxConstraints(minWidth: 40),
               filled: true,
-              fillColor: Colors.grey.withOpacity(0.04),
+              fillColor: Colors.grey.withValues(alpha: 0.04),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppTheme.ayanamiBlue.withOpacity(0.5), width: 1.5)),
+                borderSide: BorderSide(color: AppTheme.ayanamiBlue.withValues(alpha: 0.5), width: 1.5)),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
@@ -472,7 +472,7 @@ class _LoginScreenState extends State<LoginScreen> {
               hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
               prefixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: Icon(Icons.lock_outline_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.6)),
+                child: Icon(Icons.lock_outline_rounded, size: 20, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6)),
               ),
               prefixIconConstraints: const BoxConstraints(minWidth: 40),
               suffixIcon: IconButton(
@@ -480,11 +480,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: toggle,
               ),
               filled: true,
-              fillColor: Colors.grey.withOpacity(0.04),
+              fillColor: Colors.grey.withValues(alpha: 0.04),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppTheme.ayanamiBlue.withOpacity(0.5), width: 1.5)),
+                borderSide: BorderSide(color: AppTheme.ayanamiBlue.withValues(alpha: 0.5), width: 1.5)),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),

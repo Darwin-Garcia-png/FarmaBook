@@ -61,7 +61,7 @@ class ManualScreen extends StatelessWidget {
 
   Widget _buildSectionTitle(String title, IconData icon, Color color) {
     return Row(children: [
-      Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 24)),
+      Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 24)),
       const SizedBox(width: 16),
       Text(title, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 2)),
     ]);
@@ -157,13 +157,13 @@ class ManualScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: Colors.black.withOpacity(0.05)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10))]),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))]),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+            Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
               child: Icon(icon, color: color, size: 24)),
-            Icon(Icons.add_circle_outline_rounded, color: color.withOpacity(0.5), size: 20),
+            Icon(Icons.add_circle_outline_rounded, color: color.withValues(alpha: 0.5), size: 20),
           ]),
           const SizedBox(height: 16),
           Text(title, style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.w900)),
@@ -184,7 +184,7 @@ class ManualScreen extends StatelessWidget {
         padding: const EdgeInsets.all(40),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
               child: Icon(icon, color: color, size: 32)),
             const SizedBox(width: 24),
             Expanded(child: Text(title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1))),
@@ -193,7 +193,7 @@ class ManualScreen extends StatelessWidget {
           const Text('GUÍA DETALLADA', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 2)),
           const SizedBox(height: 16),
           Flexible(child: SingleChildScrollView(
-            child: Text(detail, style: TextStyle(fontSize: 15, color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8), height: 1.6, fontWeight: FontWeight.w500)),
+            child: Text(detail, style: TextStyle(fontSize: 15, color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.8), height: 1.6, fontWeight: FontWeight.w500)),
           )),
           const SizedBox(height: 32),
           SizedBox(width: double.infinity, child: ElevatedButton(
@@ -255,9 +255,9 @@ class ManualScreen extends StatelessWidget {
   Widget _flujo(Color cardColor, Color textColor, String t, IconData ic, Color c, String d) {
     return Container(
       width: double.infinity, padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(24), border: Border.all(color: c.withOpacity(0.12))),
+      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(24), border: Border.all(color: c.withValues(alpha: 0.12))),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(ic, color: c, size: 20)),
+        Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(ic, color: c, size: 20)),
         const SizedBox(width: 20),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(t, style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w900)),
@@ -304,11 +304,11 @@ class ManualScreen extends StatelessWidget {
   Widget _faq(Color cardColor, Color textColor, String q, String a) {
     return Container(
       width: double.infinity, margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.08))),
+      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.08))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(margin: const EdgeInsets.only(top: 2), padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
             child: const Icon(Icons.help_outline_rounded, color: Color(0xFF8B5CF6), size: 16)),
           const SizedBox(width: 14),
           Expanded(child: Text(q, style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w800))),
@@ -372,9 +372,9 @@ class ManualScreen extends StatelessWidget {
   Widget _trouble(Color cardColor, Color textColor, String t, IconData ic, String d) {
     return Container(
       width: double.infinity, margin: const EdgeInsets.only(bottom: 14), padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(24), border: Border.all(color: AppTheme.reiOrangeRed.withOpacity(0.1))),
+      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(24), border: Border.all(color: AppTheme.reiOrangeRed.withValues(alpha: 0.1))),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
           child: Icon(ic, color: AppTheme.reiOrangeRed, size: 20)),
         const SizedBox(width: 18),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -396,8 +396,8 @@ class ManualScreen extends StatelessWidget {
       child: Container(
         height: 100, padding: const EdgeInsets.symmetric(horizontal: 40),
         decoration: BoxDecoration(
-          color: bgColor.withOpacity(0.95),
-          border: Border(bottom: BorderSide(color: Colors.black.withOpacity(0.05))),
+          color: bgColor.withValues(alpha: 0.95),
+          border: Border(bottom: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
         ),
         child: Row(children: [
           IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.ayanamiBlue, size: 20),

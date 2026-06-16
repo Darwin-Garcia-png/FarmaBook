@@ -174,7 +174,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
           alignLabelWithHint: maxLines > 1,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           filled: true,
-          fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+          fillColor: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
           errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
         ),
         validator: (v) {
@@ -253,11 +253,11 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 40),
-      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.08)))),
+      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08)))),
       child: Row(children: [
         Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: accent.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
           child: const Icon(Icons.category_rounded, color: Color(0xFF8B5CF6), size: 24),
         ),
         const SizedBox(width: 14),
@@ -274,7 +274,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       decoration: BoxDecoration(
         color: _cardColor(context),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: TextField(
         controller: _searchCtrl,
@@ -288,7 +288,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
               : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           filled: true,
-          fillColor: bg.withOpacity(0.3),
+          fillColor: bg.withValues(alpha: 0.3),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
@@ -299,9 +299,9 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(48),
-      decoration: BoxDecoration(color: _cardColor(context), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8))]),
+      decoration: BoxDecoration(color: _cardColor(context), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8))]),
       child: Column(children: [
-        Icon(Icons.category_outlined, size: 64, color: accent.withOpacity(0.3)),
+        Icon(Icons.category_outlined, size: 64, color: accent.withValues(alpha: 0.3)),
         const SizedBox(height: 16),
         Text('No hay categorías registradas', style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
@@ -316,15 +316,15 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: accent.withOpacity(0.4), width: 3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+        border: Border(left: BorderSide(color: accent.withValues(alpha: 0.4), width: 3)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: accent.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
             child: Icon(Icons.category_rounded, color: accent, size: 22),
           ),
           const SizedBox(width: 14),
@@ -352,7 +352,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, size: 18, color: color),
       ),
     );

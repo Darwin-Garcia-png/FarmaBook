@@ -64,7 +64,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         baseColor: _accent,
         trailing: loading ? null : Row(mainAxisSize: MainAxisSize.min, children: [
           IconButton(
-            icon: Icon(Icons.refresh_rounded, size: 20, color: _accent.withOpacity(0.7)),
+            icon: Icon(Icons.refresh_rounded, size: 20, color: _accent.withValues(alpha: 0.7)),
             onPressed: () { _ctrl.fetchAll(); if (_ctrl.showDeleted) _ctrl.fetchDeleted(); },
             padding: EdgeInsets.zero, constraints: const BoxConstraints(),
           ),
@@ -182,9 +182,9 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? _accent : _accent.withOpacity(0.06),
+          color: active ? _accent : _accent.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? _accent : _accent.withOpacity(0.15), width: active ? 0 : 1),
+          border: Border.all(color: active ? _accent : _accent.withValues(alpha: 0.15), width: active ? 0 : 1),
         ),
         child: Text(label,
           style: TextStyle(
@@ -202,13 +202,13 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: _ctrl.showDeleted ? AppTheme.reiOrangeRed.withOpacity(0.06) : _accent.withOpacity(0.06),
+              color: _ctrl.showDeleted ? AppTheme.reiOrangeRed.withValues(alpha: 0.06) : _accent.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
               _ctrl.showDeleted ? Icons.archive_outlined : Icons.people_outline_rounded,
               size: 56,
-              color: _ctrl.showDeleted ? AppTheme.reiOrangeRed.withOpacity(0.4) : _accent.withOpacity(0.3),
+              color: _ctrl.showDeleted ? AppTheme.reiOrangeRed.withValues(alpha: 0.4) : _accent.withValues(alpha: 0.3),
             ),
           ),
           const SizedBox(height: 20),
@@ -256,10 +256,10 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.06)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.06)),
         boxShadow: [
           BoxShadow(
-            color: isDeleted ? AppTheme.reiOrangeRed.withOpacity(0.04) : _accent.withOpacity(0.04),
+            color: isDeleted ? AppTheme.reiOrangeRed.withValues(alpha: 0.04) : _accent.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -288,12 +288,12 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                   width: 52, height: 52,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [rolCol, rolCol.withOpacity(0.6)],
+                      colors: [rolCol, rolCol.withValues(alpha: 0.6)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: rolCol.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 2))],
+                    boxShadow: [BoxShadow(color: rolCol.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))],
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -318,7 +318,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppTheme.reiOrangeRed.withOpacity(0.08),
+                                color: AppTheme.reiOrangeRed.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text('INACTIVO',
@@ -378,7 +378,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, size: 20, color: color),
@@ -400,7 +400,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
 
     showDialog(
       context: context,
-      barrierColor: Colors.black87.withOpacity(0.8),
+      barrierColor: Colors.black87.withValues(alpha: 0.8),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDState) {
@@ -413,7 +413,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardTheme.color,
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 40)],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 40)],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -490,7 +490,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_accent, _accent.withOpacity(0.85)],
+          colors: [_accent, _accent.withValues(alpha: 0.85)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -499,7 +499,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16)),
             child: Icon(isEdit ? Icons.edit_note_rounded : Icons.person_add_alt_1_rounded, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 16),
@@ -508,7 +508,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
             const SizedBox(height: 2),
             Text(isEdit ? 'Modifica los datos del empleado' : 'Registra un nuevo miembro del equipo',
-              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8), fontWeight: FontWeight.w600)),
+              style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w600)),
           ]),
         ],
       ),
@@ -533,15 +533,15 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
               hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
               prefixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: Icon(icon, size: 20, color: _accent.withOpacity(0.6)),
+                child: Icon(icon, size: 20, color: _accent.withValues(alpha: 0.6)),
               ),
               prefixIconConstraints: const BoxConstraints(minWidth: 40),
               filled: true,
-              fillColor: Colors.grey.withOpacity(0.04),
+              fillColor: Colors.grey.withValues(alpha: 0.04),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _accent.withOpacity(0.5), width: 1.5)),
+                borderSide: BorderSide(color: _accent.withValues(alpha: 0.5), width: 1.5)),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
@@ -578,7 +578,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
               hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
               prefixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: Icon(Icons.lock_outline_rounded, size: 20, color: _accent.withOpacity(0.6)),
+                child: Icon(Icons.lock_outline_rounded, size: 20, color: _accent.withValues(alpha: 0.6)),
               ),
               prefixIconConstraints: const BoxConstraints(minWidth: 40),
               suffixIcon: IconButton(
@@ -586,11 +586,11 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 onPressed: toggle,
               ),
               filled: true,
-              fillColor: Colors.grey.withOpacity(0.04),
+              fillColor: Colors.grey.withValues(alpha: 0.04),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _accent.withOpacity(0.5), width: 1.5)),
+                borderSide: BorderSide(color: _accent.withValues(alpha: 0.5), width: 1.5)),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
@@ -626,7 +626,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
               onPressed: () => Navigator.pop(ctx),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.blueGrey,
-                side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -684,7 +684,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         title: Row(children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
             child: const Icon(Icons.person_off_rounded, color: AppTheme.reiOrangeRed, size: 22),
           ),
           const SizedBox(width: 12),
@@ -714,7 +714,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         title: Row(children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppTheme.greenMetal.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
             child: const Icon(Icons.person_add_alt_1_rounded, color: AppTheme.greenMetal, size: 22),
           ),
           const SizedBox(width: 12),

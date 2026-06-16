@@ -25,7 +25,7 @@ class SalesResultsGrid extends StatelessWidget {
                 color: Theme.of(context).cardTheme.color,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10)
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)
                 ],
               ),
               child: Icon(Icons.search_off_rounded,
@@ -59,10 +59,10 @@ class SalesResultsGrid extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 20,
                   offset: const Offset(0, 10))
             ],
@@ -80,7 +80,7 @@ class SalesResultsGrid extends StatelessWidget {
                       width: 70,
                       height: 70,
                       decoration: BoxDecoration(
-                        color: AppTheme.ayanamiBlue.withOpacity(0.1),
+                        color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Icon(Icons.medication_rounded,
@@ -100,7 +100,7 @@ class SalesResultsGrid extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: Colors.grey.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text('Stock: ${p.cantidadDisponible}',
@@ -125,7 +125,7 @@ class SalesResultsGrid extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: AppTheme.ayanamiBlue.withOpacity(0.1),
+                            color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.add_rounded, color: AppTheme.ayanamiBlue, size: 20),

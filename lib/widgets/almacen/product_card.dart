@@ -153,13 +153,13 @@ class _ProductCardState extends State<ProductCard> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.06) : Colors.black.withOpacity(0.03),
+            color: isExpired ? AppTheme.reiOrangeRed.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
         ],
         border: Border.all(
-          color: isExpired ? AppTheme.reiOrangeRed.withOpacity(0.3) : Theme.of(context).dividerColor.withOpacity(0.1),
+          color: isExpired ? AppTheme.reiOrangeRed.withValues(alpha: 0.3) : Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
       ),
       child: Material(
@@ -265,7 +265,7 @@ class _ProductCardState extends State<ProductCard> {
                         padding: const EdgeInsets.only(top: 6),
                         child: SizedBox(
                           width: 14, height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.ayanamiBlue.withOpacity(0.5)),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.ayanamiBlue.withValues(alpha: 0.5)),
                         ),
                       ),
                   ],
@@ -321,7 +321,7 @@ class _ProductCardState extends State<ProductCard> {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: stock > 0 ? (stock > 100 ? 1.0 : stock / 100.0) : 0.0,
-            backgroundColor: color.withOpacity(0.1),
+            backgroundColor: color.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation(color),
             minHeight: 6,
           ),
@@ -332,7 +332,7 @@ class _ProductCardState extends State<ProductCard> {
 
   Widget _iconPlaceholder() {
     return Center(
-      child: Icon(Icons.medication_rounded, size: 64, color: Colors.grey.withOpacity(0.2)),
+      child: Icon(Icons.medication_rounded, size: 64, color: Colors.grey.withValues(alpha: 0.2)),
     );
   }
 
@@ -340,7 +340,7 @@ class _ProductCardState extends State<ProductCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 9, letterSpacing: 0.5)),

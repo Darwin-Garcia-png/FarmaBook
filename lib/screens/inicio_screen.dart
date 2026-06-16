@@ -59,7 +59,7 @@ class _InicioScreenState extends State<InicioScreen> {
                 Row(children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.08), borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(20)),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.wb_sunny_rounded, size: 12, color: AppTheme.ayanamiBlue),
                       const SizedBox(width: 6),
@@ -69,7 +69,7 @@ class _InicioScreenState extends State<InicioScreen> {
                   const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: AppTheme.greenMetal.withOpacity(0.08), borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(20)),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.today_rounded, size: 12, color: AppTheme.greenMetal),
                       const SizedBox(width: 6),
@@ -84,7 +84,7 @@ class _InicioScreenState extends State<InicioScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: _ctrl.ingresos - _ctrl.egresos >= 0 ? AppTheme.greenMetal.withOpacity(0.08) : AppTheme.reiOrangeRed.withOpacity(0.08),
+                  color: _ctrl.ingresos - _ctrl.egresos >= 0 ? AppTheme.greenMetal.withValues(alpha: 0.08) : AppTheme.reiOrangeRed.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -132,9 +132,9 @@ class _InicioScreenState extends State<InicioScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                       decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14),
-                        border: Border(left: BorderSide(color: AppTheme.greenMetal.withOpacity(0.3), width: 3))),
+                        border: Border(left: BorderSide(color: AppTheme.greenMetal.withValues(alpha: 0.3), width: 3))),
                       child: Row(children: [
-                        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.greenMetal.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                           child: Icon(Icons.receipt_rounded, size: 16, color: AppTheme.greenMetal)),
                         const SizedBox(width: 12),
                         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -164,11 +164,11 @@ class _InicioScreenState extends State<InicioScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: colors[i].withOpacity(0.15))),
+                        border: Border.all(color: colors[i].withValues(alpha: 0.15))),
                       child: Row(children: [
                         Container(
                           width: 28, height: 28,
-                          decoration: BoxDecoration(color: colors[i].withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(color: colors[i].withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
                           child: Center(child: Text('#${i + 1}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: colors[i]))),
                         ),
                         const SizedBox(width: 10),
@@ -177,11 +177,11 @@ class _InicioScreenState extends State<InicioScreen> {
                           const SizedBox(height: 4),
                           ClipRRect(borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(value: (3 - i) / 3, minHeight: 3,
-                              backgroundColor: colors[i].withOpacity(0.08), valueColor: AlwaysStoppedAnimation(colors[i]))),
+                              backgroundColor: colors[i].withValues(alpha: 0.08), valueColor: AlwaysStoppedAnimation(colors[i]))),
                         ])),
                         const SizedBox(width: 12),
                         Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(color: colors[i].withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                          decoration: BoxDecoration(color: colors[i].withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
                           child: Text('$qty uds', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: colors[i]))),
                       ]),
                     );
@@ -197,10 +197,10 @@ class _InicioScreenState extends State<InicioScreen> {
                 Container(
                   width: double.infinity, padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.1))),
+                    border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1))),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
-                      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
                         child: const Icon(Icons.health_and_safety_rounded, color: AppTheme.ayanamiBlue, size: 18)),
                       const SizedBox(width: 12),
                       Text('SALUD DEL STOCK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1)),
@@ -211,7 +211,7 @@ class _InicioScreenState extends State<InicioScreen> {
                     const SizedBox(height: 16),
                     ClipRRect(borderRadius: BorderRadius.circular(6),
                       child: LinearProgressIndicator(value: _ctrl.stockHealthPercent, minHeight: 8,
-                        backgroundColor: Colors.grey.withOpacity(0.08),
+                        backgroundColor: Colors.grey.withValues(alpha: 0.08),
                         valueColor: AlwaysStoppedAnimation(
                           _ctrl.stockHealthPercent >= 0.7 ? AppTheme.greenMetal : _ctrl.stockHealthPercent >= 0.4 ? const Color(0xFFF59E0B) : AppTheme.reiOrangeRed))),
                   ]),
@@ -225,9 +225,9 @@ class _InicioScreenState extends State<InicioScreen> {
                   Container(
                     width: double.infinity, padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.greenMetal.withOpacity(0.1))),
+                      border: Border.all(color: AppTheme.greenMetal.withValues(alpha: 0.1))),
                     child: Row(children: [
-                      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.greenMetal.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
                         child: const Icon(Icons.check_circle_rounded, color: AppTheme.greenMetal, size: 18)),
                       const SizedBox(width: 12),
                       Text('Sin alertas activas', style: TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w800, fontSize: 13)),
@@ -237,14 +237,14 @@ class _InicioScreenState extends State<InicioScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12),
-                      border: Border(left: BorderSide(color: AppTheme.reiOrangeRed.withOpacity(0.4), width: 3))),
+                      border: Border(left: BorderSide(color: AppTheme.reiOrangeRed.withValues(alpha: 0.4), width: 3))),
                     child: Row(children: [
-                      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                         child: const Icon(Icons.inventory_rounded, color: AppTheme.reiOrangeRed, size: 14)),
                       const SizedBox(width: 10),
                       Expanded(child: Text(a['nombre']?.toString() ?? 'Producto', style: TextStyle(color: text, fontWeight: FontWeight.w700, fontSize: 12))),
                       Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                         child: const Text('Stock bajo', style: TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.w800, fontSize: 9))),
                     ]),
                   )),
@@ -252,14 +252,14 @@ class _InicioScreenState extends State<InicioScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12),
-                      border: Border(left: BorderSide(color: Colors.orange.withOpacity(0.4), width: 3))),
+                      border: Border(left: BorderSide(color: Colors.orange.withValues(alpha: 0.4), width: 3))),
                     child: Row(children: [
-                      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.orange.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                         child: const Icon(Icons.schedule_rounded, color: Colors.orange, size: 14)),
                       const SizedBox(width: 10),
                       Expanded(child: Text(a['productoNombre']?.toString() ?? 'Lote', style: TextStyle(color: text, fontWeight: FontWeight.w700, fontSize: 12))),
                       Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.orange.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                         child: const Text('Por vencer', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w800, fontSize: 9))),
                     ]),
                   )),
@@ -289,7 +289,7 @@ class _InicioScreenState extends State<InicioScreen> {
         Positioned(top: 0, left: 0, right: 0,
           child: Container(height: 80, padding: const EdgeInsets.symmetric(horizontal: 40),
             decoration: BoxDecoration(color: bg,
-              border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.08)))),
+              border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08)))),
             child: Row(children: [
               IconButton(icon: Icon(Icons.menu_rounded, color: text, size: 26),
                 onPressed: () {
@@ -298,12 +298,12 @@ class _InicioScreenState extends State<InicioScreen> {
                   s?.openDrawer();
                 }),
               const SizedBox(width: 12),
-              Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                 child: const Icon(Icons.local_pharmacy_rounded, color: AppTheme.ayanamiBlue, size: 22)),
               const SizedBox(width: 10),
               Text('FARMABOOK', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
               const Spacer(),
-              IconButton(icon: Icon(Icons.settings_outlined, color: text.withOpacity(0.5)), onPressed: () => GoRouter.of(context).push('/configuracion')),
+              IconButton(icon: Icon(Icons.settings_outlined, color: text.withValues(alpha: 0.5)), onPressed: () => GoRouter.of(context).push('/configuracion')),
             ]),
           ),
         ),
@@ -313,7 +313,7 @@ class _InicioScreenState extends State<InicioScreen> {
 
   Widget _sectionH(String t, IconData ic, Color c, Widget? action) {
     return Row(children: [
-      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: c.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: c.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
         child: Icon(ic, size: 14, color: c)),
       const SizedBox(width: 10),
       Text(t, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.5)),
@@ -330,12 +330,12 @@ class _InicioScreenState extends State<InicioScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.12)),
-          boxShadow: [BoxShadow(color: color.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+          border: Border.all(color: color.withValues(alpha: 0.12)),
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+            Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
               child: Icon(icon, color: color, size: 18)),
             Container(width: 8, height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
           ]),
@@ -347,9 +347,9 @@ class _InicioScreenState extends State<InicioScreen> {
             const Spacer(),
             if (isPct)
               ClipRRect(borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(value: raw.clamp(0, 1), minHeight: 3, backgroundColor: color.withOpacity(0.08), valueColor: AlwaysStoppedAnimation(color))),
+                child: LinearProgressIndicator(value: raw.clamp(0, 1), minHeight: 3, backgroundColor: color.withValues(alpha: 0.08), valueColor: AlwaysStoppedAnimation(color))),
             if (!isPct && raw != 0)
-              Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withOpacity(0.3)),
+              Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withValues(alpha: 0.3)),
           ]),
         ]),
       ),
@@ -364,11 +364,11 @@ class _InicioScreenState extends State<InicioScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.12)),
-          boxShadow: [BoxShadow(color: color.withOpacity(0.03), blurRadius: 8)],
+          border: Border.all(color: color.withValues(alpha: 0.12)),
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.03), blurRadius: 8)],
         ),
         child: Column(children: [
-          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
             child: Icon(icon, color: color, size: 24)),
           const SizedBox(height: 10),
           Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
@@ -381,7 +381,7 @@ class _InicioScreenState extends State<InicioScreen> {
     return Container(
       width: double.infinity, padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: c.withOpacity(0.06))),
+        border: Border.all(color: c.withValues(alpha: 0.06))),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(icon, color: c, size: 16), const SizedBox(width: 10),
         Text(msg, style: TextStyle(color: c, fontWeight: FontWeight.w600, fontSize: 13)),

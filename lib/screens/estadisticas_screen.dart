@@ -160,13 +160,13 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
 
   Widget _sectionH(String t) => Row(children: [
     Text(t, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
-    const SizedBox(width: 16), Expanded(child: Divider(color: Colors.grey.withOpacity(0.15))),
+    const SizedBox(width: 16), Expanded(child: Divider(color: Colors.grey.withValues(alpha: 0.15))),
   ]);
 
   Widget _card(Widget c) => Container(
     width: double.infinity, padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: Colors.grey.withOpacity(0.08))),
+      border: Border.all(color: Colors.grey.withValues(alpha: 0.08))),
     child: c,
   );
 
@@ -178,15 +178,15 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.withOpacity(0.1))),
+        border: Border.all(color: c.withValues(alpha: 0.1))),
       child: Row(children: [
-        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
           child: Icon(ic, color: c, size: 18)),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(v, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: c, letterSpacing: -0.3)),
           Text(l, style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
-          if (sub != null) Text(sub, style: TextStyle(fontSize: 9, color: c.withOpacity(0.7), fontWeight: FontWeight.w600, fontStyle: FontStyle.italic)),
+          if (sub != null) Text(sub, style: TextStyle(fontSize: 9, color: c.withValues(alpha: 0.7), fontWeight: FontWeight.w600, fontStyle: FontStyle.italic)),
         ])),
       ]),
     );
@@ -209,7 +209,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
         final val = _c.ingresosPorHora[h] ?? 0;
         return BarChartGroupData(x: h, barRods: [
           BarChartRodData(toY: val, width: 8, borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-            color: h == _c.peakHour && val > 0 ? AppTheme.ayanamiBlue : AppTheme.ayanamiBlue.withOpacity(0.2)),
+            color: h == _c.peakHour && val > 0 ? AppTheme.ayanamiBlue : AppTheme.ayanamiBlue.withValues(alpha: 0.2)),
         ]);
       }),
     ));
@@ -222,7 +222,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
     final avg = spots.map((s) => s.y).reduce((a, b) => a + b) / spots.length;
     return LineChart(LineChartData(
       gridData: FlGridData(drawVerticalLine: false, getDrawingHorizontalLine: (v) => FlLine(
-        color: v == 0 || v == maxSpot.y ? Colors.grey.withOpacity(0.12) : Colors.grey.withOpacity(0.06),
+        color: v == 0 || v == maxSpot.y ? Colors.grey.withValues(alpha: 0.12) : Colors.grey.withValues(alpha: 0.06),
         strokeWidth: v == 0 ? 1 : 0.5, dashArray: v == 0 ? null : [4, 4])),
       borderData: FlBorderData(show: false),
       minY: 0,
@@ -243,21 +243,21 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
             FlDotCirclePainter(
               radius: spot == maxSpot ? 6 : (spot.y > 0 ? 3 : 0),
               color: Colors.white, strokeWidth: spot == maxSpot ? 3 : 2,
-              strokeColor: spot == maxSpot ? const Color(0xFF8B5CF6) : AppTheme.ayanamiBlue.withOpacity(0.5))),
+              strokeColor: spot == maxSpot ? const Color(0xFF8B5CF6) : AppTheme.ayanamiBlue.withValues(alpha: 0.5))),
           belowBarData: BarAreaData(show: true,
             gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
-              colors: [AppTheme.ayanamiBlue.withOpacity(0.2), const Color(0xFF8B5CF6).withOpacity(0.05), Colors.transparent])),
+              colors: [AppTheme.ayanamiBlue.withValues(alpha: 0.2), const Color(0xFF8B5CF6).withValues(alpha: 0.05), Colors.transparent])),
         ),
         if (avg > 0)
           LineChartBarData(
             spots: [FlSpot(spots.first.x, avg), FlSpot(spots.last.x, avg)],
-            isCurved: false, color: Colors.orange.withOpacity(0.5), barWidth: 1.5, dashArray: [6, 4],
+            isCurved: false, color: Colors.orange.withValues(alpha: 0.5), barWidth: 1.5, dashArray: [6, 4],
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(show: false),
           ),
       ],
       extraLinesData: ExtraLinesData(horizontalLines: avg > 0 ? [
-        HorizontalLine(y: avg, color: Colors.orange.withOpacity(0.5), strokeWidth: 1.5, dashArray: [6, 4],
+        HorizontalLine(y: avg, color: Colors.orange.withValues(alpha: 0.5), strokeWidth: 1.5, dashArray: [6, 4],
           label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
             style: TextStyle(color: Colors.orange.shade400, fontSize: 9, fontWeight: FontWeight.w700),
             labelResolver: (_) => 'Prom ${_fmt(avg)}'))
@@ -273,7 +273,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
       else ...items.take(5).toList().asMap().entries.map((e) {
         final i = e.key; final p = e.value;
         return Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
-          Container(width: 20, height: 20, decoration: BoxDecoration(color: _colors[i % _colors.length].withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
+          Container(width: 20, height: 20, decoration: BoxDecoration(color: _colors[i % _colors.length].withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
             child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: _colors[i % _colors.length])))),
           const SizedBox(width: 8),
           Expanded(child: Text(p['nombre'] ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis)),
@@ -326,13 +326,13 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
         width: 540, constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
         decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(28)),
         child: Column(children: [
-          Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withOpacity(0.8)]), borderRadius: const BorderRadius.vertical(top: Radius.circular(28))),
+          Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.8)]), borderRadius: const BorderRadius.vertical(top: Radius.circular(28))),
             child: Row(children: [
               const Icon(Icons.auto_graph_rounded, color: Colors.white, size: 24),
               const SizedBox(width: 14),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const Text('CIERRE DE CAJA', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                Text('${s['fecha']}  •  ${s['hora']} hrs', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
+                Text('${s['fecha']}  •  ${s['hora']} hrs', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
               ])),
               IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(ctx)),
             ]),

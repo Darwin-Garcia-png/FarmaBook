@@ -53,9 +53,9 @@ class ErrorDisplay {
       margin: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.reiOrangeRed.withOpacity(0.06),
+        color: AppTheme.reiOrangeRed.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.reiOrangeRed.withOpacity(0.15)),
+        border: Border.all(color: AppTheme.reiOrangeRed.withValues(alpha: 0.15)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +102,7 @@ class ErrorDisplay {
         title: Container(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
           decoration: BoxDecoration(
-            color: AppTheme.reiOrangeRed.withOpacity(0.06),
+            color: AppTheme.reiOrangeRed.withValues(alpha: 0.06),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Row(
@@ -110,7 +110,7 @@ class ErrorDisplay {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.reiOrangeRed.withOpacity(0.1),
+                  color: AppTheme.reiOrangeRed.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: AppTheme.reiOrangeRed, size: 22),
@@ -129,9 +129,9 @@ class ErrorDisplay {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppTheme.reiOrangeRed.withOpacity(0.04),
+                color: AppTheme.reiOrangeRed.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.reiOrangeRed.withOpacity(0.08)),
+                border: Border.all(color: AppTheme.reiOrangeRed.withValues(alpha: 0.08)),
               ),
               child: Text(message, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, height: 1.4)),
             ),
@@ -190,7 +190,7 @@ class ErrorDisplay {
               Padding(
                 padding: const EdgeInsets.only(left: 28),
                 child: Text(hint,
-                  style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.85), fontStyle: FontStyle.italic)),
+                  style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.85), fontStyle: FontStyle.italic)),
               ),
             ],
           ],
@@ -225,10 +225,10 @@ class ErrorDisplay {
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: AppTheme.reiOrangeRed.withOpacity(0.06),
+        color: AppTheme.reiOrangeRed.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(32),
       ),
-      child: Icon(icon, size: 64, color: AppTheme.reiOrangeRed.withOpacity(0.5)),
+      child: Icon(icon, size: 64, color: AppTheme.reiOrangeRed.withValues(alpha: 0.5)),
     );
   }
 
@@ -237,9 +237,9 @@ class ErrorDisplay {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.reiOrangeRed.withOpacity(0.04),
+        color: AppTheme.reiOrangeRed.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.reiOrangeRed.withOpacity(0.12)),
+        border: Border.all(color: AppTheme.reiOrangeRed.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,7 +249,7 @@ class ErrorDisplay {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppTheme.reiOrangeRed.withOpacity(0.08),
+                  color: AppTheme.reiOrangeRed.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.error_outline_rounded, color: AppTheme.reiOrangeRed, size: 16),
@@ -266,7 +266,7 @@ class ErrorDisplay {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.04),
+                color: Colors.grey.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(

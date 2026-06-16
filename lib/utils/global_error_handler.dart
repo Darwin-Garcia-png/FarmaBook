@@ -96,15 +96,15 @@ class _AnimatedErrorCardState extends State<_AnimatedErrorCard> with SingleTicke
           decoration: BoxDecoration(
             color: AppTheme.reiOrangeRed,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: AppTheme.reiOrangeRed.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            boxShadow: [BoxShadow(color: AppTheme.reiOrangeRed.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
                 child: const Icon(Icons.error_outline_rounded, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 16),
@@ -115,19 +115,19 @@ class _AnimatedErrorCardState extends State<_AnimatedErrorCard> with SingleTicke
                   children: [
                     Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
                     const SizedBox(height: 4),
-                    Text(widget.message, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13), maxLines: 3, overflow: TextOverflow.ellipsis),
+                    Text(widget.message, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13), maxLines: 3, overflow: TextOverflow.ellipsis),
                     if (widget.hint != null) ...[
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                         child: Row(
                           children: [
-                            Icon(Icons.lightbulb_outline_rounded, size: 12, color: Colors.white.withOpacity(0.7)),
+                            Icon(Icons.lightbulb_outline_rounded, size: 12, color: Colors.white.withValues(alpha: 0.7)),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(widget.hint!,
-                                style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.85), fontStyle: FontStyle.italic, height: 1.3)),
+                                style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.85), fontStyle: FontStyle.italic, height: 1.3)),
                             ),
                           ],
                         ),

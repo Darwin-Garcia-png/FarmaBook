@@ -108,7 +108,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             contentPadding: const EdgeInsets.all(24),
                             leading: Container(
                                 padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                                decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
                                 child: const Icon(Icons.people_alt_rounded, color: Colors.orange, size: 24)),
                             title: const Text('Personal y Roles', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                             subtitle: const Text('Gestiona usuarios, permisos y accesos al sistema'),
@@ -147,9 +147,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10))
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 10))
         ],
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -157,7 +157,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: AppTheme.ayanamiBlue.withOpacity(0.1),
+              color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(32),
             ),
             child: const Icon(Icons.storefront_rounded, size: 40, color: AppTheme.ayanamiBlue),
@@ -194,9 +194,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 30, offset: const Offset(0, 10))
+              BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 30, offset: const Offset(0, 10))
             ],
           ),
           child: Column(
@@ -215,7 +215,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
         secondary: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: AppTheme.ayanamiBlue.withOpacity(0.1),
+                color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
                 shape: BoxShape.circle),
             child: Icon(icon, color: AppTheme.ayanamiBlue, size: 24)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -227,7 +227,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   .textTheme
                   .bodyMedium
                   ?.color
-                  ?.withOpacity(0.6) ?? Colors.grey)),
+                  ?.withValues(alpha: 0.6) ?? Colors.grey)),
         ),
         value: value,
         activeColor: AppTheme.ayanamiBlue,

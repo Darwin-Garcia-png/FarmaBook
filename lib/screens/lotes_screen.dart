@@ -59,7 +59,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
             baseColor: AppTheme.ayanamiBlue,
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               IconButton(
-                icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)),
+                icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withValues(alpha: 0.7)),
                 onPressed: () => lotesCtrl.refresh(),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -75,7 +75,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   elevation: 8,
-                  shadowColor: AppTheme.ayanamiBlue.withOpacity(0.4),
+                  shadowColor: AppTheme.ayanamiBlue.withValues(alpha: 0.4),
                 ),
               ),
             ]),
@@ -90,7 +90,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+                        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
                       ),
                       child: _buildTabs(context, lotesCtrl),
                     ),
@@ -164,8 +164,8 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: color.withOpacity(0.1)),
-        boxShadow: [BoxShadow(color: color.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10))],
+        border: Border.all(color: color.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +173,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 20)),
+              Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 20)),
               Text(title, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
             ],
           ),
@@ -236,7 +236,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.withOpacity(0.3)),
+            Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             const Text('No se encontraron registros', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ],
@@ -264,7 +264,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.archive_outlined, size: 48, color: Colors.grey.withOpacity(0.3)),
+            Icon(Icons.archive_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             const Text('No hay lotes en el historial', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ],
@@ -299,15 +299,15 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10))],
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             decoration: BoxDecoration(
-              color: archiveColor.withOpacity(0.05),
+              color: archiveColor.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Row(
@@ -344,7 +344,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(color: archiveColor.withOpacity(0.05), borderRadius: BorderRadius.circular(16)),
+                      decoration: BoxDecoration(color: archiveColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
                       child: Column(
                         children: [
                           Text('$stock', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: archiveColor, height: 1)),
@@ -359,9 +359,9 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppTheme.ayanamiBlue.withOpacity(0.04),
+                    color: AppTheme.ayanamiBlue.withValues(alpha: 0.04),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.ayanamiBlue.withOpacity(0.08)),
+                    border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.08)),
                   ),
                   child: Row(
                     children: [
@@ -413,14 +413,14 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10))],
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(color: statusColor.withOpacity(0.05), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
+            decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.05), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
             child: Row(
               children: [
                 Icon(statusIcon, color: statusColor, size: 14),
@@ -453,7 +453,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withOpacity(0.05), borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
                   child: Column(
                     children: [
                       Text('$stock', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: stock < 30 ? AppTheme.reiPurple : AppTheme.ayanamiBlue, height: 1)),
@@ -492,7 +492,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color, size: 18)),
+      child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color, size: 18)),
     );
   }
 

@@ -42,7 +42,7 @@ class _VentasScreenState extends State<VentasScreen> {
             icon: Icons.shopping_cart_rounded,
             baseColor: AppTheme.greenMetal,
             trailing: IconButton(
-              icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.greenMetal.withOpacity(0.7)),
+              icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.greenMetal.withValues(alpha: 0.7)),
               onPressed: () => _controller.cargarHistorialVentas(),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -123,12 +123,12 @@ class _VentasScreenState extends State<VentasScreen> {
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 30,
                 offset: const Offset(10, 0),
               )
             ],
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
           ),
           child: Column(
             children: [
@@ -189,7 +189,7 @@ class _VentasScreenState extends State<VentasScreen> {
             color: isSelected ? AppTheme.ayanamiBlue : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
             boxShadow: isSelected ? [
-              BoxShadow(color: AppTheme.ayanamiBlue.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
+              BoxShadow(color: AppTheme.ayanamiBlue.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))
             ] : [],
           ),
           child: Column(
@@ -222,7 +222,7 @@ class _VentasScreenState extends State<VentasScreen> {
         return ListTile(
           onTap: () => _showReceipt(context, sale),
           leading: CircleAvatar(
-              backgroundColor: AppTheme.ayanamiBlue.withOpacity(0.1),
+              backgroundColor: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
               child: const Icon(Icons.shopping_cart, color: AppTheme.ayanamiBlue)),
           title: Text('Venta #${sale['numeroFactura'] ?? sale['ventaId']}',
               style: TextStyle(
@@ -272,7 +272,7 @@ class _VentasScreenState extends State<VentasScreen> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Theme.of(context).dividerColor),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5)
               ],
             ),
             child: Column(

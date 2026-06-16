@@ -41,7 +41,7 @@ class BatchDetailsModal extends StatelessWidget {
             child: Row(
               children: [
                 CircleAvatar(
-                    backgroundColor: AppTheme.ayanamiBlue.withOpacity(0.1),
+                    backgroundColor: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
                     child: const Icon(Icons.layers_outlined,
                         color: AppTheme.ayanamiBlue)),
                 const SizedBox(width: 16),
@@ -105,10 +105,10 @@ class BatchDetailsModal extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardTheme.color,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: statusColor.withOpacity(0.3), width: 1.5),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       )
@@ -119,7 +119,7 @@ class BatchDetailsModal extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
+                          color: statusColor.withValues(alpha: 0.1),
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                         ),
                         child: Row(

@@ -17,11 +17,11 @@ class SalesSearchSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 30,
               offset: const Offset(0, 10)),
         ],
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
@@ -34,7 +34,7 @@ class SalesSearchSection extends StatelessWidget {
               prefixIcon:
                   const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.ayanamiBlue),
               filled: true,
-              fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+              fillColor: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide.none),
@@ -54,7 +54,7 @@ class SalesSearchSection extends StatelessWidget {
                     prefixIcon:
                         const Icon(Icons.search_rounded, color: AppTheme.ayanamiBlue),
                     filled: true,
-                    fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+                    fillColor: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none),
@@ -72,7 +72,7 @@ class SalesSearchSection extends StatelessWidget {
                   padding: const EdgeInsets.all(22),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   elevation: 8,
-                  shadowColor: AppTheme.ayanamiBlue.withOpacity(0.3),
+                  shadowColor: AppTheme.ayanamiBlue.withValues(alpha: 0.3),
                 ),
                 child: const Icon(Icons.search_rounded),
               ),

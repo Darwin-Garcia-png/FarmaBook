@@ -142,7 +142,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
           prefixIcon: Icon(icon, color: _accent),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           filled: true,
-          fillColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+          fillColor: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
           errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
         ),
         validator: (v) {
@@ -224,11 +224,11 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 40),
-      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.08)))),
+      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08)))),
       child: Row(children: [
         Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: accent.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
           child: const Icon(Icons.local_shipping_rounded, color: AppTheme.reiPurple, size: 24),
         ),
         const SizedBox(width: 14),
@@ -245,7 +245,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
       decoration: BoxDecoration(
         color: _cardColor(context),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: TextField(
         controller: _controller.searchCtrl,
@@ -259,7 +259,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
               : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           filled: true,
-          fillColor: bg.withOpacity(0.3),
+          fillColor: bg.withValues(alpha: 0.3),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
@@ -270,9 +270,9 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(48),
-      decoration: BoxDecoration(color: _cardColor(context), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8))]),
+      decoration: BoxDecoration(color: _cardColor(context), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8))]),
       child: Column(children: [
-        Icon(Icons.local_shipping_outlined, size: 64, color: accent.withOpacity(0.3)),
+        Icon(Icons.local_shipping_outlined, size: 64, color: accent.withValues(alpha: 0.3)),
         const SizedBox(height: 16),
         Text('No se encontraron proveedores', style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
@@ -287,15 +287,15 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: accent.withOpacity(0.4), width: 3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+        border: Border(left: BorderSide(color: accent.withValues(alpha: 0.4), width: 3)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: accent.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
             child: Icon(Icons.business_rounded, color: accent, size: 22),
           ),
           const SizedBox(width: 14),
@@ -338,7 +338,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, size: 18, color: color),
       ),
     );

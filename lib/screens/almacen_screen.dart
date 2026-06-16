@@ -47,7 +47,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
             icon: Icons.inventory_2_rounded, 
             baseColor: AppTheme.ayanamiBlue,
             trailing: IconButton(
-              icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withOpacity(0.7)),
+              icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withValues(alpha: 0.7)),
               onPressed: () => controller.init(),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -71,7 +71,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
         color: Theme.of(context).cardTheme.color,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4))
         ],
@@ -189,11 +189,11 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
       style: ElevatedButton.styleFrom(
         backgroundColor: controller.showLowStockOnly
             ? AppTheme.reiOrangeRed
-            : AppTheme.reiOrangeRed.withOpacity(0.1),
+            : AppTheme.reiOrangeRed.withValues(alpha: 0.1),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
-            side: BorderSide(color: AppTheme.reiOrangeRed.withOpacity(0.5))),
+            side: BorderSide(color: AppTheme.reiOrangeRed.withValues(alpha: 0.5))),
         elevation: 0,
       ),
       onPressed: controller.toggleLowStockFilter,
