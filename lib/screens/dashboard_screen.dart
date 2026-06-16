@@ -280,14 +280,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(color: AppTheme.reiOrangeRed, fontSize: 14, fontWeight: FontWeight.bold),
         ),
         onTap: () async {
-          Navigator.pop(context);
-          context.read<AlmacenController>().clearData();
-          context.read<LotesController>().clearData();
-          context.read<VentasController>().clearData();
-          context.read<NotificacionesController>().clearData();
-          
           await _controller.logout();
-          if (mounted) context.go('/login');
+          if (mounted) {
+            context.read<AlmacenController>().clearData();
+            context.read<LotesController>().clearData();
+            context.read<NotificacionesController>().clearData();
+            try { context.read<VentasController>().clearData(); } catch (_) {}
+            context.go('/login');
+          }
         },
       ),
     );

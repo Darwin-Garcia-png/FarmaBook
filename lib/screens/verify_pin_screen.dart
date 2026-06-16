@@ -1,5 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../controllers/recovery_controller.dart';
 import '../widgets/gradient_button.dart';
@@ -15,6 +15,7 @@ class VerifyPinScreen extends StatefulWidget {
 
 class _VerifyPinScreenState extends State<VerifyPinScreen> {
   late final RecoveryController _c;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -34,6 +35,7 @@ class _VerifyPinScreenState extends State<VerifyPinScreen> {
   }
 
   Future<void> _handleVerify() async {
+    if (!_formKey.currentState!.validate()) return;
     final ok = await _c.verifyPin();
     if (ok && mounted) {
       context.go('/reset-password', extra: _c);
@@ -85,20 +87,21 @@ class _VerifyPinScreenState extends State<VerifyPinScreen> {
                         'Ingresa el PIN de 6 dígitos enviado a tu correo',
                         style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.75)),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Si no lo encuentras, revisa la bandeja de spam',
+                        style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.45), fontStyle: FontStyle.italic),
+                      ),
                       const SizedBox(height: 32),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(32),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            padding: const EdgeInsets.all(32),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(32),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-                            ),
-                            child: Form(
-                              key: _c.formKey,
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                        ),
+                        child: Form(
+                              key: _formKey,
                               child: Column(
                                 children: [
                                   _buildPinField(),
@@ -131,8 +134,6 @@ class _VerifyPinScreenState extends State<VerifyPinScreen> {
                               ),
                             ),
                           ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -150,11 +151,13 @@ class _VerifyPinScreenState extends State<VerifyPinScreen> {
       maxLength: 6,
       keyboardType: TextInputType.number,
       textAlign: TextAlign.center,
+      autofocus: true,
       style: const TextStyle(color: Colors.white, fontSize: 28, letterSpacing: 12, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
         counterText: '',
         labelText: 'PIN',
         labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+        prefixIcon: Icon(Icons.pin_outlined, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 20),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.05),
         enabledBorder: OutlineInputBorder(

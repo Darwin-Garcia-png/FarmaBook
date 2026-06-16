@@ -62,9 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final passCtrl = TextEditingController();
     bool obscure = true;
     bool loading = false;
-    String? selectedRole;
-
-    const roleOptions = ['admin'];
 
     showDialog(
       context: context,
@@ -134,29 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(height: 4),
                               _registerPassField('Contraseña *', passCtrl, obscure, () => setDState(() => obscure = !obscure)),
                               const SizedBox(height: 12),
-                              const Row(children: [
-                                Text('ROL',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.5)),
-                              ]),
-                              const SizedBox(height: 4),
-                              Container(
-                                height: 48,
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade50,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade200),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: selectedRole,
-                                    isExpanded: true,
-                                    hint: Text('Seleccionar rol', style: TextStyle(fontSize: 14, color: Colors.grey.shade400)),
-                                    items: roleOptions.map((r) => DropdownMenuItem(value: r, child: Text(r, style: const TextStyle(fontSize: 14)))).toList(),
-                                    onChanged: (v) => setDState(() => selectedRole = v),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -184,17 +158,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: ElevatedButton(
                               onPressed: loading ? null : () async {
                                 if (!formKey.currentState!.validate()) return;
-                                if (selectedRole == null) {
-                                  ErrorDisplay.snackBar(context: ctx, message: 'Debes seleccionar un rol');
-                                  return;
-                                }
                                 setDState(() => loading = true);
                                 try {
                                   await ApiService.createUser({
                                     'username': usernameCtrl.text.trim(),
                                     'email': emailCtrl.text.trim(),
                                     'password': passCtrl.text,
-                                    'rolNombre': selectedRole,
                                   });
                                   if (ctx.mounted) Navigator.pop(ctx);
                                   if (context.mounted) {

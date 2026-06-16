@@ -50,7 +50,7 @@ class RecoveryController extends ChangeNotifier {
   }
 
   Future<bool> verifyPin() async {
-    if (!formKey.currentState!.validate()) return false;
+    if (formKey.currentState != null && !formKey.currentState!.validate()) return false;
     isLoading = true;
     errorMessage = null;
     notifyListeners();
