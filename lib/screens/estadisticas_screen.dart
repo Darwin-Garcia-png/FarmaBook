@@ -152,7 +152,35 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
                     _donut(),
                   ])),
                 ]),
-                const SizedBox(height: 40),
+                const SizedBox(height: 28),
+
+                // ── SUPPLIER RANKING ──
+                if (_c.supplierRanking.isNotEmpty) ...[
+                  _sectionH('PROVEEDORES POR COSTO'),
+                  const SizedBox(height: 16),
+                  _card(Column(children: [
+                    ..._c.supplierRanking.take(10).toList().asMap().entries.map((e) {
+                      final i = e.key;
+                      final s = e.value;
+                      final cost = double.tryParse(s['costoPromedio']?.toString() ?? '0') ?? 0;
+                      final color = i == 0 ? AppTheme.greenMetal : (i == _c.supplierRanking.length - 1 ? AppTheme.reiOrangeRed : Colors.blueGrey);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(children: [
+                          Container(
+                            width: 24, height: 24,
+                            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
+                            child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color))),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text(s['nombre'] ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                          Text('\$${cost.toStringAsFixed(2)}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: color)),
+                        ]),
+                      );
+                    }),
+                  ])),
+                  const SizedBox(height: 40),
+                ],
               ]),
             ),
     );

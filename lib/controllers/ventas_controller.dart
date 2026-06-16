@@ -342,6 +342,20 @@ class VentasController extends ChangeNotifier {
     }
   }
 
+  Future<bool> cancelSale(String saleId) async {
+    try {
+      await ApiService.deleteSale(saleId);
+      ventasHistorial.removeWhere((s) => s['ventaId']?.toString() == saleId || s['id']?.toString() == saleId);
+      mensaje = 'Venta anulada correctamente';
+      notifyListeners();
+      return true;
+    } catch (e) {
+      error = 'Error al anular venta: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
   @override
   void dispose() {
     _autoClearTimer?.cancel();

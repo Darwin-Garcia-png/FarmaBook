@@ -18,6 +18,11 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
   late TabController _tabController;
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
+  bool _showFilters = false;
+
+  String? _filterProductoId;
+  DateTime? _filterDesde;
+  DateTime? _filterHasta;
 
   @override
   void initState() {
@@ -85,7 +90,8 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
               : Column(
                   children: [
                     _buildMetricsRow(lotesCtrl),
-                    _buildSearchBar(context),
+                    _buildSearchBar(context, lotesCtrl),
+                    if (_showFilters) _buildFilterPanel(context, lotesCtrl, almacenCtrl),
                     const SizedBox(height: 16),
                     Container(
                       width: double.infinity,
@@ -184,7 +190,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildSearchBar(BuildContext context) {
+  Widget _buildSearchBar(BuildContext context, LotesController lotesCtrl) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
       child: TextField(
@@ -194,10 +200,150 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
           hintText: 'Buscar por producto o nombre de lote...',
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.ayanamiBlue),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _showFilters ? Icons.filter_list_off : Icons.filter_list_rounded,
+              color: lotesCtrl.filtersActive ? AppTheme.reiOrangeRed : Colors.grey,
+            ),
+            onPressed: () => setState(() => _showFilters = !_showFilters),
+          ),
           filled: true,
           fillColor: Theme.of(context).cardTheme.color,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
           contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterPanel(BuildContext context, LotesController lotesCtrl, AlmacenController almacenCtrl) {
+    final productos = almacenCtrl.productos;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 12, 32, 0),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.filter_alt_rounded, size: 16, color: AppTheme.ayanamiBlue),
+                const SizedBox(width: 8),
+                Text('FILTROS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.grey.shade500)),
+                const Spacer(),
+                if (lotesCtrl.filtersActive)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _filterProductoId = null;
+                        _filterDesde = null;
+                        _filterHasta = null;
+                      });
+                      lotesCtrl.clearFilters();
+                    },
+                    child: const Text('Limpiar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Producto',
+                labelStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                filled: true,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              value: _filterProductoId,
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem(value: null, child: Text('Todos los productos', style: TextStyle(fontSize: 13))),
+                ...productos.map((p) => DropdownMenuItem(
+                  value: p['productoId'].toString(),
+                  child: Text(p['nombre']?.toString() ?? '', style: const TextStyle(fontSize: 13)),
+                )),
+              ],
+              onChanged: (v) => _filterProductoId = v,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDateButton(context, 'Vence desde', _filterDesde, (d) => _filterDesde = d),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildDateButton(context, 'Vence hasta', _filterHasta, (d) => _filterHasta = d),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  lotesCtrl.applyFilters(
+                    productoId: _filterProductoId,
+                    vencidosDesde: _filterDesde,
+                    vencidosHasta: _filterHasta,
+                  );
+                  setState(() => _showFilters = false);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.ayanamiBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: const Text('Aplicar Filtros', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateButton(BuildContext context, String label, DateTime? value, ValueChanged<DateTime?> onChanged) {
+    return InkWell(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: value ?? DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) onChanged(picked);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today_rounded, size: 14, color: Colors.grey.shade500),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                value != null ? '${value.day}/${value.month}/${value.year}' : label,
+                style: TextStyle(fontSize: 12, color: value != null ? Colors.white : Colors.grey.shade500),
+              ),
+            ),
+            if (value != null)
+              GestureDetector(
+                onTap: () => onChanged(null),
+                child: Icon(Icons.close, size: 14, color: Colors.grey.shade500),
+              ),
+          ],
         ),
       ),
     );

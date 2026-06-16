@@ -66,7 +66,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
 
   Widget _buildHeader(BuildContext context, AlmacenController controller) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         boxShadow: [
@@ -76,100 +76,169 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
               offset: const Offset(0, 4))
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            flex: 3,
-            child: TextField(
-              controller: controller.searchCtrl,
-              style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color),
-              decoration: InputDecoration(
-                hintText: 'Buscar medicamentos por nombre o código...',
-                hintStyle: const TextStyle(color: Colors.grey),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                suffixIcon: controller.searchCtrl.text.isNotEmpty
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.search, color: AppTheme.ayanamiBlue),
-                            onPressed: () => controller.search()),
-                          IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.grey),
-                            onPressed: () {
-                              controller.searchCtrl.clear();
-                              controller.search();
-                            }),
-                        ],
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none),
-                filled: true,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-              ),
-              onSubmitted: (_) => controller.search(),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 2,
-            child: (() {
-              // De-duplicate items for UI safety
-              final seen = <String>{};
-              final List<Map<String, String>> uniqueCats = [];
-              for (var cat in controller.categorias) {
-                final id = cat['categoriaId']?.toString() ?? '';
-                if (!seen.contains(id)) {
-                  seen.add(id);
-                  uniqueCats.add({
-                    'id': id,
-                    'nombre': (cat['nombre'] ?? 'Sin nombre').toString()
-                  });
-                }
-              }
-
-              final bool exists = controller.categoriaSeleccionada == null ||
-                  uniqueCats.any(
-                      (it) => it['id'] == controller.categoriaSeleccionada);
-              final String? safeValue =
-                  exists ? controller.categoriaSeleccionada : null;
-
-              return DropdownButtonFormField<String>(
-                initialValue: safeValue,
-                dropdownColor: Theme.of(context).cardTheme.color,
-                style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color),
-                decoration: InputDecoration(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: controller.searchCtrl,
+                  style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar medicamentos por nombre o código...',
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    suffixIcon: controller.searchCtrl.text.isNotEmpty
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.search, color: AppTheme.ayanamiBlue),
+                                onPressed: () => controller.search()),
+                              IconButton(
+                                icon: const Icon(Icons.clear, color: Colors.grey),
+                                onPressed: () {
+                                  controller.searchCtrl.clear();
+                                  controller.search();
+                                }),
+                            ],
+                          )
+                        : null,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
                         borderSide: BorderSide.none),
                     filled: true,
                     fillColor: Theme.of(context).scaffoldBackgroundColor,
-                    hintText: 'Todas las categorías',
-                    hintStyle: const TextStyle(color: Colors.grey)),
-                items: [
-                  const DropdownMenuItem(
-                      value: null, child: Text('Todas las categorías')),
-                  ...uniqueCats.map((it) => DropdownMenuItem(
-                      value: it['id'], child: Text(it['nombre']!))),
-                ],
-                onChanged: controller.updateCategoriaSeleccionada,
-              );
-            })(),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                  ),
+                  onSubmitted: (_) => controller.search(),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 2,
+                child: (() {
+                  final seen = <String>{};
+                  final List<Map<String, String>> uniqueCats = [];
+                  for (var cat in controller.categorias) {
+                    final id = cat['categoriaId']?.toString() ?? '';
+                    if (!seen.contains(id)) {
+                      seen.add(id);
+                      uniqueCats.add({
+                        'id': id,
+                        'nombre': (cat['nombre'] ?? 'Sin nombre').toString()
+                      });
+                    }
+                  }
+
+                  final bool exists = controller.categoriaSeleccionada == null ||
+                      uniqueCats.any(
+                          (it) => it['id'] == controller.categoriaSeleccionada);
+                  final String? safeValue =
+                      exists ? controller.categoriaSeleccionada : null;
+
+                  return DropdownButtonFormField<String>(
+                    initialValue: safeValue,
+                    dropdownColor: Theme.of(context).cardTheme.color,
+                    style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color),
+                    decoration: InputDecoration(
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none),
+                        filled: true,
+                        fillColor: Theme.of(context).scaffoldBackgroundColor,
+                        hintText: 'Todas las categorías',
+                        hintStyle: const TextStyle(color: Colors.grey)),
+                    items: [
+                      const DropdownMenuItem(
+                          value: null, child: Text('Todas las categorías')),
+                      ...uniqueCats.map((it) => DropdownMenuItem(
+                          value: it['id'], child: Text(it['nombre']!))),
+                    ],
+                    onChanged: controller.updateCategoriaSeleccionada,
+                  );
+                })(),
+              ),
+              const SizedBox(width: 24),
+              _buildLowStockButton(controller),
+              const SizedBox(width: 16),
+              _buildAddButton(context, controller),
+            ],
           ),
-          const SizedBox(width: 24),
-          _buildLowStockButton(controller),
-          const SizedBox(width: 16),
-          _buildAddButton(context, controller),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDropdown<String>(
+                  context: context,
+                  value: controller.casaSeleccionada,
+                  hint: 'Todas las casas',
+                  items: controller.casas.map((c) {
+                    final id = c['casaId']?.toString() ?? '';
+                    return DropdownMenuItem(
+                      value: id,
+                      child: Text(c['nombre']?.toString() ?? 'Sin nombre', style: const TextStyle(fontSize: 13)),
+                    );
+                  }).toList(),
+                  onChanged: controller.updateCasaSeleccionada,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildDropdown<String>(
+                  context: context,
+                  value: controller.proveedorSeleccionada,
+                  hint: 'Todos los proveedores',
+                  items: controller.proveedores.map((p) {
+                    final id = p['proveedorId']?.toString() ?? p['supplierId']?.toString() ?? '';
+                    return DropdownMenuItem(
+                      value: id,
+                      child: Text(p['nombreComercial']?.toString() ?? p['nombre']?.toString() ?? 'Sin nombre', style: const TextStyle(fontSize: 13)),
+                    );
+                  }).toList(),
+                  onChanged: controller.updateProveedorSeleccionada,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
         ],
       ),
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    required BuildContext context,
+    required T? value,
+    required String hint,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      dropdownColor: Theme.of(context).cardTheme.color,
+      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 13),
+      decoration: InputDecoration(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none),
+        filled: true,
+        fillColor: Theme.of(context).scaffoldBackgroundColor,
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+      ),
+      items: [
+        DropdownMenuItem<T>(value: null, child: Text(hint, style: const TextStyle(fontSize: 13))),
+        ...items,
+      ],
+      onChanged: onChanged,
     );
   }
 

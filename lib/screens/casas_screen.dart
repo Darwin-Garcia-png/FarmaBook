@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/casas_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
+import '../services/api_service.dart';
 import 'package:flutter/services.dart';
 
 class CasasScreen extends StatefulWidget {
@@ -41,6 +42,108 @@ class _CasasScreenState extends State<CasasScreen> {
       return (c['nombre'] ?? '').toString().toLowerCase().contains(q) ||
              (c['paisDeOrigen'] ?? '').toString().toLowerCase().contains(q);
     }).toList();
+  }
+
+  Future<void> _showHouseDetail(Map<String, dynamic> casa) async {
+    final houseId = casa['casaId']?.toString() ?? '';
+    if (houseId.isEmpty) return;
+
+    List<dynamic> suppliers = [];
+    List<dynamic> products = [];
+    bool loading = true;
+    String? error;
+
+    try {
+      final results = await Future.wait([
+        ApiService.getHouseSuppliers(houseId),
+        ApiService.getHouseProducts(houseId),
+      ]);
+      suppliers = results[0];
+      products = results[1];
+    } catch (e) {
+      error = 'Error al cargar detalles: $e';
+    } finally {
+      loading = false;
+    }
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        child: Container(
+          width: 600,
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.8)]),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: Row(children: [
+                  Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(14)),
+                    child: const Icon(Icons.business_rounded, color: Colors.white, size: 28)),
+                  const SizedBox(width: 16),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(casa['nombre'] ?? 'Casa', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+                    Text(casa['paisDeOrigen']?.isEmpty ?? true ? 'País no especificado' : casa['paisDeOrigen'],
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
+                  ])),
+                  IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+                ]),
+              ),
+              Flexible(
+                child: loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : error != null
+                    ? Center(child: Text(error, style: const TextStyle(color: AppTheme.reiOrangeRed)))
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          const Text('PROVEEDORES', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.5)),
+                          const SizedBox(height: 12),
+                          if (suppliers.isEmpty)
+                            const Text('Sin proveedores asociados', style: TextStyle(color: Colors.grey, fontSize: 13))
+                          else
+                            ...suppliers.map((s) => Container(
+                              width: double.infinity, margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: AppTheme.reiPurple.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.reiPurple.withValues(alpha: 0.1))),
+                              child: Row(children: [
+                                Icon(Icons.local_shipping_rounded, size: 16, color: AppTheme.reiPurple),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text(s['nombre'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                              ]),
+                            )),
+                          const SizedBox(height: 24),
+                          const Text('PRODUCTOS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 1.5)),
+                          const SizedBox(height: 12),
+                          if (products.isEmpty)
+                            const Text('Sin productos asociados', style: TextStyle(color: Colors.grey, fontSize: 13))
+                          else
+                            ...products.map((p) => Container(
+                              width: double.infinity, margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1))),
+                              child: Row(children: [
+                                Icon(Icons.medication_rounded, size: 16, color: AppTheme.ayanamiBlue),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text(p['nombre'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                              ]),
+                            )),
+                        ]),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _showAddEditDialog({Map<String, dynamic>? casa}) async {
@@ -309,7 +412,9 @@ class _CasasScreenState extends State<CasasScreen> {
   }
 
   Widget _buildCard(Map<String, dynamic> casa, Color accent, Color text, Color card) {
-    return Container(
+    return GestureDetector(
+      onTap: () => _showHouseDetail(casa),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: card,
@@ -344,6 +449,7 @@ class _CasasScreenState extends State<CasasScreen> {
             _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(casa)),
           ]),
         ]),
+      ),
       ),
     );
   }

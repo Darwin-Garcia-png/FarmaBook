@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../controllers/login_controller.dart';
+import '../controllers/recovery_controller.dart';
 import '../services/api_service.dart';
 import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
@@ -63,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool loading = false;
     String? selectedRole;
 
-    const roleOptions = ['Dueño', 'Administrador', 'Cajero'];
+    const roleOptions = ['admin'];
 
     showDialog(
       context: context,
@@ -345,7 +346,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                     isLoading: _controller.isLoading,
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
+                                FittedBox(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => context.go('/forgot-password', extra: RecoveryController()),
+                                        child: Text('¿Olvidaste tu contraseña?',
+                                          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
                                 FittedBox(
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,

@@ -7,6 +7,7 @@ import '../widgets/ventas/sales_results_grid.dart';
 import '../widgets/ventas/sales_search_section.dart';
 import '../widgets/ventas/receipt_dialog.dart';
 import '../widgets/premium_header.dart';
+import '../widgets/error_display.dart';
 
 class VentasScreen extends StatefulWidget {
   const VentasScreen({super.key});
@@ -241,11 +242,56 @@ class _VentasScreenState extends State<VentasScreen> {
               ),
             ],
           ),
-          trailing: Text('\$${sale['total']}',
-              style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.greenMetal)),
+          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text('\$${sale['total']}',
+                style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.greenMetal)),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => _confirmCancelSale(context, controller, sale),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: const Icon(Icons.cancel_outlined, size: 18, color: AppTheme.reiOrangeRed),
+              ),
+            ),
+          ]),
         );
       },
     );
+  }
+
+  Future<void> _confirmCancelSale(BuildContext context, VentasController controller, Map<String, dynamic> sale) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Anular Venta', style: TextStyle(fontWeight: FontWeight.w900)),
+        content: Text('¿Deseas anular la venta #${sale['numeroFactura'] ?? sale['ventaId']}?\nEl stock se restaurará automáticamente.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Anular', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final saleId = sale['ventaId']?.toString() ?? sale['id']?.toString();
+      if (saleId != null) {
+        final ok = await controller.cancelSale(saleId);
+        if (mounted) {
+          if (ok) {
+            ErrorDisplay.successSnackBar(context: context, message: 'Venta anulada correctamente');
+          } else {
+            ErrorDisplay.snackBar(context: context, message: controller.error ?? 'Error al anular');
+          }
+        }
+      }
+    }
   }
 
   Widget _buildReceiptsCardsList(BuildContext context, VentasController controller) {

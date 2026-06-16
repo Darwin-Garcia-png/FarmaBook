@@ -290,8 +290,12 @@ class ApiService {
   // ────────────────────────────────────────────────────────────────
   // BATCHES
   // ────────────────────────────────────────────────────────────────
-  static Future<List<dynamic>> getBatches({int page = 1, int limit = 100}) async {
-    final r = await _get('/inventory/batches', query: {'page': '$page', 'limit': '$limit'});
+  static Future<List<dynamic>> getBatches({int page = 1, int limit = 100, String? productoId, String? vencidosAntes, String? vencidosDespues}) async {
+    final query = <String, String>{'page': '$page', 'limit': '$limit'};
+    if (productoId != null) query['productoId'] = productoId;
+    if (vencidosAntes != null) query['vencidosAntes'] = vencidosAntes;
+    if (vencidosDespues != null) query['vencidosDespues'] = vencidosDespues;
+    final r = await _get('/inventory/batches', query: query);
     return _listFromBody(r);
   }
 
@@ -685,5 +689,107 @@ class ApiService {
   static Future<Map<String, dynamic>> getInventoryAll() async {
     final r = await _get('/inventory/all');
     return _parseBody(r);
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // PRODUCT-HOUSES
+  // ────────────────────────────────────────────────────────────────
+  static Future<List<dynamic>> getProductHouses(String productId) async {
+    final r = await _get('/inventory/products/$productId/houses');
+    return _listFromBody(r);
+  }
+
+  static Future<Map<String, dynamic>> addHouseToProduct(String productId, String houseId) async {
+    final r = await _post('/inventory/products/$productId/houses', data: {'casaId': houseId});
+    return _parseBody(r);
+  }
+
+  static Future<void> removeHouseFromProduct(String productId, String houseId) async {
+    await _delete('/inventory/products/$productId/houses/$houseId');
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // HOUSE DETAIL
+  // ────────────────────────────────────────────────────────────────
+  static Future<Map<String, dynamic>?> getHouseByIdentifier(String identifier) async {
+    try {
+      final r = await _get('/inventory/houses/$identifier');
+      return _mapFromBody(r);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  static Future<List<dynamic>> getHouseSuppliers(String houseId) async {
+    final r = await _get('/inventory/houses/$houseId/suppliers');
+    return _listFromBody(r);
+  }
+
+  static Future<List<dynamic>> getHouseProducts(String houseId) async {
+    final r = await _get('/inventory/houses/$houseId/products');
+    return _listFromBody(r);
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // SUPPLIER PRODUCT-HOUSES
+  // ────────────────────────────────────────────────────────────────
+  static Future<List<dynamic>> getSupplierProductHouses(String supplierId) async {
+    final r = await _get('/inventory/suppliers/$supplierId/product-houses');
+    return _listFromBody(r);
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // CANCEL SALE
+  // ────────────────────────────────────────────────────────────────
+  static Future<void> deleteSale(String saleId) async {
+    await _delete('/sales/$saleId');
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // ANALYTICS: SUPPLIER RANKING
+  // ────────────────────────────────────────────────────────────────
+  static Future<List<dynamic>> getSupplierAvgCost({String? order, int? limit, String? casaId}) async {
+    final query = <String, String>{};
+    if (order != null) query['order'] = order;
+    if (limit != null) query['limit'] = '$limit';
+    if (casaId != null) query['casaId'] = casaId;
+    final r = await _get('/analytics/suppliers/by-avg-cost', query: query.isNotEmpty ? query : null);
+    return _listFromBody(r);
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // PASSWORD RESTORE (no auth required, except reset-password uses reset JWT)
+  // ────────────────────────────────────────────────────────────────
+  static Future<void> restorePassword(String username) async {
+    await _post('/auth/restore', data: {'username': username}, auth: false);
+  }
+
+  static Future<String> verifyRestorePin(String username, String pin) async {
+    final r = await _post('/auth/restore-verify', data: {'username': username, 'pin': pin}, auth: false);
+    final body = _parseBody(r);
+    final token = body['data']?['token'] as String?;
+    if (token == null || token.isEmpty) {
+      throw ApiException('No se recibió token de restablecimiento', statusCode: r.statusCode, serverBody: body);
+    }
+    return token;
+  }
+
+  static Future<void> resetPassword(String resetToken, String password) async {
+    final uri = Uri.parse('${AppConstants.baseUrl}/auth/restore-password');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $resetToken',
+    };
+    final resp = await _http.post(uri, headers: headers, body: jsonEncode({'password': password})).timeout(AppConstants.connectTimeout!);
+    if (resp.statusCode >= 400) {
+      final body = _parseBody(resp);
+      throw ApiException(
+        body['message']?.toString() ?? body['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
+        statusCode: resp.statusCode,
+        serverBody: body,
+      );
+    }
   }
 }

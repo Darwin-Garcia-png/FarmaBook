@@ -14,6 +14,11 @@ class LotesController extends ChangeNotifier {
   bool hasMore = true;
   int currentPage = 1;
 
+  String? filterProductoId;
+  DateTime? filterVencidosDesde;
+  DateTime? filterVencidosHasta;
+  bool filtersActive = false;
+
   List<Map<String, dynamic>> _vencidos = [];
   List<Map<String, dynamic>> _porVencer = [];
   List<Map<String, dynamic>> _bajoStock = [];
@@ -76,6 +81,22 @@ class LotesController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void applyFilters({String? productoId, DateTime? vencidosDesde, DateTime? vencidosHasta}) {
+    filterProductoId = productoId;
+    filterVencidosDesde = vencidosDesde;
+    filterVencidosHasta = vencidosHasta;
+    filtersActive = productoId != null || vencidosDesde != null || vencidosHasta != null;
+    fetchAllBatches(isRefresh: true);
+  }
+
+  void clearFilters() {
+    filterProductoId = null;
+    filterVencidosDesde = null;
+    filterVencidosHasta = null;
+    filtersActive = false;
+    fetchAllBatches(isRefresh: true);
+  }
+
   void touch() {
     _autoClearTimer?.cancel();
     _autoClearTimer = null;
@@ -131,7 +152,13 @@ class LotesController extends ChangeNotifier {
     }
 
     try {
-      final batchesList = await ApiService.getBatches(page: 1, limit: 999999);
+      final batchesList = await ApiService.getBatches(
+        page: 1,
+        limit: 999999,
+        productoId: filterProductoId,
+        vencidosAntes: filterVencidosHasta?.toIso8601String().split('T')[0],
+        vencidosDespues: filterVencidosDesde?.toIso8601String().split('T')[0],
+      );
 
       final newBatches = batchesList.cast<Map<String, dynamic>>().toList();
       

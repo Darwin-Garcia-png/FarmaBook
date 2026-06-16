@@ -51,6 +51,7 @@ class EstadisticasController extends ChangeNotifier {
   List<dynamic> topProductosHoy    = [];
   List<dynamic> topProductosMes    = [];
   List<dynamic> topProductosGlobal = [];
+  List<dynamic> supplierRanking   = [];
 
   // ── Datos para gráficas ─────────────────────────────────────────
   List<Map<String, dynamic>> dailyTrend = [];
@@ -75,6 +76,7 @@ class EstadisticasController extends ChangeNotifier {
     topProductosHoy.clear();
     topProductosMes.clear();
     topProductosGlobal.clear();
+    supplierRanking.clear();
     dailyTrend.clear();
     ingresosPorHora.clear();
     rankingProductosHoy.clear();
@@ -135,6 +137,10 @@ class EstadisticasController extends ChangeNotifier {
       topProductosGlobal = results[8]['data'] as List? ?? [];
 
       averageTicket = ventasHoy > 0 ? ingresosHoy / ventasHoy : 0;
+
+      try {
+        supplierRanking = await ApiService.getSupplierAvgCost(order: 'asc', limit: 10);
+      } catch (_) {}
 
       // Análisis profundo a partir de las ventas reales
       await Future.wait([

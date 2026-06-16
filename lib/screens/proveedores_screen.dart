@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/proveedores_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
+import '../services/api_service.dart';
 import 'package:flutter/services.dart';
 
 class ProveedoresScreen extends StatefulWidget {
@@ -33,6 +34,75 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
   }
 
   Color get _accent => AppTheme.reiPurple;
+
+  Future<void> _showSupplierHouses(Map<String, dynamic> supplier) async {
+    final supplierId = supplier['proveedorId']?.toString() ?? '';
+    if (supplierId.isEmpty) return;
+
+    List<dynamic> houses = [];
+    bool loading = true;
+
+    try {
+      houses = await ApiService.getSupplierProductHouses(supplierId);
+    } catch (_) {} finally { loading = false; }
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        child: Container(
+          width: 500,
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [AppTheme.reiPurple, AppTheme.reiPurple.withValues(alpha: 0.8)]),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: Row(children: [
+                  Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(14)),
+                    child: const Icon(Icons.business_rounded, color: Colors.white, size: 28)),
+                  const SizedBox(width: 16),
+                  Expanded(child: Text('Casas que distribuye ${supplier['nombre'] ?? ''}',
+                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900))),
+                  IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+                ]),
+              ),
+              Flexible(
+                child: loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : houses.isEmpty
+                    ? const Center(child: Text('Sin casas asociadas', style: TextStyle(color: Colors.grey)))
+                    : ListView(
+                        padding: const EdgeInsets.all(24),
+                        children: houses.map((h) => Container(
+                          margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(color: AppTheme.reiPurple.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.reiPurple.withValues(alpha: 0.1))),
+                          child: Row(children: [
+                            Icon(Icons.business_rounded, size: 16, color: AppTheme.reiPurple),
+                            const SizedBox(width: 10),
+                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text(h['nombre'] ?? '', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                              if (h['paisDeOrigen'] != null && h['paisDeOrigen'].toString().isNotEmpty)
+                                Text(h['paisDeOrigen'], style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                            ])),
+                          ]),
+                        )).toList(),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _showAddEditDialog({Map<String, dynamic>? supplier}) async {
     final isEdit = supplier != null;
@@ -312,6 +382,8 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
           ),
           const SizedBox(width: 8),
           Column(mainAxisSize: MainAxisSize.min, children: [
+            _actionButton(Icons.info_outline_rounded, AppTheme.ayanamiBlue, () => _showSupplierHouses(p)),
+            const SizedBox(height: 6),
             _actionButton(Icons.edit_rounded, accent, () => _showAddEditDialog(supplier: p)),
             const SizedBox(height: 6),
             _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(p)),

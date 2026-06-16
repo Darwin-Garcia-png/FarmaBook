@@ -1,0 +1,185 @@
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../controllers/recovery_controller.dart';
+import '../widgets/gradient_button.dart';
+import '../theme/app_theme.dart';
+
+class ForgotPasswordScreen extends StatefulWidget {
+  final RecoveryController controller;
+  const ForgotPasswordScreen({super.key, required this.controller});
+
+  @override
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  late final RecoveryController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = widget.controller;
+    _c.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    _c.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _handleSend() async {
+    final ok = await _c.sendPin();
+    if (ok && mounted) {
+      context.go('/verify-pin', extra: _c);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: Theme.of(context).brightness == Brightness.dark
+                    ? const [Color(0xFF0F1115), Color(0xFF1A1A2E), Color(0xFF2A4365)]
+                    : const [Color(0xFF6DABE4), Color(0xFF2A4365), Color(0xFF1A2744)],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+                        ),
+                        child: const Icon(Icons.lock_reset_rounded, size: 48, color: Colors.white),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Recuperar Contraseña',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Ingresa tu usuario para recibir un PIN',
+                        style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.75)),
+                      ),
+                      const SizedBox(height: 32),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(32),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          child: Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(32),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                            ),
+                            child: Form(
+                              key: _c.formKey,
+                              child: Column(
+                                children: [
+                                  _buildUsernameField(),
+                                  if (_c.errorMessage != null) ...[
+                                    const SizedBox(height: 12),
+                                    _buildError(_c.errorMessage!),
+                                  ],
+                                  const SizedBox(height: 24),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 50,
+                                    child: GradientButton(
+                                      text: 'Enviar PIN',
+                                      onPressed: _c.isLoading ? null : _handleSend,
+                                      isLoading: _c.isLoading,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  GestureDetector(
+                                    onTap: () => context.go('/login'),
+                                    child: Text(
+                                      'Volver al inicio de sesión',
+                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUsernameField() {
+    return TextFormField(
+      controller: _c.usernameController,
+      style: const TextStyle(color: Colors.white, fontSize: 15),
+      decoration: InputDecoration(
+        labelText: 'Usuario',
+        labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+        prefixIcon: Icon(Icons.person_outline, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 20),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.05),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppTheme.ayanamiBlue, width: 1.5),
+        ),
+        errorStyle: const TextStyle(color: AppTheme.reiOrangeRed, fontSize: 11),
+      ),
+      validator: (v) => v?.isEmpty ?? true ? 'Campo requerido' : null,
+    );
+  }
+
+  Widget _buildError(String msg) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.reiOrangeRed.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.reiOrangeRed.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: AppTheme.reiOrangeRed, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(msg, style: const TextStyle(color: Colors.white, fontSize: 13))),
+        ],
+      ),
+    );
+  }
+}

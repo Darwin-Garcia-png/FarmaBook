@@ -21,6 +21,8 @@ class AlmacenController extends ChangeNotifier {
 
   bool showLowStockOnly = false;
   String? categoriaSeleccionada;
+  String? casaSeleccionada;
+  String? proveedorSeleccionada;
   String? error;
 
   final TextEditingController searchCtrl = TextEditingController();
@@ -101,6 +103,12 @@ class AlmacenController extends ChangeNotifier {
         Map<String, dynamic> extraParams = {};
         if (categoriaSeleccionada != null) {
           extraParams['categoriaId'] = categoriaSeleccionada;
+        }
+        if (casaSeleccionada != null) {
+          extraParams['casaId'] = casaSeleccionada;
+        }
+        if (proveedorSeleccionada != null) {
+          extraParams['proveedorId'] = proveedorSeleccionada;
         }
         // Note: Si el backend no soporta "bajo_stock" directo, podríamos tener que filtrarlo localmente.
         // Asumiendo que no lo soporta en query, lo filtramos en Dart.
@@ -183,6 +191,16 @@ class AlmacenController extends ChangeNotifier {
 
   void updateCategoriaSeleccionada(String? v) {
     categoriaSeleccionada = v;
+    fetchProducts(isRefresh: true);
+  }
+
+  void updateCasaSeleccionada(String? v) {
+    casaSeleccionada = v;
+    fetchProducts(isRefresh: true);
+  }
+
+  void updateProveedorSeleccionada(String? v) {
+    proveedorSeleccionada = v;
     fetchProducts(isRefresh: true);
   }
 }
