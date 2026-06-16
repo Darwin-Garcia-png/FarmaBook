@@ -346,17 +346,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('¿No tienes cuenta? ',
-                                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
-                                    GestureDetector(
-                                      onTap: _showRegisterDialog,
-                                      child: const Text('Registrarse',
-                                        style: TextStyle(color: AppTheme.ayanamiBlue, fontSize: 13, fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
+                                FittedBox(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text('¿No tienes cuenta? ',
+                                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+                                      GestureDetector(
+                                        onTap: _showRegisterDialog,
+                                        child: const Text('Registrarse',
+                                          style: TextStyle(color: AppTheme.ayanamiBlue, fontSize: 13, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

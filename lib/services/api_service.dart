@@ -20,6 +20,12 @@ class ApiService {
   static const _storage = FlutterSecureStorage();
   static http.Client? _client;
 
+  @visibleForTesting
+  static set testClient(http.Client? c) => _client = c;
+
+  @visibleForTesting
+  static set testCachedToken(String? t) => _cachedToken = t;
+
   static http.Client get _http {
     if (_client == null) _client = http.Client();
     return _client!;

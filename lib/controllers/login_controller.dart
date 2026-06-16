@@ -5,7 +5,9 @@ import '../router/app_router.dart';
 import '../widgets/error_display.dart';
 
 class LoginController extends ChangeNotifier {
-  final AuthService _authService = AuthService();
+  final AuthService _authService;
+
+  LoginController({AuthService? authService}) : _authService = authService ?? AuthService();
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
