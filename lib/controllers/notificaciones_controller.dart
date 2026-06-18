@@ -1,23 +1,42 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class NotificacionesController extends ChangeNotifier {
   int unreadCount = 0;
   List<Map<String, dynamic>> notificaciones = [];
+  Timer? _timer;
+  int _previousCount = 0;
+  int _toastShownCount = 0;
+
+  /// Returns a message to show as a toast if new notifications appeared
+  /// since the last time we checked.
+  String? get toastMessage {
+    if (unreadCount > 0 && unreadCount > _toastShownCount) {
+      return notificaciones.isNotEmpty ? notificaciones.first['mensaje'] as String : null;
+    }
+    return null;
+  }
 
   void clearData() {
     notificaciones.clear();
     unreadCount = 0;
+    _previousCount = 0;
+    _toastShownCount = 0;
+    _timer?.cancel();
+    _timer = null;
     notifyListeners();
   }
 
   void init() {
     fetchAlerts();
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => fetchAlerts());
   }
 
   Future<void> fetchAlerts() async {
     try {
-        final res = await Future.wait([
+      final res = await Future.wait([
         ApiService.getProductos(page: 1, limit: 100),
         ApiService.getBatches(page: 1, limit: 999999),
       ]);
@@ -49,21 +68,32 @@ class NotificacionesController extends ChangeNotifier {
           nuevasNotifs.add({
             'id': p['productoId'] ?? p['id'],
             'tipo': 'stock_bajo',
-            'mensaje': 'Stock bajo: ${p['nombre']} ($stock)',
+            'mensaje': 'Stock bajo: ${p['nombre']} ($stock uds)',
           });
         }
       }
 
       notificaciones = nuevasNotifs;
+      _previousCount = unreadCount;
       unreadCount = notificaciones.length;
       notifyListeners();
-    } catch (e) {
-      // Error silencioso en background
-    }
+    } catch (_) {}
+  }
+
+  void markToastShown() {
+    _toastShownCount = unreadCount;
   }
 
   void markAllAsRead() {
     unreadCount = 0;
+    _toastShownCount = 0;
+    _previousCount = 0;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 }

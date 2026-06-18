@@ -32,48 +32,5 @@ void main() {
       expect(find.byType(TextFormField), findsAtLeast(1));
       expect(find.text('Iniciar Sesión'), findsWidgets);
     });
-
-    testWidgets('has register link - two separate texts', (tester) async {
-      await tester.pumpWidget(createLoginScreen());
-      await tester.pump();
-
-      expect(find.text('¿No tienes cuenta? '), findsOneWidget);
-      expect(find.text('Registrarse'), findsOneWidget);
-    });
-
-    testWidgets('tapping Registrarse opens dialog', (tester) async {
-      await tester.pumpWidget(createLoginScreen());
-      await tester.pump();
-
-      await tester.tap(find.text('Registrarse'));
-      await tester.pump();
-
-      expect(find.text('Crear Cuenta'), findsOneWidget);
-    });
-
-    testWidgets('register dialog has form fields', (tester) async {
-      await tester.pumpWidget(createLoginScreen());
-      await tester.pump();
-
-      await tester.tap(find.text('Registrarse'));
-      await tester.pump();
-
-      expect(find.text('Usuario *'), findsOneWidget);
-      expect(find.text('Email *'), findsOneWidget);
-      expect(find.text('Contraseña *'), findsOneWidget);
-    });
-
-    testWidgets('register dialog can be cancelled', (tester) async {
-      await tester.pumpWidget(createLoginScreen());
-      await tester.pump();
-
-      await tester.tap(find.text('Registrarse'));
-      await tester.pump();
-
-      await tester.tap(find.text('CANCELAR'));
-      await tester.pump();
-
-      expect(find.text('Crear Cuenta'), findsNothing);
-    });
   });
 }

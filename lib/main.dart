@@ -44,7 +44,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AlmacenController()),
         ChangeNotifierProvider(create: (_) => LotesController()),
         ChangeNotifierProvider(create: (_) => DashboardController()),
-        ChangeNotifierProvider(create: (_) => NotificacionesController()),
+        ChangeNotifierProvider(create: (_) => NotificacionesController()..init()),
       ],
       child: const MyApp(),
     ),
