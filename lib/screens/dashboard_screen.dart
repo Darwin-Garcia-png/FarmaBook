@@ -77,6 +77,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const Divider(indent: 32, endIndent: 32),
+              Consumer<NotificacionesController>(
+                builder: (context, notifCtrl, _) => _buildNotifItem(notifCtrl),
+              ),
               _buildLogoutItem(),
               const SizedBox(height: 20),
             ],
@@ -266,6 +269,144 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showNotifDialog(BuildContext context, NotificacionesController notifCtrl) {
+    final list = List<Map<String, dynamic>>.from(notifCtrl.notificaciones);
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(20),
+        child: Container(
+          width: 420,
+          constraints: const BoxConstraints(maxHeight: 500),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                decoration: BoxDecoration(
+                  color: AppTheme.ayanamiBlue.withValues(alpha: 0.08),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.notifications_rounded, color: AppTheme.ayanamiBlue, size: 22),
+                    const SizedBox(width: 10),
+                    const Text('Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                    const Spacer(),
+                    if (list.isNotEmpty)
+                      GestureDetector(
+                        onTap: () { notifCtrl.markAllAsRead(); Navigator.pop(ctx); },
+                        child: Text('Marcar leídas', style: TextStyle(fontSize: 12, color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700)),
+                      ),
+                  ],
+                ),
+              ),
+              if (list.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Column(
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded, size: 48, color: AppTheme.greenMetal),
+                      SizedBox(height: 12),
+                      Text('No hay notificaciones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      SizedBox(height: 4),
+                      Text('Todo está en orden', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    shrinkWrap: true,
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final n = list[i];
+                      final isExpiry = n['tipo']?.toString() == 'vencimiento';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: (isExpiry ? AppTheme.reiOrangeRed : Colors.orange).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                isExpiry ? Icons.event_available_rounded : Icons.inventory_2_rounded,
+                                size: 18, color: isExpiry ? AppTheme.reiOrangeRed : Colors.orange,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(n['mensaje']?.toString() ?? '', style: const TextStyle(fontSize: 13))),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                    child: const Text('CERRAR'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) => notifCtrl.markAllAsRead());
+  }
+
+  Widget _buildNotifItem(NotificacionesController notifCtrl) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        leading: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(notifCtrl.unreadCount > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_outlined,
+              color: notifCtrl.unreadCount > 0 ? AppTheme.reiOrangeRed : Colors.grey.shade500, size: 22),
+            if (notifCtrl.unreadCount > 0)
+              Positioned(
+                right: -4, top: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(color: AppTheme.reiOrangeRed, shape: BoxShape.circle),
+                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                  child: Text('${notifCtrl.unreadCount}',
+                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center),
+                ),
+              ),
+          ],
+        ),
+        title: Text('Notificaciones',
+          style: TextStyle(
+            color: notifCtrl.unreadCount > 0 ? AppTheme.reiOrangeRed : Colors.grey.shade600,
+            fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        onTap: () {
+          Navigator.pop(context);
+          _showNotifDialog(context, notifCtrl);
+        },
       ),
     );
   }
