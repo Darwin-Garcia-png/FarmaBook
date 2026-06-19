@@ -7,6 +7,7 @@ import '../utils/inventory_dialogs.dart';
 import '../widgets/almacen/product_card.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
+import '../widgets/shimmer_loading.dart';
 
 class AlmacenScreen extends StatefulWidget {
   const AlmacenScreen({super.key});
@@ -289,7 +290,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
   Widget _buildMainContent(BuildContext context, AlmacenController controller,
       LotesController lotesCtrl) {
     if (controller.isLoadingInitial) {
-      return const Expanded(child: Center(child: CircularProgressIndicator()));
+      return Expanded(child: ShimmerList(itemCount: 6, itemHeight: 220, padding: const EdgeInsets.fromLTRB(32, 32, 32, 0)));
     }
 
     if (controller.error != null && controller.productos.isEmpty) {

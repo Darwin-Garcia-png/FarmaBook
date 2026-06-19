@@ -9,6 +9,7 @@ import '../widgets/ventas/receipt_dialog.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../utils/price_formatter.dart';
+import '../widgets/shimmer_loading.dart';
 
 class VentasScreen extends StatefulWidget {
   const VentasScreen({super.key});
@@ -212,7 +213,7 @@ class _VentasScreenState extends State<VentasScreen> {
   }
 
   Widget _buildSalesHistoryList(BuildContext context, VentasController controller) {
-    if (controller.isLoadingHistorial) return const Center(child: CircularProgressIndicator());
+    if (controller.isLoadingHistorial) return const ShimmerList(itemCount: 5, itemHeight: 90);
     if (controller.ventasHistorial.isEmpty) return const Center(child: Text('No hay ventas registradas', style: TextStyle(color: Colors.grey)));
 
     return ListView.separated(
@@ -296,7 +297,7 @@ class _VentasScreenState extends State<VentasScreen> {
   }
 
   Widget _buildReceiptsCardsList(BuildContext context, VentasController controller) {
-    if (controller.isLoadingHistorial) return const Center(child: CircularProgressIndicator());
+    if (controller.isLoadingHistorial) return const ShimmerList(itemCount: 4, itemHeight: 200);
     if (controller.ventasHistorial.isEmpty) return const Center(child: Text('No hay recibos disponibles', style: TextStyle(color: Colors.grey)));
 
     return GridView.builder(

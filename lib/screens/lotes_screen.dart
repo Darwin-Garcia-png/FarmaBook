@@ -4,6 +4,7 @@ import '../controllers/lotes_controller.dart';
 import '../controllers/almacen_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
+import '../widgets/shimmer_loading.dart';
 import '../utils/inventory_dialogs.dart';
 import '../utils/price_formatter.dart';
 
@@ -86,7 +87,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
             ]),
           ),
           body: lotesCtrl.isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue))
+              ? const ShimmerList(itemCount: 6, itemHeight: 90)
               : Column(
                   children: [
                     _buildMetricsRow(lotesCtrl),

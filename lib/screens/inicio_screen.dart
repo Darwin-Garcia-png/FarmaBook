@@ -7,6 +7,7 @@ import '../utils/price_formatter.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
+import '../widgets/shimmer_loading.dart';
 
 class InicioScreen extends StatefulWidget {
   const InicioScreen({super.key});
@@ -43,7 +44,7 @@ class _InicioScreenState extends State<InicioScreen> {
     final text = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
     final card = Theme.of(context).cardTheme.color ?? Colors.white;
 
-    if (_ctrl.isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue)));
+    if (_ctrl.isLoading) return const Scaffold(body: ShimmerList(itemCount: 6, itemHeight: 100));
     if (_ctrl.error != null) return _errorView();
 
     return Scaffold(

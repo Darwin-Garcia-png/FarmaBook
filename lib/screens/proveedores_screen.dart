@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/proveedores_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
+import '../widgets/shimmer_loading.dart';
 import '../services/api_service.dart';
 import 'package:flutter/services.dart';
 
@@ -76,7 +77,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
               ),
               Flexible(
                 child: loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(child: SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 3)))
                   : houses.isEmpty
                     ? const Center(child: Text('Sin casas asociadas', style: TextStyle(color: Colors.grey)))
                     : ListView(
@@ -241,7 +242,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         backgroundColor: bg,
         body: Stack(children: [
           Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
-          const Center(child: CircularProgressIndicator(color: AppTheme.reiPurple)),
+          const ShimmerList(itemCount: 5, itemHeight: 80),
         ]),
       );
     }

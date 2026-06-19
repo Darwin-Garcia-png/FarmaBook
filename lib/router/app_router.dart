@@ -19,6 +19,27 @@ import '../screens/reset_password_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+Page<dynamic> _slidePage(Widget child) {
+  return CustomTransitionPage(
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.04, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 final GoRouter appRouter = GoRouter(
   navigatorKey: navigatorKey,
   initialLocation: '/login',
@@ -26,70 +47,70 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/login',
       name: 'login',
-      builder: (context, state) => const LoginScreen(),
+      pageBuilder: (context, state) => _slidePage(const LoginScreen()),
     ),
     GoRoute(
       path: '/forgot-password',
-      builder: (context, state) => ForgotPasswordScreen(
+      pageBuilder: (context, state) => _slidePage(ForgotPasswordScreen(
         controller: state.extra as RecoveryController? ?? RecoveryController(),
-      ),
+      )),
     ),
     GoRoute(
       path: '/verify-pin',
-      builder: (context, state) => VerifyPinScreen(
+      pageBuilder: (context, state) => _slidePage(VerifyPinScreen(
         controller: state.extra as RecoveryController,
-      ),
+      )),
     ),
     GoRoute(
       path: '/reset-password',
-      builder: (context, state) => ResetPasswordScreen(
+      pageBuilder: (context, state) => _slidePage(ResetPasswordScreen(
         controller: state.extra as RecoveryController,
-      ),
+      )),
     ),
     GoRoute(
       path: '/dashboard',
       name: 'dashboard',
-      builder: (context, state) => const DashboardScreen(),
+      pageBuilder: (context, state) => _slidePage(const DashboardScreen()),
     ),
     GoRoute(
       path: '/ventas',
-      builder: (context, state) => const VentasScreen(),
+      pageBuilder: (context, state) => _slidePage(const VentasScreen()),
     ),
     GoRoute(
       path: '/inicio',
-      builder: (context, state) => const InicioScreen(),
+      pageBuilder: (context, state) => _slidePage(const InicioScreen()),
     ),
     GoRoute(
       path: '/almacen',
-      builder: (context, state) => const AlmacenScreen(),
+      pageBuilder: (context, state) => _slidePage(const AlmacenScreen()),
     ),
     GoRoute(
       path: '/proveedores',
-      builder: (context, state) => const ProveedoresScreen(),
+      pageBuilder: (context, state) => _slidePage(const ProveedoresScreen()),
     ),
     GoRoute(
       path: '/categorias',
-      builder: (context, state) => const CategoriasScreen(),
+      pageBuilder: (context, state) => _slidePage(const CategoriasScreen()),
     ),
     GoRoute(
       path: '/presentaciones',
-      builder: (context, state) => const PresentacionesScreen(),
+      pageBuilder: (context, state) => _slidePage(const PresentacionesScreen()),
     ),
     GoRoute(
       path: '/estadisticas',
-      builder: (context, state) => const EstadisticasScreen(),
+      pageBuilder: (context, state) => _slidePage(const EstadisticasScreen()),
     ),
     GoRoute(
       path: '/configuracion',
-      builder: (context, state) => const ConfigScreen(),
+      pageBuilder: (context, state) => _slidePage(const ConfigScreen()),
     ),
     GoRoute(
       path: '/usuarios',
-      builder: (context, state) => const UsuariosScreen(),
+      pageBuilder: (context, state) => _slidePage(const UsuariosScreen()),
     ),
     GoRoute(
       path: '/manual',
-      builder: (context, state) => const ManualScreen(),
+      pageBuilder: (context, state) => _slidePage(const ManualScreen()),
     ),
   ],
 );

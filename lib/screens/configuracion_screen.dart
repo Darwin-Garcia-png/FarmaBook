@@ -6,6 +6,7 @@ import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/user_session.dart';
 import '../widgets/premium_header.dart';
+import '../widgets/shimmer_loading.dart';
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -91,7 +92,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
         ),
       ),
       body: _controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const ShimmerList(itemCount: 4, itemHeight: 100)
           : Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 900),

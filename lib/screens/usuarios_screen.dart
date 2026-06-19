@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../utils/user_session.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
+import '../widgets/shimmer_loading.dart';
 
 class UsuariosScreen extends StatefulWidget {
   const UsuariosScreen({super.key});
@@ -72,7 +73,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         ]),
       ),
       body: loading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue))
+          ? const ShimmerList(itemCount: 5, itemHeight: 80)
           : hasError
               ? _buildError()
               : _buildContent(),

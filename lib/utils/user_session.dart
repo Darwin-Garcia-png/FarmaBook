@@ -9,7 +9,7 @@ class UserSession {
   static void save(Map<String, dynamic>? userData) {
     if (userData == null) return;
     email = userData['email']?.toString() ?? userData['username']?.toString();
-    role = userData['rolNombre']?.toString();
+    role = userData['rol']?.toString();
     userId = userData['usuarioId'] ?? userData['id'];
   }
 

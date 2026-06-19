@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/casas_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
+import '../widgets/shimmer_loading.dart';
 import '../services/api_service.dart';
 import 'package:flutter/services.dart';
 
@@ -381,7 +382,7 @@ class _CasasScreenState extends State<CasasScreen> {
         backgroundColor: bg,
         body: Stack(children: [
           Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
-          const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue)),
+          const ShimmerList(itemCount: 5, itemHeight: 80),
         ]),
       );
     }

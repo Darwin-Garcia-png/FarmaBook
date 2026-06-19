@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/categorias_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
+import '../widgets/shimmer_loading.dart';
 import 'package:flutter/services.dart';
 
 class CategoriasScreen extends StatefulWidget {
@@ -280,7 +281,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         backgroundColor: bg,
         body: Stack(children: [
           Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
-          const Center(child: CircularProgressIndicator(color: Color(0xFF8B5CF6))),
+          const ShimmerList(itemCount: 5, itemHeight: 80),
         ]),
       );
     }
