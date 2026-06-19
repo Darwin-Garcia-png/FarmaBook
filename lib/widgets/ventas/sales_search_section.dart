@@ -4,7 +4,8 @@ import '../../theme/app_theme.dart';
 import '../../controllers/ventas_controller.dart';
 
 class SalesSearchSection extends StatelessWidget {
-  const SalesSearchSection({super.key});
+  final FocusNode? barcodeFocusNode;
+  const SalesSearchSection({super.key, this.barcodeFocusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +28,7 @@ class SalesSearchSection extends StatelessWidget {
         children: [
           TextField(
             controller: controller.barcodeController,
+            focusNode: barcodeFocusNode,
             autofocus: true,
             decoration: InputDecoration(
               hintText: 'Escanear Código de Barras...',

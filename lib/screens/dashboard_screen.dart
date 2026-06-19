@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../controllers/dashboard_controller.dart';
@@ -8,6 +9,8 @@ import '../controllers/ventas_controller.dart';
 import '../controllers/notificaciones_controller.dart';
 import '../utils/user_session.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animations.dart';
+import '../widgets/keyboard_shortcuts.dart';
 import 'inicio_screen.dart';
 import 'almacen_screen.dart';
 import 'proveedores_screen.dart';
@@ -72,8 +75,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4),
                     _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11),
                     
+                    if (UserSession.isDueno) ...[
                     const SizedBox(height: 12),
                     _buildExpansionCatalogos(),
+                    ],
                   ],
                 ),
               ),
@@ -87,18 +92,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      body: Stack(children: [
-        RepaintBoundary(child: _buildScreen()),
-        if (_controller.selectedIndex != 0)
-          Positioned(top: 88, left: 12,
-            child: FloatingActionButton.small(
-              heroTag: 'backBtn',
-              onPressed: () => _controller.onItemTapped(0),
-              backgroundColor: AppTheme.ayanamiBlue,
-              child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            ),
-          ),
-      ]),
+      body: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.f1): () => _controller.onItemTapped(11),
+          if (_controller.selectedIndex != 0)
+            const SingleActivator(LogicalKeyboardKey.escape): () => _controller.onItemTapped(0),
+          const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => _controller.onItemTapped(0),
+          const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => _controller.onItemTapped(1),
+          const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => _controller.onItemTapped(2),
+          const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => _controller.onItemTapped(3),
+          const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => _controller.onItemTapped(4),
+        },
+        child: Focus(
+          autofocus: true,
+          child: Stack(children: [
+            RepaintBoundary(child: _buildScreen()),
+            if (_controller.selectedIndex != 0)
+              Positioned(top: 88, left: 12,
+                child: FloatingActionButton.small(
+                  heroTag: 'backBtn',
+                  onPressed: () => _controller.onItemTapped(0),
+                  backgroundColor: AppTheme.ayanamiBlue,
+                  child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                ),
+              ),
+          ]),
+        ),
+      ),
     );
   }
 
@@ -194,7 +214,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
+      child: HoverScale(
+        scale: 1.02,
+        elevation: 4,
+        onTap: () {
+          _controller.onItemTapped(index);
+          if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+        },
+        child: InkWell(
         onTap: () {
           _controller.onItemTapped(index);
           if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
@@ -232,7 +259,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -241,7 +268,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     return Padding(
       padding: const EdgeInsets.only(left: 32, bottom: 4, right: 8),
-      child: InkWell(
+      child: HoverScale(
+        scale: 1.02,
+        elevation: 2,
+        onTap: () {
+          _controller.onItemTapped(index);
+          if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+        },
+        child: InkWell(
         onTap: () {
           _controller.onItemTapped(index);
           if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
@@ -270,7 +304,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -278,100 +312,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final list = List<Map<String, dynamic>>.from(notifCtrl.notificaciones);
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: Container(
-          width: 420,
-          constraints: const BoxConstraints(maxHeight: 500),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-                decoration: BoxDecoration(
-                  color: AppTheme.ayanamiBlue.withValues(alpha: 0.08),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.notifications_rounded, color: AppTheme.ayanamiBlue, size: 22),
-                    const SizedBox(width: 10),
-                    const Text('Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                    const Spacer(),
-                    if (list.isNotEmpty)
-                      GestureDetector(
-                        onTap: () { notifCtrl.markAllAsRead(); Navigator.pop(ctx); },
-                        child: Text('Marcar leídas', style: TextStyle(fontSize: 12, color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700)),
-                      ),
-                  ],
-                ),
-              ),
-              if (list.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(40),
-                  child: Column(
-                    children: [
-                      Icon(Icons.check_circle_outline_rounded, size: 48, color: AppTheme.greenMetal),
-                      SizedBox(height: 12),
-                      Text('No hay notificaciones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                      SizedBox(height: 4),
-                      Text('Todo está en orden', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                )
-              else
-                Flexible(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    shrinkWrap: true,
-                    itemCount: list.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (_, i) {
-                      final n = list[i];
-                      final isExpiry = n['tipo']?.toString() == 'vencimiento';
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: (isExpiry ? AppTheme.reiOrangeRed : Colors.orange).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                isExpiry ? Icons.event_available_rounded : Icons.inventory_2_rounded,
-                                size: 18, color: isExpiry ? AppTheme.reiOrangeRed : Colors.orange,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(child: Text(n['mensaje']?.toString() ?? '', style: const TextStyle(fontSize: 13))),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                    child: const Text('CERRAR'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      builder: (ctx) => _AnimatedNotifDialog(list: list, notifCtrl: notifCtrl),
     ).then((_) => notifCtrl.markAllAsRead());
   }
 
@@ -432,6 +373,197 @@ class _DashboardScreenState extends State<DashboardScreen> {
             context.go('/login');
           }
         },
+      ),
+    );
+  }
+}
+
+class _AnimatedNotifDialog extends StatefulWidget {
+  final List<Map<String, dynamic>> list;
+  final NotificacionesController notifCtrl;
+  const _AnimatedNotifDialog({required this.list, required this.notifCtrl});
+
+  @override
+  State<_AnimatedNotifDialog> createState() => _AnimatedNotifDialogState();
+}
+
+class _AnimatedNotifDialogState extends State<_AnimatedNotifDialog> {
+  @override
+  Widget build(BuildContext context) {
+    final list = widget.list;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(20),
+      child: Container(
+        width: 420,
+        constraints: const BoxConstraints(maxHeight: 500),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.85)],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(14)),
+                    child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
+                    Text('${list.length} pendiente${list.length != 1 ? 's' : ''}', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.7))),
+                  ]),
+                  const Spacer(),
+                  if (list.isNotEmpty)
+                    GestureDetector(
+                      onTap: () { widget.notifCtrl.markAllAsRead(); Navigator.pop(context); },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+                        child: Text('Marcar leídas', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (list.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(40),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.08), shape: BoxShape.circle),
+                      child: const Icon(Icons.check_circle_outline_rounded, size: 48, color: AppTheme.greenMetal),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('No hay notificaciones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 4),
+                    const Text('Todo está en orden', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: list.length,
+                  itemBuilder: (_, i) {
+                    final n = list[i];
+                    final isExpiry = n['tipo']?.toString() == 'vencimiento';
+                    final color = isExpiry ? AppTheme.reiOrangeRed : Colors.orange;
+                    return _NotifItem(
+                      index: i,
+                      icon: isExpiry ? Icons.event_available_rounded : Icons.inventory_2_rounded,
+                      color: color,
+                      message: n['mensaje']?.toString() ?? '',
+                    );
+                  },
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                  child: const Text('CERRAR'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NotifItem extends StatefulWidget {
+  final int index;
+  final IconData icon;
+  final Color color;
+  final String message;
+  const _NotifItem({required this.index, required this.icon, required this.color, required this.message});
+
+  @override
+  State<_NotifItem> createState() => _NotifItemState();
+}
+
+class _NotifItemState extends State<_NotifItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _fade;
+  late Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0.1, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    Future.delayed(Duration(milliseconds: 50 * widget.index), _ctrl.forward);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(
+        position: _slide,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: widget.color.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: widget.color.withValues(alpha: 0.1)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: widget.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(widget.icon, size: 18, color: widget.color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(widget.message, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              ),
+              Container(
+                width: 8, height: 8,
+                decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

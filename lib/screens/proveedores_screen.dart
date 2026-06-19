@@ -4,6 +4,8 @@ import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import '../services/api_service.dart';
+import '../utils/user_session.dart';
+import '../widgets/animations.dart';
 import 'package:flutter/services.dart';
 
 class ProveedoresScreen extends StatefulWidget {
@@ -273,10 +275,14 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
             if (list.isEmpty)
               _buildEmptyState(accent)
             else
-              ...list.map((p) => _buildCard(p, accent, text, card)),
+              ...list.asMap().entries.map((e) => AnimatedEntry(
+                index: e.key,
+                child: _buildCard(e.value, accent, text, card),
+              )),
           ]),
         ),
         Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+        if (UserSession.isDueno)
         Positioned(bottom: 24, right: 40,
           child: FloatingActionButton(
             backgroundColor: accent,
@@ -353,7 +359,10 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
   }
 
   Widget _buildCard(Map<String, dynamic> p, Color accent, Color text, Color card) {
-    return Container(
+    return HoverScale(
+      scale: 1.01,
+      elevation: 6,
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: card,
@@ -384,13 +393,16 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
           const SizedBox(width: 8),
           Column(mainAxisSize: MainAxisSize.min, children: [
             _actionButton(Icons.info_outline_rounded, AppTheme.ayanamiBlue, () => _showSupplierHouses(p)),
+            if (UserSession.isDueno) ...[
             const SizedBox(height: 6),
             _actionButton(Icons.edit_rounded, accent, () => _showAddEditDialog(supplier: p)),
             const SizedBox(height: 6),
             _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(p)),
+            ],
           ]),
         ]),
       ),
+    ),
     );
   }
 

@@ -6,6 +6,7 @@ import '../utils/user_session.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
+import '../widgets/animations.dart';
 
 class UsuariosScreen extends StatefulWidget {
   const UsuariosScreen({super.key});
@@ -109,11 +110,15 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                   ? _buildEmptyState()
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(32, 4, 32, 100),
-                      children: list.asMap().entries.map((e) => _buildUserCard(e.value, e.key)).toList(),
+                      children: list.asMap().entries.map((e) => AnimatedEntry(
+                        index: e.key,
+                        child: _buildUserCard(e.value, e.key),
+                      )).toList(),
                     ),
             ),
           ],
         ),
+        if (UserSession.isDueno)
         Positioned(
           bottom: 24,
           right: 32,
@@ -360,7 +365,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 ),
                 if (isDeleted)
                   _actionIcon(Icons.restore_from_trash_rounded, AppTheme.greenMetal, () => _confirmRestore(user))
-                else ...[
+                else if (UserSession.isDueno) ...[
                   _actionIcon(Icons.edit_rounded, rolCol, () => _showAddEditDialog(user: user)),
                   const SizedBox(width: 6),
                   _actionIcon(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(user)),

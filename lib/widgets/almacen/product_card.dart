@@ -6,6 +6,7 @@ import '../../services/api_service.dart';
 import '../../utils/inventory_dialogs.dart';
 import '../../utils/price_formatter.dart';
 import '../../utils/user_session.dart';
+import '../animations.dart';
 import 'batch_details_modal.dart';
 
 class ProductCard extends StatefulWidget {
@@ -148,7 +149,10 @@ class _ProductCardState extends State<ProductCard> {
         ? p['concentracion'].toString()
         : null;
 
-    return Container(
+    return HoverScale(
+      scale: 1.01,
+      elevation: 10,
+      child: Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
@@ -301,6 +305,7 @@ class _ProductCardState extends State<ProductCard> {
           ),
         ),
       ),
+    ),
     );
   }
 

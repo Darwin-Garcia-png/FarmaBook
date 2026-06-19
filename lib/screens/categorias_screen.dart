@@ -3,6 +3,7 @@ import '../controllers/categorias_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
+import '../utils/user_session.dart';
 import 'package:flutter/services.dart';
 
 class CategoriasScreen extends StatefulWidget {
@@ -325,6 +326,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
           ]),
         ),
         Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+        if (UserSession.isDueno)
         Positioned(bottom: 24, right: 40,
           child: FloatingActionButton(
             backgroundColor: accent,
@@ -521,6 +523,7 @@ class _AnimatedCatCardState extends State<_AnimatedCatCard>
                   ]),
                 ]),
               ),
+              if (UserSession.isDueno)
               Row(mainAxisSize: MainAxisSize.min, children: [
                 _actionButton(Icons.edit_rounded, accent, widget.onEdit),
                 const SizedBox(width: 4),

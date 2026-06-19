@@ -8,6 +8,7 @@ import '../widgets/almacen/product_card.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
+import '../widgets/animations.dart';
 
 class AlmacenScreen extends StatefulWidget {
   const AlmacenScreen({super.key});
@@ -316,11 +317,13 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
                 crossAxisSpacing: 24,
                 mainAxisSpacing: 24),
             itemCount: controller.productos.length,
-            itemBuilder: (context, index) => ProductCard(
+            itemBuilder: (context, index) => AnimatedEntry(
+              index: index,
+              child: ProductCard(
               p: controller.productos[index],
               controller: controller,
               lotesCtrl: lotesCtrl,
-            ),
+            )),
           ),
           if (controller.isFetchingMore)
             Positioned(

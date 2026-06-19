@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../controllers/ventas_controller.dart';
@@ -10,6 +11,7 @@ import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../utils/price_formatter.dart';
 import '../widgets/shimmer_loading.dart';
+import '../widgets/animations.dart';
 
 class VentasScreen extends StatefulWidget {
   const VentasScreen({super.key});
@@ -33,6 +35,8 @@ class _VentasScreenState extends State<VentasScreen> {
     super.dispose();
   }
 
+  final FocusNode _barcodeFocus = FocusNode();
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<VentasController>.value(
@@ -51,7 +55,33 @@ class _VentasScreenState extends State<VentasScreen> {
               constraints: const BoxConstraints(),
             ),
         ),
-        body: _buildBody(),
+        body: CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.f2): () => _barcodeFocus.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.escape): () {
+              if (_controller.vistaActual == VentasView.search) {
+                _controller.barcodeController.clear();
+                _controller.searchController.clear();
+                _controller.productosEncontrados.clear();
+              } else {
+                _controller.setVista(VentasView.search);
+              }
+            },
+            const SingleActivator(LogicalKeyboardKey.enter, control: true): () {
+              if (_controller.carrito.isNotEmpty && !_controller.isLoading) {
+                _controller.registrarVenta().then((result) {
+                  if (result != null && context.mounted) {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => ReceiptDialog(sale: _controller.ultimaVenta ?? result['data']),
+                    );
+                  }
+                });
+              }
+            },
+          },
+          child: Focus(autofocus: true, child: _buildBody()),
+        ),
       ),
     );
   }
@@ -70,9 +100,9 @@ class _VentasScreenState extends State<VentasScreen> {
                   key: ValueKey(controller.vistaActual),
                   children: [
                     if (controller.vistaActual == VentasView.search) ...[
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(32, 32, 32, 16),
-                        child: SalesSearchSection(),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(32, 32, 32, 16),
+                        child: SalesSearchSection(barcodeFocusNode: _barcodeFocus),
                       ),
                       const Expanded(
                         child: Padding(
@@ -311,7 +341,10 @@ class _VentasScreenState extends State<VentasScreen> {
       itemCount: controller.ventasHistorial.length,
       itemBuilder: (context, index) {
         final sale = controller.ventasHistorial[index];
-        return _buildReceiptCard(context, sale);
+        return AnimatedEntry(
+          index: index,
+          child: _buildReceiptCard(context, sale),
+        );
       },
     );
   }

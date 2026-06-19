@@ -82,7 +82,7 @@ class AppTheme {
           foregroundColor: WidgetStateProperty.all(Colors.white),
           overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.15)),
           shadowColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) return ayanamiBlue.withValues(alpha: 0.3);
+            if (states.contains(WidgetState.hovered)) return ayanamiBlue.withValues(alpha: 0.15);
             return Colors.transparent;
           }),
         ),
@@ -155,7 +155,7 @@ class AppTheme {
           foregroundColor: WidgetStateProperty.all(Colors.white),
           overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.15)),
           shadowColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) return reiBlueDark.withValues(alpha: 0.3);
+            if (states.contains(WidgetState.hovered)) return reiBlueDark.withValues(alpha: 0.15);
             return Colors.transparent;
           }),
         ),

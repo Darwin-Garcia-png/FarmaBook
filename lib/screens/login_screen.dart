@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -6,7 +6,6 @@ import '../controllers/login_controller.dart';
 import '../controllers/recovery_controller.dart';
 import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
-import '../widgets/gradient_button.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
 
@@ -17,19 +16,47 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final LoginController _controller = LoginController();
+  late AnimationController _bgCtrl;
+  late Animation<double> _bgAnim;
+  late List<_FloatingIcon> _icons;
+
+  final _rng = Random();
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_onControllerChanged);
+
+    _bgCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat(reverse: true);
+    _bgAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _bgCtrl, curve: Curves.easeInOutSine),
+    );
+
+    _icons = List.generate(6, (i) {
+      return _FloatingIcon(
+        icon: [Icons.medication_rounded, Icons.healing_rounded, Icons.biotech_rounded,
+                Icons.science_rounded, Icons.health_and_safety_rounded, Icons.coronavirus_rounded][i],
+        x: _rng.nextDouble() * 0.8 + 0.1,
+        y: _rng.nextDouble() * 0.8 + 0.1,
+        size: _rng.nextDouble() * 20 + 16,
+        speed: _rng.nextDouble() * 0.002 + 0.001,
+        opacity: _rng.nextDouble() * 0.12 + 0.04,
+        phase: _rng.nextDouble() * 2 * pi,
+      );
+    });
   }
 
   @override
   void dispose() {
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
+    _bgCtrl.dispose();
     super.dispose();
   }
 
@@ -59,21 +86,68 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Refined Gradient Background
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: Theme.of(context).brightness == Brightness.dark
-                    ? const [Color(0xFF0F1115), Color(0xFF1A1A2E), Color(0xFF2A4365)]
-                    : const [Color(0xFF6DABE4), Color(0xFF2A4365), Color(0xFF1A2744)],
-                stops: const [0.0, 0.5, 1.0],
-              ),
-            ),
+          // Animated gradient background con partículas
+          AnimatedBuilder(
+            animation: _bgAnim,
+            builder: (context, _) {
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment(_bgAnim.value * 0.2, -1),
+                    end: Alignment(-_bgAnim.value * 0.2, 1),
+                    colors: const [
+                      Color(0xFF0F2027),
+                      Color(0xFF203A43),
+                      Color(0xFF2C5364),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                ),
+                child: _buildFloatingIcons(),
+              );
+            },
           ),
-          
-          // 2. Main Content
+          // Glow corners
+          AnimatedBuilder(
+            animation: _bgAnim,
+            builder: (context, _) {
+              return Stack(
+                children: [
+                  Positioned(
+                    top: -100, left: -100,
+                    child: Container(
+                      width: 300, height: 300,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppTheme.ayanamiBlue.withValues(alpha: 0.15 + _bgAnim.value * 0.08),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -80, right: -80,
+                    child: Container(
+                      width: 250, height: 250,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFF2C5364).withValues(alpha: 0.2 + _bgAnim.value * 0.1),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          // Main content
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -82,110 +156,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 24,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-                      ),
-                      child: const Icon(
-                        Icons.local_pharmacy_rounded,
-                        size: 64,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'FarmaBook',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      'Gestión de Farmacia',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white.withValues(alpha: 0.75),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                    // Logo animado
+                    _AnimatedLogo(),
                     const SizedBox(height: 40),
-
-                    // Simplified Glassmorphism Card
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                        child: Container(
-                          padding: const EdgeInsets.all(40),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(32),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-                          ),
-                          child: Form(
-                            key: _controller.formKey,
-                            child: Column(
-                              children: [
-                                _buildTextField(
-                                  controller: _controller.emailController,
-                                  label: 'Usuario',
-                                  icon: Icons.person_outline,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _controller.passwordController,
-                                  label: 'Contraseña',
-                                  icon: Icons.lock_outline,
-                                  obscureText: _controller.obscurePassword,
-                                  suffix: IconButton(
-                                    icon: Icon(
-                                      _controller.obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                      color: Colors.white54,
-                                      size: 18,
-                                    ),
-                                    onPressed: _controller.togglePasswordVisibility,
-                                  ),
-                                ),
-                                const SizedBox(height: 32),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: GradientButton(
-                                    text: 'Iniciar Sesión',
-                                    onPressed: _controller.isLoading ? null : _handleLogin,
-                                    isLoading: _controller.isLoading,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                FittedBox(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () => context.go('/forgot-password', extra: RecoveryController()),
-                                        child: Text('¿Olvidaste tu contraseña?',
-                                          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                    // Card de login
+                    _LoginForm(
+                      controller: _controller,
+                      onLogin: _handleLogin,
                     ),
                   ],
                 ),
@@ -197,38 +174,390 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-    Widget? suffix,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 15),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-        prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 20),
-        suffixIcon: suffix,
-        filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.05),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+  Widget _buildFloatingIcons() {
+    return AnimatedBuilder(
+      animation: _bgCtrl,
+      builder: (context, _) {
+        return CustomPaint(
+          painter: _FloatingIconsPainter(_icons, _bgCtrl.value),
+          size: Size.infinite,
+        );
+      },
+    );
+  }
+}
+
+// ─── Floating icons background ───────────────────────────────────
+
+class _FloatingIcon {
+  final IconData icon;
+  double x, y;
+  final double size, speed, opacity, phase;
+  _FloatingIcon({required this.icon, required this.x, required this.y,
+    required this.size, required this.speed, required this.opacity, required this.phase});
+}
+
+class _FloatingIconsPainter extends CustomPainter {
+  final List<_FloatingIcon> icons;
+  final double time;
+
+  _FloatingIconsPainter(this.icons, this.time);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final icon in icons) {
+      final x = icon.x * size.width + sin(time * 2 * pi + icon.phase) * 20;
+      final y = icon.y * size.height + cos(time * 2 * pi + icon.phase) * 15;
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: String.fromCharCode(icon.icon.codePoint),
+          style: TextStyle(
+            fontSize: icon.size,
+            fontFamily: icon.icon.fontFamily,
+            color: Colors.white.withValues(alpha: icon.opacity),
+          ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppTheme.ayanamiBlue, width: 1.5),
-        ),
-        errorStyle: const TextStyle(color: AppTheme.reiOrangeRed, fontSize: 11),
-      ),
-      validator: (v) => v?.isEmpty ?? true ? 'Campo requerido' : null,
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(x, y));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FloatingIconsPainter old) => true;
+}
+
+// ─── Animated Logo ───────────────────────────────────────────────
+
+class _AnimatedLogo extends StatefulWidget {
+  @override
+  State<_AnimatedLogo> createState() => _AnimatedLogoState();
+}
+
+class _AnimatedLogoState extends State<_AnimatedLogo>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _floatAnim;
+  late Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat(reverse: true);
+    _floatAnim = Tween<double>(begin: -6, end: 6).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
+    );
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
     );
   }
 
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        return Transform.translate(
+          offset: Offset(0, _floatAnim.value),
+          child: Column(
+            children: [
+              Transform.scale(
+                scale: _pulseAnim.value,
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const SweepGradient(
+                      colors: [
+                        AppTheme.ayanamiBlue,
+                        Color(0xFF4A8BC4),
+                        Color(0xFF2C5364),
+                        AppTheme.ayanamiBlue,
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.ayanamiBlue.withValues(alpha: 0.3),
+                        blurRadius: 30,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.local_pharmacy_rounded, size: 44, color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'FarmaBook',
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Gestión Inteligente',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  letterSpacing: 3,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── Login Form ──────────────────────────────────────────────────
+
+class _LoginForm extends StatefulWidget {
+  final LoginController controller;
+  final VoidCallback onLogin;
+
+  const _LoginForm({required this.controller, required this.onLogin});
+
+  @override
+  State<_LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<_LoginForm>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+    _fadeAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+    );
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: SlideTransition(
+        position: _slideAnim,
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: Form(
+            key: widget.controller.formKey,
+            child: Column(
+              children: [
+                _Field(
+                  controller: widget.controller.emailController,
+                  label: 'Usuario',
+                  icon: Icons.person_outline,
+                ),
+                const SizedBox(height: 14),
+                _Field(
+                  controller: widget.controller.passwordController,
+                  label: 'Contraseña',
+                  icon: Icons.lock_outline,
+                  obscureText: widget.controller.obscurePassword,
+                  suffix: GestureDetector(
+                    onTap: widget.controller.togglePasswordVisibility,
+                    child: Icon(
+                      widget.controller.obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                      color: Colors.white38,
+                      size: 18,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                _LoginButton(
+                  isLoading: widget.controller.isLoading,
+                  onPressed: widget.controller.isLoading ? null : widget.onLogin,
+                ),
+                const SizedBox(height: 14),
+                GestureDetector(
+                  onTap: () => context.go('/forgot-password', extra: RecoveryController()),
+                  child: Text(
+                    '¿Olvidaste tu contraseña?',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Campo de texto ──────────────────────────────────────────────
+
+class _Field extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool obscureText;
+  final Widget? suffix;
+
+  const _Field({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.obscureText = false,
+    this.suffix,
+  });
+
+  @override
+  State<_Field> createState() => _FieldState();
+}
+
+class _FieldState extends State<_Field> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      onFocusChange: (v) => setState(() => _focused = v),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: _focused ? 0.08 : 0.04),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: _focused
+                ? AppTheme.ayanamiBlue.withValues(alpha: 0.6)
+                : Colors.white.withValues(alpha: 0.05),
+          ),
+        ),
+        child: TextFormField(
+          controller: widget.controller,
+          obscureText: widget.obscureText,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          decoration: InputDecoration(
+            labelText: widget.label,
+            labelStyle: TextStyle(
+              color: _focused
+                  ? AppTheme.ayanamiBlue.withValues(alpha: 0.7)
+                  : Colors.white38,
+              fontSize: 12,
+            ),
+            floatingLabelStyle: TextStyle(
+              color: _focused ? AppTheme.ayanamiBlue : Colors.white38,
+            ),
+            prefixIcon: Icon(widget.icon, color: _focused ? AppTheme.ayanamiBlue : Colors.white38, size: 20),
+            suffixIcon: widget.suffix != null
+                ? Padding(padding: const EdgeInsets.only(right: 8), child: widget.suffix)
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          validator: (v) => v?.isEmpty ?? true ? 'Campo requerido' : null,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Botón con animación ─────────────────────────────────────────
+
+class _LoginButton extends StatefulWidget {
+  final bool isLoading;
+  final VoidCallback? onPressed;
+
+  const _LoginButton({required this.isLoading, this.onPressed});
+
+  @override
+  State<_LoginButton> createState() => _LoginButtonState();
+}
+
+class _LoginButtonState extends State<_LoginButton>
+    with SingleTickerProviderStateMixin {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        child: AnimatedScale(
+          scale: _hovering ? 1.02 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: _hovering
+                    ? [AppTheme.ayanamiBlue, const Color(0xFF4A8BC4)]
+                    : [AppTheme.ayanamiBlue.withValues(alpha: 0.9), const Color(0xFF4A8BC4).withValues(alpha: 0.9)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.ayanamiBlue.withValues(alpha: _hovering ? 0.4 : 0.2),
+                  blurRadius: _hovering ? 16 : 8,
+                  offset: Offset(0, _hovering ? 6 : 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: widget.isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'INICIAR SESIÓN',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

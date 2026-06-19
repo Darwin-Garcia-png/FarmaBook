@@ -429,7 +429,8 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
   Widget _buildArchivedCard(Map<String, dynamic> b) {
     final expDate = DateTime.tryParse(b['fechaDeVencimiento']?.toString() ?? b['fechaVencimiento']?.toString() ?? '');
     final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
-    final precio = double.tryParse((b['precioPorUnidad'] ?? '0').toString()) ?? 0;
+    final precio = _batchPrice(b);
+    final codigoBarras = _batchBarcode(b);
 
     String archiveReason = 'ARCHIVADO';
     Color archiveColor = Colors.grey;
@@ -479,11 +480,14 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                         children: [
                           Text(b['nombreLote'] ?? 'Lote', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                           const SizedBox(height: 8),
-                          Row(
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 4,
                             children: [
                               _badge(Icons.event_rounded, expDate == null ? 'N/A' : '${expDate.day}/${expDate.month}/${expDate.year}'),
-                              const SizedBox(width: 12),
                               _badge(Icons.qr_code_rounded, 'SKU: ${b['productoCodigo'] ?? 'N/A'}'),
+                              if (codigoBarras != null)
+                                _badge(Icons.apps_rounded, 'EAN: $codigoBarras'),
                             ],
                           ),
                         ],
@@ -533,6 +537,8 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
   Widget _buildBatchCard(Map<String, dynamic> b, AlmacenController almacenCtrl, LotesController lotesCtrl) {
     final expDate = DateTime.tryParse(b['fechaDeVencimiento']?.toString() ?? b['fechaVencimiento']?.toString() ?? '');
     final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
+    final precio = _batchPrice(b);
+    final codigoBarras = _batchBarcode(b);
     
     int daysLeft = 9999;
     if (expDate != null) daysLeft = expDate.difference(DateTime.now()).inDays;
@@ -580,41 +586,69 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
           ),
           Padding(
             padding: const EdgeInsets.all(20),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(b['nombreLote'] ?? 'Lote', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                      const SizedBox(height: 8),
-                      Row(
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _badge(Icons.event_rounded, expDate == null ? 'N/A' : '${expDate.day}/${expDate.month}/${expDate.year}'),
-                          const SizedBox(width: 12),
-                          _badge(Icons.qr_code_rounded, 'SKU: ${b['productoCodigo'] ?? 'N/A'}'),
+                          Text(b['nombreLote'] ?? 'Lote', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 4,
+                            children: [
+                              _badge(Icons.event_rounded, expDate == null ? 'N/A' : '${expDate.day}/${expDate.month}/${expDate.year}'),
+                              _badge(Icons.qr_code_rounded, 'SKU: ${b['productoCodigo'] ?? 'N/A'}'),
+                              if (codigoBarras != null)
+                                _badge(Icons.apps_rounded, 'EAN: $codigoBarras'),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
-                  child: Column(
-                    children: [
-                      Text('$stock', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: stock < 30 ? AppTheme.reiPurple : AppTheme.ayanamiBlue, height: 1)),
-                      const Text('UNDS', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  children: [
-                    _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl, prefillBatch: b)),
-                    const SizedBox(height: 6),
-                    _actionIcon(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(b, lotesCtrl, almacenCtrl)),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
+                      child: Column(
+                        children: [
+                          Text('$stock', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: stock < 30 ? AppTheme.reiPurple : AppTheme.ayanamiBlue, height: 1)),
+                          const Text('UNDS', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      children: [
+                        _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl, prefillBatch: b)),
+                        const SizedBox(height: 6),
+                        _actionIcon(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(b, lotesCtrl, almacenCtrl)),
+                      ],
+                    ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.ayanamiBlue.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.08)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.attach_money_rounded, color: AppTheme.ayanamiBlue, size: 18),
+                      const SizedBox(width: 8),
+                      Text('Precio histórico:', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 8),
+                      Text(formatCop(precio), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.ayanamiBlue, letterSpacing: -0.5)),
+                      const Spacer(),
+                      Text('Lote #${b['loteId'] ?? b['batchId'] ?? b['id'] ?? 'N/A'}', style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -660,5 +694,21 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       await lotesCtrl.deleteBatch(b['loteId'] ?? b['batchId'] ?? b['id']);
       almacenCtrl.init(); 
     }
+  }
+
+  num _batchPrice(Map<String, dynamic> b) {
+    for (final f in ['precioPorUnidad', 'costoDeCompra', 'precioVenta', 'precio', 'precioCompra', 'precio_unitario', 'pvp']) {
+      final v = double.tryParse((b[f] ?? '').toString());
+      if (v != null && v > 0) return v;
+    }
+    return 0;
+  }
+
+  String? _batchBarcode(Map<String, dynamic> b) {
+    for (final f in ['codigoBarras', 'codigo', 'barcode', 'ean', 'codigo_barra']) {
+      final v = b[f]?.toString();
+      if (v != null && v.isNotEmpty) return v;
+    }
+    return null;
   }
 }

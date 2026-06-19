@@ -6,8 +6,10 @@ import '../controllers/inicio_controller.dart';
 import '../utils/price_formatter.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/user_session.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
+import '../widgets/animations.dart';
 
 class InicioScreen extends StatefulWidget {
   const InicioScreen({super.key});
@@ -304,6 +306,7 @@ class _InicioScreenState extends State<InicioScreen> {
               const SizedBox(width: 10),
               Text('FARMABOOK', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
               const Spacer(),
+              if (UserSession.isDueno)
               IconButton(icon: Icon(Icons.settings_outlined, color: text.withValues(alpha: 0.5)), onPressed: () => GoRouter.of(context).push('/configuracion')),
             ]),
           ),
@@ -324,7 +327,11 @@ class _InicioScreenState extends State<InicioScreen> {
   }
 
   Widget _kpi(String label, String value, IconData icon, Color color, double raw, VoidCallback onTap, {bool isPct = false}) {
-    return Expanded(child: InkWell(
+    return Expanded(child: HoverScale(
+      scale: 1.01,
+      elevation: 8,
+      onTap: onTap,
+      child: InkWell(
       onTap: onTap, borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(22),
@@ -354,11 +361,15 @@ class _InicioScreenState extends State<InicioScreen> {
           ]),
         ]),
       ),
-    ));
+    )));
   }
 
   Widget _moduleBtn(String label, IconData icon, Color color, VoidCallback onTap) {
-    return Expanded(child: InkWell(
+    return Expanded(child: HoverScale(
+      scale: 1.03,
+      elevation: 4,
+      onTap: onTap,
+      child: InkWell(
       onTap: onTap, borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 18),
@@ -375,7 +386,7 @@ class _InicioScreenState extends State<InicioScreen> {
           Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
         ]),
       ),
-    ));
+    )));
   }
 
   Widget _emptyCard(String msg, IconData icon, Color c) {

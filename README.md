@@ -217,6 +217,11 @@ Cada pantalla es un `StatefulWidget` que:
 
 ---
 
+### `lib/widgets/` — Widgets reutilizables (continuación)
+
+- `keyboard_shortcuts.dart` — Sistema de atajos de teclado para escritorio (`AppShortcuts.wrap`)
+- `animations.dart` — `AnimatedEntry`, `HoverScale`, `ParticleBackground`
+
 ### `lib/utils/` — Utilidades (7 archivos)
 
 | Archivo | Propósito |
@@ -310,6 +315,45 @@ Todos los precios se muestran en **pesos colombianos (COP)** usando `formatCop()
 | pdf | ^3.11.1 | Creación de documentos PDF |
 | image_picker | ^1.2.1 | Selección de imágenes (subida a Cloudinary) |
 
+## Animaciones y UX
+
+### Widgets de animación (`lib/widgets/animations.dart`)
+- **`AnimatedEntry`** — Entrada escalonada con fade + slide para listas/grids
+- **`HoverScale`** — Escala + elevación al hover sobre tarjetas y botones
+- **`ParticleBackground`** — Fondo animado con partículas flotantes (login screen)
+- **`ShimmerList`** — Skeleton loading animado con gradiente móvil
+
+### Login rediseñado
+- Fondo con gradiente animado y orbes pulsantes
+- Iconos flotantes de la marca Rx dibujados con `CustomPaint`
+- Formulario glassmorphism con entrada escalonada
+- Campos con animación al enfocar, botón con hover
+
+### Transiciones entre pantallas
+Todas las rutas usan `CustomTransitionPage` con fade + slide (`easeOutCubic`) gracias a GoRouter.
+
+## Atajos de teclado (`lib/widgets/keyboard_shortcuts.dart`)
+
+Atajos disponibles en escritorio (Windows/Linux):
+
+| Tecla | Ámbito | Acción |
+|-------|--------|--------|
+| `F1` | Global | Abrir Manual de Ayuda |
+| `Escape` | Global | Volver a Inicio |
+| `Ctrl+1` | Global | Panel Inicio |
+| `Ctrl+2` | Global | Almacén Central |
+| `Ctrl+3` | Global | Punto de Venta |
+| `Ctrl+4` | Global | Gestión de Lotes |
+| `Ctrl+5` | Global | Estadísticas |
+| `F2` | Ventas | Enfocar campo de código de barras |
+| `Ctrl+Enter` | Ventas | Cobrar (procesar venta) |
+| `Escape` | Ventas | Limpiar búsqueda / volver a búsqueda |
+
+## Roles y permisos
+
+- **Dueño/Admin**: Acceso completo a todas las funcionalidades
+- **Empleado/Cajero/Vendedor**: Acceso limitado — ocultos: CATÁLOGOS, ajustes, botones de editar/eliminar, y sección "Personal y Roles"
+
 ## Build y despliegue
 
 ### Windows (.exe)
@@ -320,7 +364,7 @@ flutter pub get
 flutter build windows --release
 ```
 
-El ejecutable se genera en `build\windows\x64\runner\Release\farmabook_flutter.exe`.
+El ejecutable se genera en `build\windows\x64\runner\Release\farmaboook_flutter.exe`.
 
 Para crear un instalador MSIX:
 ```powershell
