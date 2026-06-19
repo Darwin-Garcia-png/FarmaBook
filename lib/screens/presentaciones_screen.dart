@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../controllers/presentaciones_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
-import '../utils/user_session.dart';
 import '../widgets/animations.dart';
 import '../widgets/shimmer_loading.dart';
 import 'package:flutter/services.dart';
@@ -241,7 +240,6 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
           ]),
         ),
         Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
-        if (UserSession.isDueno)
         Positioned(bottom: 24, right: 40,
           child: FloatingActionButton(
             backgroundColor: accent,
@@ -346,12 +344,11 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
             ]),
           ),
-          if (UserSession.isDueno)
           Row(mainAxisSize: MainAxisSize.min, children: [
             _actionButton(Icons.edit_rounded, accent, () => _showAddEditDialog(pres: pres)),
             const SizedBox(width: 4),
             _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(pres)),
-          ]),
+          ],)
         ]),
       ),
     ),

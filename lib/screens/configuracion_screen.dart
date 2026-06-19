@@ -7,7 +7,6 @@ import '../theme/app_theme.dart';
 import '../utils/user_session.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
-import '../widgets/animations.dart';
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -123,7 +122,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           ),
                         ],
                       ),
-                      if (UserSession.isDueno) ...[
                       const SizedBox(height: 40),
                       _buildSettingsGroup(
                         title: 'GESTIÓN DE EQUIPO',
@@ -144,7 +142,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           ),
                         ],
                       ),
-                      ],
                       const SizedBox(height: 40),
                       _buildSettingsGroup(
                         title: 'EXPERIENCIA Y PREFERENCIAS',
@@ -167,112 +164,49 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
   void _showMyAccountDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showGeneralDialog(
+    showDialog(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      transitionBuilder: (ctx, anim, _, child) {
-        return FadeTransition(
-          opacity: anim,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.85, end: 1.0).animate(
-              CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
-            ),
-            child: child,
-          ),
-        );
-      },
-      pageBuilder: (ctx, _, __) {
-        return Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            width: 380,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, 12))],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppTheme.reiPurple, AppTheme.reiPurple.withValues(alpha: 0.85)],
-                      begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    ),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  ),
-                  child: Column(children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.person_rounded, size: 40, color: Colors.white),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(UserSession.email ?? 'Sin correo',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        UserSession.role ?? 'Sin rol',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.5),
-                      ),
-                    ),
-                  ]),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(children: [
-                    if (UserSession.userId != null)
-                      _detailRow(Icons.tag_rounded, 'ID de Usuario', '${UserSession.userId}'),
-                    _detailRow(Icons.email_rounded, 'Correo Electrónico', UserSession.email ?? '—'),
-                    _detailRow(Icons.badge_rounded, 'Rol', UserSession.role ?? '—'),
-                    _detailRow(Icons.verified_rounded, 'Tipo de Cuenta', UserSession.isDueno ? 'Administrador' : 'Empleado'),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: const Text('CERRAR'),
-                      ),
-                    ),
-                  ]),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (ctx) => Dialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.person_rounded, size: 24, color: AppTheme.ayanamiBlue),
+              ),
+              const SizedBox(width: 14),
+              const Text('Mi Información', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 20),
+                onPressed: () => Navigator.pop(ctx),
+                style: IconButton.styleFrom(backgroundColor: Colors.grey.withValues(alpha: 0.1)),
+              ),
+            ]),
+            const Divider(height: 24),
+            _detailRow('ID de Usuario', '${UserSession.userId ?? '—'}'),
+            _detailRow('Correo Electrónico', UserSession.email ?? '—'),
+            _detailRow('Rol', UserSession.role ?? '—'),
+            _detailRow('Tipo de Cuenta', UserSession.isDueno ? 'Administrador' : 'Empleado'),
+          ]),
+        ),
+      ),
     );
   }
 
-  Widget _detailRow(IconData icon, String label, String value) {
+  Widget _detailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(children: [
-        Icon(icon, size: 18, color: AppTheme.reiPurple.withValues(alpha: 0.6)),
-        const SizedBox(width: 12),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-          const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-        ]),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(
+          width: 140,
+          child: Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+        ),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
       ]),
     );
   }

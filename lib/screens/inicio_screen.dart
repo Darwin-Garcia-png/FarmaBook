@@ -6,7 +6,6 @@ import '../controllers/inicio_controller.dart';
 import '../utils/price_formatter.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/user_session.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/animations.dart';
@@ -306,7 +305,6 @@ class _InicioScreenState extends State<InicioScreen> {
               const SizedBox(width: 10),
               Text('FARMABOOK', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
               const Spacer(),
-              if (UserSession.isDueno)
               IconButton(icon: Icon(Icons.settings_outlined, color: text.withValues(alpha: 0.5)), onPressed: () => GoRouter.of(context).push('/configuracion')),
             ]),
           ),

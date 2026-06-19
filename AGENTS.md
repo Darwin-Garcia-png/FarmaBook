@@ -9,45 +9,31 @@
 
 ## Key Fixes (Session 2026-06-18)
 
-### UserSession (`lib/utils/user_session.dart`)
-- `_deepFindUser()` — searches for nested `usuario`/`user`/`data` objects
-- `_firstNonEmpty()` — tries 7+ field name variants for email & role
-- `_parseInt()` — handles both `int` and parsable `String` for `userId`
-- `isDueno` — matches `dueño`, `admin`, `administrador`
-- `isEmpleado` — matches `empleado`, `cajero`, `vendedor`
-- `canEdit` — alias for `isDueno`
+### Role-based restrictions REMOVED
+- All `if (UserSession.isDueno)` guards removed — CATÁLOGOS, FABs, edit/delete buttons, settings icon, "Personal y Roles" section now visible to all users
+- Unused `user_session.dart` imports cleaned up
 
-### Mis información personal dialog (`configuracion_screen.dart`)
-- Redesigned with gradient header, animated scale entrance (`showGeneralDialog`)
-- Shows: User ID, email, role, account type (Admin/Empleado)
-- **Hidden from Empleado**: "Personal y Roles" section, Settings gear in header
+### Notification bell (`premium_header.dart`)
+- `_NotifBell`: pulse animation on badge when unread (repeat/reverse with glow)
+- `_NotifItem` replaces old `_NotifCard`: staggered fade+slide entrance (60ms × index)
+- Cleaner header, severity dot with shadow, elevated close button
 
-### Empleado restrictions (hidden UI)
-| Screen | Hidden from Empleado |
-|--------|---------------------|
-| Dashboard drawer | CATÁLOGOS expansion tile |
-| Inicio | Settings gear icon |
-| Config | "Personal y Roles" section |
-| Proveedores | FAB, edit/delete buttons |
-| Casas | FAB, edit/delete buttons |
-| Presentaciones | FAB, edit/delete buttons |
-| Categorías | FAB, edit/delete buttons |
-| Usuarios | FAB, edit/delete buttons (screen itself inaccessible) |
-| Almacén (product cards) | edit/delete overlay icons |
+### Receipt dialog (`receipt_dialog.dart`)
+- Redesigned with gradient header, receipt icon, product list with quantity badges
+- Total with gradient background, sale info card with icons
+- PDF printing preserved
 
-### Button shadow
-- Hover shadow alpha reduced: `0.3` → `0.15` (both light & dark themes)
+### Login screen (`login_screen.dart`)
+- `_AnimatedLogo` now renders `assets/images/logo.png` (floating animation preserved)
 
-### Notification dialog (`dashboard_screen.dart`)
-- New: `_AnimatedNotifDialog` — gradient header, animated item entrance via `_NotifItem`
-- Items fade+slide in with staggered delay, show severity dot + colored border
+### Sidebar drawer (`dashboard_screen.dart`)
+- `_buildDrawerHeader` now renders `assets/images/logo_base.png`
+- Floating back arrow button removed (no more `Positioned` FAB)
 
-### Screen improvements
-- **Proveedores**: `AnimatedEntry` + `HoverScale` applied to cards
-- **Casas**: `AnimatedEntry` + `HoverScale` applied to cards
-- **Presentaciones**: `CircularProgressIndicator` → `ShimmerList`, `AnimatedEntry` + `HoverScale` on cards
-- **Categorías**: Already had `_AnimatedCatCard` animation
-- **Usuarios**: `AnimatedEntry` on user cards
+### Mi información personal dialog (`configuracion_screen.dart`)
+- Simplified: no gradient header, no scale animation, plain `showDialog`
+- Shows: User ID, email, role, account type
+- Clean label:value rows with close button
 
 ## Keyboard Shortcuts (`lib/widgets/keyboard_shortcuts.dart`)
 Atajos de teclado para escritorio (Windows/Linux/Mac):

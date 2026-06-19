@@ -4,7 +4,6 @@ import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import '../services/api_service.dart';
-import '../utils/user_session.dart';
 import '../widgets/animations.dart';
 import 'package:flutter/services.dart';
 
@@ -422,7 +421,6 @@ class _CasasScreenState extends State<CasasScreen> {
           ]),
         ),
         Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
-        if (UserSession.isDueno)
         Positioned(bottom: 24, right: 40,
           child: FloatingActionButton(
             backgroundColor: accent,
@@ -533,12 +531,11 @@ class _CasasScreenState extends State<CasasScreen> {
               ]),
             ]),
           ),
-          if (UserSession.isDueno)
           Row(mainAxisSize: MainAxisSize.min, children: [
             _actionButton(Icons.edit_rounded, accent, () => _showAddEditDialog(casa: casa)),
             const SizedBox(width: 4),
             _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(casa)),
-          ]),
+          ],)
         ]),
       ),
       ),

@@ -239,16 +239,12 @@ class _AnimatedLogoState extends State<_AnimatedLogo>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _floatAnim;
-  late Animation<double> _pulseAnim;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat(reverse: true);
     _floatAnim = Tween<double>(begin: -6, end: 6).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
-    );
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
     );
   }
@@ -268,34 +264,7 @@ class _AnimatedLogoState extends State<_AnimatedLogo>
           offset: Offset(0, _floatAnim.value),
           child: Column(
             children: [
-              Transform.scale(
-                scale: _pulseAnim.value,
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const SweepGradient(
-                      colors: [
-                        AppTheme.ayanamiBlue,
-                        Color(0xFF4A8BC4),
-                        Color(0xFF2C5364),
-                        AppTheme.ayanamiBlue,
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.ayanamiBlue.withValues(alpha: 0.3),
-                        blurRadius: 30,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.local_pharmacy_rounded, size: 44, color: Colors.white),
-                  ),
-                ),
-              ),
+              Image.asset('assets/images/logo.png', height: 100, width: 100, fit: BoxFit.contain),
               const SizedBox(height: 16),
               const Text(
                 'FarmaBook',

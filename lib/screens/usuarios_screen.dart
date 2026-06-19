@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/usuarios_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/user_session.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
@@ -118,7 +117,6 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             ),
           ],
         ),
-        if (UserSession.isDueno)
         Positioned(
           bottom: 24,
           right: 32,
@@ -365,7 +363,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 ),
                 if (isDeleted)
                   _actionIcon(Icons.restore_from_trash_rounded, AppTheme.greenMetal, () => _confirmRestore(user))
-                else if (UserSession.isDueno) ...[
+                else ...[
                   _actionIcon(Icons.edit_rounded, rolCol, () => _showAddEditDialog(user: user)),
                   const SizedBox(width: 6),
                   _actionIcon(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(user)),
@@ -444,7 +442,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                               const SizedBox(height: 4),
                               _passField('Contraseña', passCtrl, showPass, () => setDState(() => showPass = !showPass),
                                   isEdit: isEdit),
-                              if (isEdit && !UserSession.isDueno) ...[
+                              if (isEdit) ...[
                                 const SizedBox(height: 4),
                                 _passField('Contraseña actual *', currentPassCtrl, showCurrent,
                                     () => setDState(() => showCurrent = !showCurrent),

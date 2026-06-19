@@ -356,77 +356,71 @@ class _VentasScreenState extends State<VentasScreen> {
         [];
     final total = double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0;
     final fecha = _formatDate(_getSafeDate(sale));
+    final hora = _formatTime(_getSafeDate(sale));
     final numFactura = '#${sale['numeroFactura'] ?? sale['ventaId']}';
 
     return InkWell(
       onTap: () => _showReceipt(context, sale),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.08)),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(color: AppTheme.ayanamiBlue.withValues(alpha: 0.06), blurRadius: 16, offset: const Offset(0, 6)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppTheme.ayanamiBlue.withValues(alpha: 0.08),
-                    Colors.transparent,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.85)],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.ayanamiBlue.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.receipt_long_rounded, color: AppTheme.ayanamiBlue, size: 16),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(numFactura,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
+              child: Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(numFactura, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.3)),
+                    const SizedBox(height: 2),
+                    Row(children: [
+                      Icon(Icons.calendar_today_rounded, size: 9, color: Colors.white.withValues(alpha: 0.7)),
+                      const SizedBox(width: 4),
+                      Text('$fecha  $hora', style: TextStyle(fontSize: 9, color: Colors.white.withValues(alpha: 0.7), fontWeight: FontWeight.w600)),
+                    ]),
+                  ]),
+                ),
+              ]),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.calendar_today_rounded, size: 10, color: Colors.grey.shade400),
-                        const SizedBox(width: 4),
-                        Text(fecha, style: TextStyle(fontSize: 9, color: Colors.grey.shade500)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(_clienteDisplay(sale),
-                      style: TextStyle(fontSize: 9, color: Colors.grey.shade600),
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
+                    Row(children: [
+                      Icon(Icons.person_outline_rounded, size: 11, color: Colors.grey.shade400),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(_clienteDisplay(sale),
+                          style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 8),
                     if (productos.isNotEmpty)
                       ...productos.take(3).map((det) {
                         final d = det as Map<String, dynamic>;
@@ -434,36 +428,48 @@ class _VentasScreenState extends State<VentasScreen> {
                         final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
                         final sub = double.tryParse(d['subTotal']?.toString() ?? d['precioTotal']?.toString() ?? '0') ?? 0.0;
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 2),
-                          child: Row(
-                            children: [
-                              Text('${qty}x ', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
-                              Expanded(child: Text(nom, style: TextStyle(fontSize: 10, color: Colors.grey.shade700), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                              Text(formatCop(sub), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
-                            ],
-                          ),
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(children: [
+                            Container(
+                              width: 22, height: 22,
+                              decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
+                              alignment: Alignment.center,
+                              child: Text('$qty', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.ayanamiBlue)),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(nom, style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            const SizedBox(width: 8),
+                            Text(formatCop(sub), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.ayanamiBlue)),
+                          ]),
                         );
                       }),
                     if (productos.length > 3)
                       Text('+${productos.length - 3} más',
-                        style: TextStyle(fontSize: 9, color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w600)),
+                        style: TextStyle(fontSize: 10, color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.15))),
+                border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.08))),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('TOTAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
-                  Text(formatCop(total),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppTheme.greenMetal)),
-                ],
-              ),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text('TOTAL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade500, letterSpacing: 0.5)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.greenMetal, AppTheme.greenMetal.withValues(alpha: 0.8)],
+                      begin: Alignment.centerLeft, end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(formatCop(total),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.3)),
+                ),
+              ]),
             ),
           ],
         ),

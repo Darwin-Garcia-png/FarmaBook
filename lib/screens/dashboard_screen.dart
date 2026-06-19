@@ -10,7 +10,6 @@ import '../controllers/notificaciones_controller.dart';
 import '../utils/user_session.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animations.dart';
-import '../widgets/keyboard_shortcuts.dart';
 import 'inicio_screen.dart';
 import 'almacen_screen.dart';
 import 'proveedores_screen.dart';
@@ -75,10 +74,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4),
                     _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11),
                     
-                    if (UserSession.isDueno) ...[
                     const SizedBox(height: 12),
                     _buildExpansionCatalogos(),
-                    ],
                   ],
                 ),
               ),
@@ -107,15 +104,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           autofocus: true,
           child: Stack(children: [
             RepaintBoundary(child: _buildScreen()),
-            if (_controller.selectedIndex != 0)
-              Positioned(top: 88, left: 12,
-                child: FloatingActionButton.small(
-                  heroTag: 'backBtn',
-                  onPressed: () => _controller.onItemTapped(0),
-                  backgroundColor: AppTheme.ayanamiBlue,
-                  child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                ),
-              ),
           ]),
         ),
       ),
@@ -184,14 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Icon(Icons.local_pharmacy_rounded, size: 32, color: AppTheme.ayanamiBlue),
-          ),
+          Image.asset('assets/images/logo_base.png', height: 40, width: 40, fit: BoxFit.contain),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
