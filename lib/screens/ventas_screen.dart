@@ -8,6 +8,7 @@ import '../widgets/ventas/sales_search_section.dart';
 import '../widgets/ventas/receipt_dialog.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
+import '../utils/price_formatter.dart';
 
 class VentasScreen extends StatefulWidget {
   const VentasScreen({super.key});
@@ -302,58 +303,137 @@ class _VentasScreenState extends State<VentasScreen> {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.5,
+        childAspectRatio: 0.85,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
       itemCount: controller.ventasHistorial.length,
       itemBuilder: (context, index) {
         final sale = controller.ventasHistorial[index];
-        return InkWell(
-          onTap: () => _showReceipt(context, sale),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Theme.of(context).dividerColor),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5)
-              ],
+        return _buildReceiptCard(context, sale);
+      },
+    );
+  }
+
+  Widget _buildReceiptCard(BuildContext context, Map<String, dynamic> sale) {
+    final productos = (sale['productosVendidos'] as List<dynamic>?) ??
+        (sale['detalles'] as List<dynamic>?) ??
+        (sale['items'] as List<dynamic>?) ??
+        [];
+    final total = double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0;
+    final fecha = _formatDate(_getSafeDate(sale));
+    final numFactura = '#${sale['numeroFactura'] ?? sale['ventaId']}';
+
+    return InkWell(
+      onTap: () => _showReceipt(context, sale),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.ayanamiBlue.withValues(alpha: 0.08),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.ayanamiBlue.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.receipt_long_rounded, color: AppTheme.ayanamiBlue, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(numFactura,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.receipt, color: AppTheme.ayanamiBlue, size: 20),
-                    Text('\$${sale['total']}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.greenMetal)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today_rounded, size: 10, color: Colors.grey.shade400),
+                        const SizedBox(width: 4),
+                        Text(fecha, style: TextStyle(fontSize: 9, color: Colors.grey.shade500)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(_clienteDisplay(sale),
+                      style: TextStyle(fontSize: 9, color: Colors.grey.shade600),
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    if (productos.isNotEmpty)
+                      ...productos.take(3).map((det) {
+                        final d = det as Map<String, dynamic>;
+                        final nom = d['nombre'] ?? d['nombreProducto'] ?? 'Prod';
+                        final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
+                        final sub = double.tryParse(d['subTotal']?.toString() ?? d['precioTotal']?.toString() ?? '0') ?? 0.0;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Row(
+                            children: [
+                              Text('${qty}x ', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                              Expanded(child: Text(nom, style: TextStyle(fontSize: 10, color: Colors.grey.shade700), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                              Text(formatCop(sub), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                            ],
+                          ),
+                        );
+                      }),
+                    if (productos.length > 3)
+                      Text('+${productos.length - 3} más',
+                        style: TextStyle(fontSize: 9, color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w600)),
                   ],
                 ),
-                const Spacer(),
-                Text('Factura #${sale['numeroFactura'] ?? sale['ventaId']}',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.bodyLarge?.color)),
-                const SizedBox(height: 4),
-                Text(_formatDate(_getSafeDate(sale)),
-                    style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                Text(
-                  _clienteDisplay(sale),
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 9),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.15))),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('TOTAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+                  Text(formatCop(total),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppTheme.greenMetal)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

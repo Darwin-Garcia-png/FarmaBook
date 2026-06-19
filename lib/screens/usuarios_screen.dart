@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/usuarios_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/user_session.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 
@@ -437,7 +438,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                               const SizedBox(height: 4),
                               _passField('Contraseña', passCtrl, showPass, () => setDState(() => showPass = !showPass),
                                   isEdit: isEdit),
-                              if (isEdit) ...[
+                              if (isEdit && !UserSession.isDueno) ...[
                                 const SizedBox(height: 4),
                                 _passField('Contraseña actual *', currentPassCtrl, showCurrent,
                                     () => setDState(() => showCurrent = !showCurrent),

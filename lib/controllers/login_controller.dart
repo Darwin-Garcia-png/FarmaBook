@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/auth_service.dart';
 import '../router/app_router.dart';
 import '../widgets/error_display.dart';
+import '../utils/user_session.dart';
 
 class LoginController extends ChangeNotifier {
   final AuthService _authService;
@@ -50,6 +51,13 @@ class LoginController extends ChangeNotifier {
           );
           return false;
         }
+        final body = result['body'] as Map<String, dynamic>? ?? {};
+        final userData = body['data'] is Map
+            ? body['data'] as Map<String, dynamic>
+            : body['user'] is Map
+                ? body['user'] as Map<String, dynamic>
+                : body;
+        UserSession.save(userData);
         const storage = FlutterSecureStorage();
         await storage.write(
             key: 'user_email', value: emailController.text.trim());

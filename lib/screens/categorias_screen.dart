@@ -57,72 +57,152 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       _controller.descripcionCtrl.clear();
     }
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (diaCtx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-        backgroundColor: Theme.of(context).cardTheme.color,
-        child: Container(
-          width: 500,
-          padding: const EdgeInsets.all(32),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(isEdit ? 'Editar Categoría' : 'Nueva Categoría',
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(diaCtx)),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildField('Nombre de la Categoría', _controller.nombreCtrl, Icons.category_rounded, req: true),
-                _buildField('Descripción (Opcional)', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(onPressed: () => Navigator.pop(diaCtx), child: const Text('Cancelar')),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _accent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      onPressed: () async {
-                        if (!formKey.currentState!.validate()) return;
-                        bool success;
-                        if (isEdit) {
-                          success = await _controller.actualizarCategoria(cat['categoriaId']);
-                        } else {
-                          success = await _controller.agregarCategoria();
-                        }
-                        
-                        if (mounted) {
-                          Navigator.pop(diaCtx);
-                          if (success) {
-                            ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Categoría actualizada' : 'Categoría registrada');
-                          } else {
-                            ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
-                          }
-                        }
-                      },
-                      child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Categoría', style: const TextStyle(fontWeight: FontWeight.w900)),
-                    ),
-                  ],
-                )
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (ctx, anim, _, child) {
+        return FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+              CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+            ),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (ctx, _, __) {
+        return Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            width: 520,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, 12)),
               ],
             ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 20, 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [_accent, _accent.withValues(alpha: 0.85)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(isEdit ? Icons.edit_rounded : Icons.category_rounded, color: Colors.white, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(isEdit ? 'Editar Categoría' : 'Nueva Categoría',
+                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                                Text(isEdit ? 'Modifica los datos de la categoría' : 'Registra una nueva clasificación',
+                                    style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Colors.white),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildField('Nombre de la Categoría', _controller.nombreCtrl, Icons.category_rounded, req: true),
+                          _buildField('Descripción (Opcional)', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancelar'),
+                          ),
+                          const SizedBox(width: 12),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [_accent, const Color(0xFF7C3AED)],
+                                begin: Alignment.centerLeft, end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(color: _accent.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ),
+                              onPressed: () async {
+                                if (!formKey.currentState!.validate()) return;
+                                bool success;
+                                if (isEdit) {
+                                  success = await _controller.actualizarCategoria(cat['categoriaId']);
+                                } else {
+                                  success = await _controller.agregarCategoria();
+                                }
+                                if (mounted) {
+                                  Navigator.pop(ctx);
+                                  if (success) {
+                                    ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Categoría actualizada' : 'Categoría registrada');
+                                  } else {
+                                    ErrorDisplay.snackBar(context: context, message: 'Error', hint: 'Revisa los datos e intenta de nuevo.');
+                                  }
+                                }
+                              },
+                              child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Categoría',
+                                  style: const TextStyle(fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -231,7 +311,16 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
             if (list.isEmpty)
               _buildEmptyState(accent)
             else
-              ...list.map((cat) => _buildCard(cat, accent, text, card)),
+              ...list.asMap().entries.map((entry) => _AnimatedCatCard(
+                key: ValueKey(entry.value['categoriaId']),
+                index: entry.key,
+                cat: entry.value,
+                accent: accent,
+                text: text,
+                card: card,
+                onEdit: () => _showAddEditDialog(cat: entry.value),
+                onDelete: () => _confirmDelete(entry.value),
+              )),
           ]),
         ),
         Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
@@ -253,11 +342,18 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 40),
-      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08)))),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08))),
+      ),
       child: Row(children: [
         Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [accent.withValues(alpha: 0.15), accent.withValues(alpha: 0.05)],
+                begin: Alignment.topLeft, end: Alignment.bottomRight),
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: const Icon(Icons.category_rounded, color: Color(0xFF8B5CF6), size: 24),
         ),
         const SizedBox(width: 14),
@@ -299,49 +395,139 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(48),
-      decoration: BoxDecoration(color: _cardColor(context), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8))]),
+      decoration: BoxDecoration(
+        color: _cardColor(context),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8))],
+      ),
       child: Column(children: [
-        Icon(Icons.category_outlined, size: 64, color: accent.withValues(alpha: 0.3)),
-        const SizedBox(height: 16),
-        Text('No hay categorías registradas', style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        Text('Agrega una nueva categoría', style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: accent.withValues(alpha: 0.1),
+          ),
+          child: Icon(Icons.category_outlined, size: 48, color: accent.withValues(alpha: 0.4)),
+        ),
+        const SizedBox(height: 20),
+        Text('No hay categorías', style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
+        const SizedBox(height: 6),
+        Text('Agrega una nueva categoría con el botón +',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
       ]),
     );
   }
 
-  Widget _buildCard(Map<String, dynamic> cat, Color accent, Color text, Color card) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: accent.withValues(alpha: 0.4), width: 3)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
-            child: Icon(Icons.category_rounded, color: accent, size: 22),
+  Color _cardColor(BuildContext context) => Theme.of(context).cardTheme.color ?? Colors.white;
+}
+
+class _AnimatedCatCard extends StatefulWidget {
+  final int index;
+  final Map<String, dynamic> cat;
+  final Color accent, text, card;
+  final VoidCallback onEdit, onDelete;
+  const _AnimatedCatCard({
+    super.key,
+    required this.index,
+    required this.cat,
+    required this.accent,
+    required this.text,
+    required this.card,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  State<_AnimatedCatCard> createState() => _AnimatedCatCardState();
+}
+
+class _AnimatedCatCardState extends State<_AnimatedCatCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+    Future.delayed(Duration(milliseconds: 60 * widget.index), _animCtrl.forward);
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cat = widget.cat;
+    final accent = widget.accent;
+    final text = widget.text;
+    final card = widget.card;
+    final gradient = LinearGradient(
+      colors: [accent.withValues(alpha: 0.12), accent.withValues(alpha: 0.04)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: SlideTransition(
+        position: _slideAnim,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border(left: BorderSide(color: accent.withValues(alpha: 0.5), width: 3)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(cat['nombre'] ?? 'Sin nombre', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3, color: text), maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 4),
-              Text(cat['descripcion']?.isEmpty ?? true ? 'Sin descripción provista' : cat['descripcion'],
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(12)),
+                child: Icon(Icons.category_rounded, color: accent, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(cat['nombre'] ?? 'Sin nombre',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3, color: text),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    Icon(Icons.description_outlined, size: 12, color: Colors.grey.shade400),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        cat['descripcion']?.isEmpty ?? true ? 'Sin descripción' : cat['descripcion'],
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ]),
+                ]),
+              ),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                _actionButton(Icons.edit_rounded, accent, widget.onEdit),
+                const SizedBox(width: 4),
+                _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, widget.onDelete),
+              ]),
             ]),
           ),
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            _actionButton(Icons.edit_rounded, accent, () => _showAddEditDialog(cat: cat)),
-            const SizedBox(width: 4),
-            _actionButton(Icons.delete_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(cat)),
-          ]),
-        ]),
+        ),
       ),
     );
   }
@@ -357,6 +543,4 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       ),
     );
   }
-
-  Color _cardColor(BuildContext context) => Theme.of(context).cardTheme.color ?? Colors.white;
 }

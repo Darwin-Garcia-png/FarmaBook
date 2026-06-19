@@ -4,6 +4,7 @@ import '../controllers/config_controller.dart';
 import '../providers/theme_provider.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
+import '../utils/user_session.dart';
 import '../widgets/premium_header.dart';
 
 class ConfigScreen extends StatefulWidget {
@@ -102,6 +103,26 @@ class _ConfigScreenState extends State<ConfigScreen> {
                       _buildProfileCard(),
                       const SizedBox(height: 40),
                       _buildSettingsGroup(
+                        title: 'MI CUENTA',
+                        children: [
+                          ListTile(
+                            contentPadding: const EdgeInsets.all(24),
+                            leading: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                    color: AppTheme.reiPurple.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(16)),
+                                child: const Icon(Icons.person_rounded, color: AppTheme.reiPurple, size: 24)),
+                            title: const Text('Información Personal', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                            subtitle: Text('${UserSession.role ?? "—"} · ${UserSession.email ?? "—"}',
+                                style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => _showMyAccountDialog(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                      _buildSettingsGroup(
                         title: 'GESTIÓN DE EQUIPO',
                         children: [
                           ListTile(
@@ -137,6 +158,71 @@ class _ConfigScreenState extends State<ConfigScreen> {
                 ),
               ),
             ),
+    );
+  }
+
+  void _showMyAccountDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+        contentPadding: const EdgeInsets.all(32),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.reiPurple.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person_rounded, size: 40, color: AppTheme.reiPurple),
+            ),
+            const SizedBox(height: 20),
+            Text(UserSession.email ?? '—',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: UserSession.isDueno
+                    ? const Color(0xFFD4AF37).withValues(alpha: 0.15)
+                    : AppTheme.ayanamiBlue.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                UserSession.role ?? 'Sin rol',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: UserSession.isDueno
+                      ? const Color(0xFFD4AF37)
+                      : AppTheme.ayanamiBlue,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            if (UserSession.userId != null) ...[
+              const SizedBox(height: 16),
+              Text('ID: ${UserSession.userId}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+            ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: const Text('CERRAR'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

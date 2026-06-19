@@ -158,72 +158,152 @@ class _CasasScreenState extends State<CasasScreen> {
       _controller.paisCtrl.clear();
     }
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (diaCtx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-        backgroundColor: Theme.of(context).cardTheme.color,
-        child: Container(
-          width: 500,
-          padding: const EdgeInsets.all(32),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(isEdit ? 'Editar Casa' : 'Nueva Casa',
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(diaCtx)),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildField('Nombre de la Casa', _controller.nombreCtrl, Icons.business_rounded, req: true),
-                _buildField('País de Origen (Opcional)', _controller.paisCtrl, Icons.public_rounded),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(onPressed: () => Navigator.pop(diaCtx), child: const Text('Cancelar')),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.ayanamiBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      onPressed: () async {
-                        if (!formKey.currentState!.validate()) return;
-                        bool success;
-                        if (isEdit) {
-                          success = await _controller.actualizarCasa(casa['casaId']);
-                        } else {
-                          success = await _controller.agregarCasa();
-                        }
-
-                        if (mounted) {
-                          Navigator.pop(diaCtx);
-                          if (success) {
-                            ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Casa actualizada' : 'Casa registrada');
-                          } else {
-                            ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
-                          }
-                        }
-                      },
-                      child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Casa', style: const TextStyle(fontWeight: FontWeight.w900)),
-                    ),
-                  ],
-                )
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (ctx, anim, _, child) {
+        return FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+              CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+            ),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (ctx, _, __) {
+        return Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            width: 520,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, 12)),
               ],
             ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 20, 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.85)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(isEdit ? Icons.edit_rounded : Icons.business_rounded, color: Colors.white, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(isEdit ? 'Editar Casa' : 'Nueva Casa',
+                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                                Text(isEdit ? 'Modifica los datos de la casa' : 'Registra una casa farmacéutica',
+                                    style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Colors.white),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildField('Nombre de la Casa', _controller.nombreCtrl, Icons.business_rounded, req: true),
+                          _buildField('País de Origen *', _controller.paisCtrl, Icons.public_rounded, req: true),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancelar'),
+                          ),
+                          const SizedBox(width: 12),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [AppTheme.ayanamiBlue, Color(0xFF4A8BC4)],
+                                begin: Alignment.centerLeft, end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(color: AppTheme.ayanamiBlue.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ),
+                              onPressed: () async {
+                                if (!formKey.currentState!.validate()) return;
+                                bool success;
+                                if (isEdit) {
+                                  success = await _controller.actualizarCasa(casa['casaId']);
+                                } else {
+                                  success = await _controller.agregarCasa();
+                                }
+                                if (mounted) {
+                                  Navigator.pop(ctx);
+                                  if (success) {
+                                    ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Casa actualizada' : 'Casa registrada');
+                                  } else {
+                                    ErrorDisplay.snackBar(context: context, message: 'Error', hint: 'Revisa los datos e intenta de nuevo.');
+                                  }
+                                }
+                              },
+                              child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Casa',
+                                  style: const TextStyle(fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

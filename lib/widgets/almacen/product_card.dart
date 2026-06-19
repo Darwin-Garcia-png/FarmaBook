@@ -5,6 +5,7 @@ import '../../controllers/lotes_controller.dart';
 import '../../services/api_service.dart';
 import '../../utils/inventory_dialogs.dart';
 import '../../utils/price_formatter.dart';
+import '../../utils/user_session.dart';
 import 'batch_details_modal.dart';
 
 class ProductCard extends StatefulWidget {
@@ -202,22 +203,23 @@ class _ProductCardState extends State<ProductCard> {
                           : _iconPlaceholder(),
                     ),
                   ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () {
-                          InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
-                        }),
-                        const SizedBox(width: 6),
-                        _actionIcon(Icons.delete_rounded, AppTheme.reiOrangeRed, () {
-                          _confirmDelete(context);
-                        }),
-                      ],
+                  if (UserSession.isDueno)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () {
+                            InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
+                          }),
+                          const SizedBox(width: 6),
+                          _actionIcon(Icons.delete_rounded, AppTheme.reiOrangeRed, () {
+                            _confirmDelete(context);
+                          }),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
               // Content below image

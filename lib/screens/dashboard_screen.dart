@@ -6,6 +6,7 @@ import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
 import '../controllers/ventas_controller.dart';
 import '../controllers/notificaciones_controller.dart';
+import '../utils/user_session.dart';
 import '../theme/app_theme.dart';
 import 'inicio_screen.dart';
 import 'almacen_screen.dart';
@@ -427,6 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             context.read<LotesController>().clearData();
             context.read<NotificacionesController>().clearData();
             try { context.read<VentasController>().clearData(); } catch (_) {}
+            UserSession.clear();
             context.go('/login');
           }
         },
