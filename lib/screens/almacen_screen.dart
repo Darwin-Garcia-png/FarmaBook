@@ -9,6 +9,7 @@ import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/animations.dart';
+import '../utils/user_session.dart';
 
 class AlmacenScreen extends StatefulWidget {
   const AlmacenScreen({super.key});
@@ -169,8 +170,8 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
               ),
               const SizedBox(width: 24),
               _buildLowStockButton(controller),
-              const SizedBox(width: 16),
-              _buildAddButton(context, controller),
+              if (UserSession.isDueno) const SizedBox(width: 16),
+              if (UserSession.isDueno) _buildAddButton(context, controller),
             ],
           ),
           const SizedBox(height: 12),

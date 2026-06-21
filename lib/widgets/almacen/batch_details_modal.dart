@@ -4,6 +4,7 @@ import '../../controllers/almacen_controller.dart';
 import '../../controllers/lotes_controller.dart';
 import '../../utils/inventory_dialogs.dart';
 import '../../utils/price_formatter.dart';
+import '../../utils/user_session.dart';
 
 class BatchDetailsModal extends StatelessWidget {
   final Map<String, dynamic> p;
@@ -58,16 +59,17 @@ class BatchDetailsModal extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline,
-                      color: AppTheme.ayanamiBlue),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    InventoryDialogs.showAddEditProduct(
-                        context, controller, lotesCtrl,
-                        prod: p, isNewBatchOnly: true);
-                  },
-                )
+                if (UserSession.isDueno)
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline,
+                        color: AppTheme.ayanamiBlue),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      InventoryDialogs.showAddEditProduct(
+                          context, controller, lotesCtrl,
+                          prod: p, isNewBatchOnly: true);
+                    },
+                  )
               ],
             ),
           ),
@@ -180,22 +182,24 @@ class BatchDetailsModal extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Column(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_note, color: AppTheme.ayanamiBlue, size: 20),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    InventoryDialogs.showAddEditProduct(context, controller, lotesCtrl, prod: p, prefillBatch: l);
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_sweep_outlined, color: AppTheme.reiOrangeRed, size: 20),
-                                  onPressed: () => _confirmarBorradoLote(context, l, lotesCtrl, controller),
-                                ),
-                              ],
-                            ),
+                            if (UserSession.isDueno) ...[
+                              const SizedBox(width: 12),
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_note, color: AppTheme.ayanamiBlue, size: 20),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      InventoryDialogs.showAddEditProduct(context, controller, lotesCtrl, prod: p, prefillBatch: l);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_sweep_outlined, color: AppTheme.reiOrangeRed, size: 20),
+                                    onPressed: () => _confirmarBorradoLote(context, l, lotesCtrl, controller),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),

@@ -5,6 +5,7 @@ import '../../controllers/lotes_controller.dart';
 import '../../services/api_service.dart';
 import '../../utils/inventory_dialogs.dart';
 import '../../utils/price_formatter.dart';
+import '../../utils/user_session.dart';
 import '../animations.dart';
 import 'batch_details_modal.dart';
 
@@ -172,29 +173,45 @@ class _ProductCardState extends State<ProductCard> {
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: () {
-            if (batchCount > 1) {
-              showModalBottomSheet(
-                context: context,
-                backgroundColor: Colors.transparent,
-                isScrollControlled: true,
-                builder: (ctx) => BatchDetailsModal(
-                  p: Map<String, dynamic>.from(p),
-                  lotes: lotes.cast<Map<String, dynamic>>(),
-                  controller: controller,
-                  lotesCtrl: widget.lotesCtrl,
-                ),
-              );
+            if (UserSession.isDueno) {
+              if (batchCount > 1) {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  builder: (ctx) => BatchDetailsModal(
+                    p: Map<String, dynamic>.from(p),
+                    lotes: lotes.cast<Map<String, dynamic>>(),
+                    controller: controller,
+                    lotesCtrl: widget.lotesCtrl,
+                  ),
+                );
+              } else {
+                InventoryDialogs.showEditProduct(
+                    context, controller,
+                    prod: Map<String, dynamic>.from(p));
+              }
             } else {
-              InventoryDialogs.showEditProduct(
-                  context, controller,
-                  prod: Map<String, dynamic>.from(p));
+              if (batchCount > 1) {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  builder: (ctx) => BatchDetailsModal(
+                    p: Map<String, dynamic>.from(p),
+                    lotes: lotes.cast<Map<String, dynamic>>(),
+                    controller: controller,
+                    lotesCtrl: widget.lotesCtrl,
+                  ),
+                );
+              }
             }
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Image at top - full width with overlay buttons
-              Stack(
+                Stack(
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -206,22 +223,23 @@ class _ProductCardState extends State<ProductCard> {
                           : _iconPlaceholder(),
                     ),
                   ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () {
-                            InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
-                          }),
-                          const SizedBox(width: 6),
-                          _actionIcon(Icons.delete_rounded, AppTheme.reiOrangeRed, () {
-                            _confirmDelete(context);
-                          }),
-                        ],
+                    if (UserSession.isDueno)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () {
+                              InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
+                            }),
+                            const SizedBox(width: 6),
+                            _actionIcon(Icons.delete_rounded, AppTheme.reiOrangeRed, () {
+                              _confirmDelete(context);
+                            }),
+                          ],
+                        ),
                       ),
-                    ),
                 ],
               ),
               // Content below image
