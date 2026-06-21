@@ -449,7 +449,10 @@ class ApiService {
     final token = body['data']?['token'] as String? ?? body['token'] as String?;
     if (token != null && token.isNotEmpty) {
       final username = (data['username'] ?? '').toString().trim();
-      if (username.isNotEmpty) await setUserToken(username, token);
+      if (username.isNotEmpty) {
+        await setUserToken(username, token);
+        await setToken(token);
+      }
     }
     return body;
   }

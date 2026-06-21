@@ -5,7 +5,6 @@ import '../providers/theme_provider.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/user_session.dart';
-import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/animations.dart';
 
@@ -81,11 +80,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PremiumHeader(
-        title: 'Ajustes del Sistema',
-        subtitle: 'Configuración general de la farmacia',
-        icon: Icons.settings_rounded,
-        baseColor: AppTheme.ayanamiBlue,
+      appBar: AppBar(
+        title: const Text('Ajustes del Sistema', style: TextStyle(fontWeight: FontWeight.w900)),
+        centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).textTheme.titleLarge?.color),
           tooltip: 'Volver',

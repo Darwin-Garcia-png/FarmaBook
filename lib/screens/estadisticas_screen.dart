@@ -4,7 +4,6 @@ import '../controllers/estadisticas_controller.dart';
 import '../utils/price_formatter.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
-import '../widgets/premium_header.dart';
 
 class EstadisticasScreen extends StatefulWidget {
   const EstadisticasScreen({super.key});
@@ -35,13 +34,11 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PremiumHeader(
-        title: 'Estadísticas',
-        subtitle: 'Análisis completo de rendimiento',
-        icon: Icons.insights_rounded,
-        baseColor: AppTheme.ayanamiBlue,
-        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          IconButton(icon: Icon(_isPdf ? Icons.hourglass_top : Icons.picture_as_pdf_rounded, color: AppTheme.reiOrangeRed, size: 22),
+      appBar: AppBar(
+        title: const Text('Estadísticas', style: TextStyle(fontWeight: FontWeight.w900)),
+        centerTitle: true,
+        actions: [
+          IconButton(icon: Icon(_isPdf ? Icons.hourglass_top : Icons.picture_as_pdf_rounded, color: AppTheme.reiOrangeRed),
             onPressed: _isPdf ? null : () async {
               setState(() => _isPdf = true);
               try {
@@ -51,9 +48,9 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
                 if (mounted) ErrorDisplay.snackBar(context: context, message: 'Error al guardar PDF', hint: 'Verifica que la carpeta Descargas exista y tengas permisos de escritura.');
               } finally { if (mounted) setState(() => _isPdf = false); }
             }),
-          IconButton(icon: const Icon(Icons.summarize_rounded, color: AppTheme.ayanamiBlue, size: 22), onPressed: _showSummary),
-          IconButton(icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500, size: 22), onPressed: _c.cargarEstadisticas),
-        ]),
+          IconButton(icon: const Icon(Icons.summarize_rounded, color: AppTheme.ayanamiBlue), onPressed: _showSummary),
+          IconButton(icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500), onPressed: _c.cargarEstadisticas),
+        ],
       ),
       body: _c.isLoading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.ayanamiBlue))

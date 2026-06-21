@@ -7,7 +7,6 @@ import '../widgets/ventas/cart_section.dart';
 import '../widgets/ventas/sales_results_grid.dart';
 import '../widgets/ventas/sales_search_section.dart';
 import '../widgets/ventas/receipt_dialog.dart';
-import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../utils/price_formatter.dart';
 import '../widgets/shimmer_loading.dart';
@@ -43,17 +42,15 @@ class _VentasScreenState extends State<VentasScreen> {
       value: _controller,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: PremiumHeader(
-            title: 'Punto de Venta',
-            subtitle: 'Atención y Cobro',
-            icon: Icons.shopping_cart_rounded,
-            baseColor: AppTheme.greenMetal,
-            trailing: IconButton(
-              icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.greenMetal.withValues(alpha: 0.7)),
+        appBar: AppBar(
+          title: const Text('Punto de Venta', style: TextStyle(fontWeight: FontWeight.w900)),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh_rounded, color: AppTheme.greenMetal.withValues(alpha: 0.7)),
               onPressed: () => _controller.cargarHistorialVentas(),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
             ),
+          ],
         ),
         body: CallbackShortcuts(
           bindings: {

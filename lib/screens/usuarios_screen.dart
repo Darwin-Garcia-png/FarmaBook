@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/usuarios_controller.dart';
 import '../theme/app_theme.dart';
-import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/animations.dart';
@@ -59,18 +58,16 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PremiumHeader(
-        title: 'Personal',
-        subtitle: 'Administra usuarios y permisos',
-        icon: Icons.engineering_rounded,
-        baseColor: _accent,
-        trailing: loading ? null : Row(mainAxisSize: MainAxisSize.min, children: [
-          IconButton(
-            icon: Icon(Icons.refresh_rounded, size: 20, color: _accent.withValues(alpha: 0.7)),
-            onPressed: () { _ctrl.fetchAll(); if (_ctrl.showDeleted) _ctrl.fetchDeleted(); },
-            padding: EdgeInsets.zero, constraints: const BoxConstraints(),
-          ),
-        ]),
+      appBar: AppBar(
+        title: const Text('Personal', style: TextStyle(fontWeight: FontWeight.w900)),
+        centerTitle: true,
+        actions: [
+          if (!loading)
+            IconButton(
+              icon: Icon(Icons.refresh_rounded, color: _accent.withValues(alpha: 0.7)),
+              onPressed: () { _ctrl.fetchAll(); if (_ctrl.showDeleted) _ctrl.fetchDeleted(); },
+            ),
+        ],
       ),
       body: loading
           ? const ShimmerList(itemCount: 5, itemHeight: 80)
