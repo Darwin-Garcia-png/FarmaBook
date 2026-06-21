@@ -5,6 +5,7 @@ import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
 import '../utils/inventory_dialogs.dart';
 import '../widgets/almacen/product_card.dart';
+import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/animations.dart';
@@ -42,15 +43,17 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
       builder: (context, controller, lotesCtrl, child) {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: AppBar(
-            title: const Text('Almacén Central', style: TextStyle(fontWeight: FontWeight.w900)),
-            centerTitle: true,
-            actions: [
-              IconButton(
-                icon: Icon(Icons.refresh_rounded, color: AppTheme.ayanamiBlue.withValues(alpha: 0.7)),
-                onPressed: () => controller.init(),
-              ),
-            ],
+          appBar: PremiumHeader(
+            title: 'Almacén Central', 
+            subtitle: 'Inventario general de medicamentos', 
+            icon: Icons.inventory_2_rounded, 
+            baseColor: AppTheme.ayanamiBlue,
+            trailing: IconButton(
+              icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withValues(alpha: 0.7)),
+              onPressed: () => controller.init(),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
           ),
           body: Column(
             children: [

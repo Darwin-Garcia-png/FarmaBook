@@ -70,12 +70,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     AnimatedEntry(index: 0, child: _buildDrawerItem(Icons.dashboard_rounded, 'Panel Inicio', 0)),
                     AnimatedEntry(index: 1, child: _buildDrawerItem(Icons.inventory_2_rounded, 'Almacén Central', 1)),
                     AnimatedEntry(index: 2, child: _buildDrawerItem(Icons.point_of_sale_rounded, 'Punto de Venta', 2)),
-                    AnimatedEntry(index: 3, child: _buildDrawerItem(Icons.layers_outlined, 'Gestión de Lotes', 3)),
-                    AnimatedEntry(index: 4, child: _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4)),
+                    if (UserSession.isDueno) AnimatedEntry(index: 3, child: _buildDrawerItem(Icons.layers_outlined, 'Gestión de Lotes', 3)),
+                    if (UserSession.isDueno) AnimatedEntry(index: 4, child: _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4)),
                     AnimatedEntry(index: 5, child: _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11)),
                     
-                    const SizedBox(height: 12),
-                    AnimatedEntry(index: 6, child: _buildExpansionCatalogos()),
+                    if (UserSession.isDueno) ...[
+                      const SizedBox(height: 12),
+                      AnimatedEntry(index: 6, child: _buildExpansionCatalogos()),
+                    ],
                   ],
                 ),
               ),

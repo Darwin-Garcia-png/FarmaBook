@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/lotes_controller.dart';
 import '../controllers/almacen_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../utils/inventory_dialogs.dart';
 import '../utils/price_formatter.dart';
@@ -58,14 +59,19 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       builder: (context, lotesCtrl, almacenCtrl, _) {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: AppBar(
-            title: const Text('Gestión de Lotes', style: TextStyle(fontWeight: FontWeight.w900)),
-            centerTitle: true,
-            actions: [
+          appBar: PremiumHeader(
+            title: 'Gestión de Lotes',
+            subtitle: 'Control de caducidad y trazabilidad',
+            icon: Icons.layers_outlined,
+            baseColor: AppTheme.ayanamiBlue,
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               IconButton(
-                icon: Icon(Icons.refresh_rounded, color: AppTheme.ayanamiBlue.withValues(alpha: 0.7)),
+                icon: Icon(Icons.refresh_rounded, size: 20, color: AppTheme.ayanamiBlue.withValues(alpha: 0.7)),
                 onPressed: () => lotesCtrl.refresh(),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl),
                 icon: const Icon(Icons.add_box_rounded),
@@ -73,11 +79,13 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.ayanamiBlue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  elevation: 8,
+                  shadowColor: AppTheme.ayanamiBlue.withValues(alpha: 0.4),
                 ),
               ),
-            ],
+            ]),
           ),
           body: lotesCtrl.isLoading
               ? const ShimmerList(itemCount: 6, itemHeight: 90)
