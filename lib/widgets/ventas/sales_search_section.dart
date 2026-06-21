@@ -5,7 +5,8 @@ import '../../controllers/ventas_controller.dart';
 
 class SalesSearchSection extends StatelessWidget {
   final FocusNode? barcodeFocusNode;
-  const SalesSearchSection({super.key, this.barcodeFocusNode});
+  final FocusNode? nameFocusNode;
+  const SalesSearchSection({super.key, this.barcodeFocusNode, this.nameFocusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +31,7 @@ class SalesSearchSection extends StatelessWidget {
             controller: controller.barcodeController,
             focusNode: barcodeFocusNode,
             autofocus: true,
+            textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               hintText: 'Escanear Código de Barras...',
               hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
@@ -42,14 +44,19 @@ class SalesSearchSection extends StatelessWidget {
                   borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.all(22),
             ),
-            onSubmitted: (_) => controller.buscarPorCodigo(),
+            onSubmitted: (_) {
+              controller.buscarPorCodigo();
+              nameFocusNode?.requestFocus();
+            },
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: TextField(
+                  child: TextField(
                   controller: controller.searchController,
+                  focusNode: nameFocusNode,
+                  textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
                     hintText: 'Buscar por nombre de medicamento...',
                     hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),

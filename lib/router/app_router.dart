@@ -16,10 +16,13 @@ import '../screens/manual_screen.dart';
 import '../screens/forgot_password_screen.dart';
 import '../screens/verify_pin_screen.dart';
 import '../screens/reset_password_screen.dart';
+import '../utils/app_logger.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-Page<dynamic> _slidePage(Widget child) {
+Page<dynamic> _slidePage(Widget child, {String? name}) {
+  final label = name ?? child.runtimeType.toString().replaceAll('_', '');
+  AppLogger.screen(label);
   return CustomTransitionPage(
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {

@@ -15,17 +15,23 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   late final RecoveryController _c;
+  late final FocusNode _passwordFocusNode;
+  late final FocusNode _confirmFocusNode;
 
   @override
   void initState() {
     super.initState();
     _c = widget.controller;
     _c.addListener(_onChanged);
+    _passwordFocusNode = FocusNode();
+    _confirmFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
     _c.removeListener(_onChanged);
+    _passwordFocusNode.dispose();
+    _confirmFocusNode.dispose();
     super.dispose();
   }
 
@@ -110,9 +116,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               key: _c.formKey,
                               child: Column(
                                 children: [
-                                  _buildPasswordField(),
+                                  _buildPasswordField(
+                                    focusNode: _passwordFocusNode,
+                                    textInputAction: TextInputAction.next,
+                                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_confirmFocusNode),
+                                  ),
                                   const SizedBox(height: 16),
-                                  _buildConfirmField(),
+                                  _buildConfirmField(
+                                    focusNode: _confirmFocusNode,
+                                    textInputAction: TextInputAction.done,
+                                    onFieldSubmitted: (_) => _handleReset(),
+                                  ),
                                   if (_c.errorMessage != null) ...[
                                     const SizedBox(height: 12),
                                     _buildError(_c.errorMessage!),
@@ -155,9 +169,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField({
+    required FocusNode focusNode,
+    required TextInputAction textInputAction,
+    required ValueChanged<String> onFieldSubmitted,
+  }) {
     return TextFormField(
       controller: _c.passwordController,
+      focusNode: focusNode,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       obscureText: !_c.obscurePassword,
       style: const TextStyle(color: Colors.white, fontSize: 15),
       decoration: InputDecoration(
@@ -193,9 +214,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     );
   }
 
-  Widget _buildConfirmField() {
+  Widget _buildConfirmField({
+    required FocusNode focusNode,
+    required TextInputAction textInputAction,
+    required ValueChanged<String> onFieldSubmitted,
+  }) {
     return TextFormField(
       controller: _c.confirmPasswordController,
+      focusNode: focusNode,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       obscureText: !_c.obscureConfirm,
       style: const TextStyle(color: Colors.white, fontSize: 15),
       decoration: InputDecoration(

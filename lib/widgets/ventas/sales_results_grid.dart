@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../controllers/ventas_controller.dart';
 import '../../utils/price_formatter.dart';
+import '../../widgets/animations.dart';
 
 class SalesResultsGrid extends StatelessWidget {
   const SalesResultsGrid({super.key});
@@ -55,7 +56,12 @@ class SalesResultsGrid extends StatelessWidget {
       itemCount: controller.productosEncontrados.length,
       itemBuilder: (context, index) {
         final p = controller.productosEncontrados[index];
-        return Container(
+        return AnimatedEntry(
+          index: index,
+          child: HoverScale(
+            scale: 1.02,
+            elevation: 6,
+            child: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(32),
@@ -137,7 +143,9 @@ class SalesResultsGrid extends StatelessWidget {
               ),
             ),
           ),
-        );
+        ),
+        ),
+      );
       },
     );
   }

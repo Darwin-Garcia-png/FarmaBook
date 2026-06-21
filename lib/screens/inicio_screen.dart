@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -34,7 +34,7 @@ class _InicioScreenState extends State<InicioScreen> {
 
   String _greet() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Buenos d├¡as';
+    if (h < 12) return 'Buenos días';
     if (h < 19) return 'Buenas tardes';
     return 'Buenas noches';
   }
@@ -66,7 +66,7 @@ class _InicioScreenState extends State<InicioScreen> {
           padding: const EdgeInsets.fromLTRB(40, 100, 40, 60),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-            // ÔöÇÔöÇ GREETING + SUMMARY ÔöÇÔöÇ
+            // ── GREETING + SUMMARY ──
             AnimatedEntry(
               index: 0,
               child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -115,7 +115,7 @@ class _InicioScreenState extends State<InicioScreen> {
             ),
             const SizedBox(height: 32),
 
-            // ÔöÇÔöÇ KPIs ÔöÇÔöÇ
+            // ── KPIs ──
             Row(children: [
               _kpi('Ingresos', formatCop(_ctrl.ingresos), Icons.trending_up_rounded, AppTheme.greenMetal, _ctrl.ingresos, () => _go(4), index: 1),
               const SizedBox(width: 16),
@@ -129,7 +129,7 @@ class _InicioScreenState extends State<InicioScreen> {
             ]),
             const SizedBox(height: 32),
 
-            // ÔöÇÔöÇ CONTENT ROW: Left (Sales + Products) | Right (Alerts + Quick) ÔöÇÔöÇ
+            // ── CONTENT ROW: Left (Sales + Products) | Right (Alerts + Quick) ──
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(
                 flex: 3,
@@ -137,7 +137,7 @@ class _InicioScreenState extends State<InicioScreen> {
                   index: 5,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                // ÔöÇÔöÇ VENTAS RECIENTES ÔöÇÔöÇ
+                // ── VENTAS RECIENTES ──
                 _sectionH('VENTAS RECIENTES', Icons.receipt_long_rounded, AppTheme.greenMetal, _ctrl.recentSales.isNotEmpty
                   ? TextButton(onPressed: () => _go(2), child: const Text('Ver todas', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700))) : null),
                 const SizedBox(height: 12),
@@ -173,7 +173,7 @@ class _InicioScreenState extends State<InicioScreen> {
                   }),
                 const SizedBox(height: 20),
 
-                // ÔöÇÔöÇ TOP PRODUCTOS ÔöÇÔöÇ
+                // ── TOP PRODUCTOS ──
                 _sectionH('PRODUCTOS TOP', Icons.workspace_premium_rounded, const Color(0xFFF59E0B), null),
                 const SizedBox(height: 12),
                 if (_ctrl.topProducts.isEmpty)
@@ -219,14 +219,14 @@ class _InicioScreenState extends State<InicioScreen> {
 
               const SizedBox(width: 24),
 
-              // ÔöÇÔöÇ RIGHT COLUMN ÔöÇÔöÇ
+              // ── RIGHT COLUMN ──
               Expanded(
                 flex: 2,
                 child: AnimatedEntry(
                   index: 6,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                // ÔöÇÔöÇ STOCK HEALTH ÔöÇÔöÇ
+                // ── STOCK HEALTH ──
                 Container(
                   width: double.infinity, padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(20),
@@ -251,7 +251,7 @@ class _InicioScreenState extends State<InicioScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ÔöÇÔöÇ ALERTAS ÔöÇÔöÇ
+                // ── ALERTAS ──
                 _sectionH('ALERTAS', Icons.notifications_active_rounded, AppTheme.reiOrangeRed, null),
                 const SizedBox(height: 12),
                 if (_ctrl.alertsStock.isEmpty && _ctrl.alertsVencimiento.isEmpty)
@@ -307,13 +307,13 @@ class _InicioScreenState extends State<InicioScreen> {
                 ],
                 const SizedBox(height: 20),
 
-                // ÔöÇÔöÇ ACCESO R├üPIDO ÔöÇÔöÇ
-                _sectionH('ACCESO R├üPIDO', Icons.flash_on_rounded, const Color(0xFF8B5CF6), null),
+                // ── ACCESO RÁPIDO ──
+                _sectionH('ACCESO RÁPIDO', Icons.flash_on_rounded, const Color(0xFF8B5CF6), null),
                 const SizedBox(height: 12),
                 Row(children: [
                   _moduleBtn('Venta', Icons.point_of_sale_rounded, AppTheme.greenMetal, () => _go(2)),
                   const SizedBox(width: 10),
-                  _moduleBtn('Almac├®n', Icons.inventory_2_rounded, AppTheme.ayanamiBlue, () => _go(1)),
+                  _moduleBtn('Almacén', Icons.inventory_2_rounded, AppTheme.ayanamiBlue, () => _go(1)),
                 ]),
                 const SizedBox(height: 10),
                 Row(children: [
@@ -327,7 +327,7 @@ class _InicioScreenState extends State<InicioScreen> {
         ]),
         ),
 
-        // ÔöÇÔöÇ HEADER ÔöÇÔöÇ
+        // ── HEADER ──
         Positioned(top: 0, left: 0, right: 0,
           child: Container(height: 80, padding: const EdgeInsets.symmetric(horizontal: 40),
             decoration: BoxDecoration(color: bg,

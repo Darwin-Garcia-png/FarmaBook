@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -45,7 +45,7 @@ class ReceiptDialog extends StatelessWidget {
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
               _receiptRow(context, 'Cliente:', _clienteName()),
-              _receiptRow(context, 'C├®dula:', _clienteId()),
+              _receiptRow(context, 'Cédula:', _clienteId()),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text('PRODUCTOS',
@@ -246,7 +246,7 @@ class ReceiptDialog extends StatelessWidget {
               _row('Fecha:', _formatDate(_getSafeDate(sale))),
               _row('Hora:', _formatTime(_getSafeDate(sale))),
               _row('Cliente:', _clienteName()),
-              _row('C├®dula:', _clienteId()),
+              _row('Cédula:', _clienteId()),
               pw.SizedBox(height: 6),
               pw.Divider(thickness: 1),
               pw.SizedBox(height: 4),
