@@ -28,9 +28,10 @@ void main() {
     testWidgets('renders login form with email and password fields', (tester) async {
       await tester.pumpWidget(createLoginScreen());
       await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(TextFormField), findsAtLeast(1));
-      expect(find.text('Iniciar Sesión'), findsWidgets);
+      expect(find.text('INICIAR SESIÓN'), findsOneWidget);
     });
   });
 }

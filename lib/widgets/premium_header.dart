@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../controllers/notificaciones_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../utils/global_error_handler.dart';
+import '../utils/user_session.dart';
 
 class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -332,8 +333,8 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
   void _navigateTo(BuildContext ctx, String tipo, String id) {
     Navigator.pop(ctx);
     final dash = context.read<DashboardController>();
-    if (tipo == 'vencimiento') {
-      dash.onItemTapped(3); // Lotes
+    if (tipo == 'vencimiento' && UserSession.isDueno) {
+      dash.onItemTapped(3); // Lotes — only for admin/dueño
     } else {
       dash.onItemTapped(1); // Almacén
     }
