@@ -50,186 +50,161 @@ class InventoryDialogs {
     }
     XFile? selectedImage;
 
-    final fnCodigo = FocusNode();
-    final fnNombre = FocusNode();
-    final fnNombreGenerico = FocusNode();
-    final fnConcentracion = FocusNode();
-    final fnDesc = FocusNode();
-    final fnPrecio = FocusNode();
-
-    try {
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogCtx) {
-          Future<void> handleEditSave() async {
-            if (!formKey.currentState!.validate()) return;
-            final pId = prod['productoId']?.toString();
-            if (pId == null || pId.isEmpty) return;
-            try {
-              final Map<String, dynamic> prodData = {};
-              if (codigoCtrl.text.trim().isNotEmpty) prodData['codigoBarras'] = codigoCtrl.text.trim();
-              if (nombreCtrl.text.trim().isNotEmpty) prodData['nombre'] = nombreCtrl.text.trim();
-              if (nombreGenericoCtrl.text.trim().isNotEmpty) prodData['nombreGenerico'] = nombreGenericoCtrl.text.trim();
-              if (concentracionCtrl.text.trim().isNotEmpty) prodData['concentracion'] = concentracionCtrl.text.trim();
-              if (descCtrl.text.trim().isNotEmpty) prodData['descripcion'] = descCtrl.text.trim();
-              if (catId != null) prodData['categoriaId'] = catId;
-              if (presId != null) prodData['presentacionId'] = presId;
-              if (precioCtrl.text.trim().isNotEmpty) prodData['precioPorUnidad'] = double.tryParse(precioCtrl.text.replaceAll(',', '.')) ?? 0.0;
-              await controller.saveProduct(
-                  isEdit: true, productId: pId, data: prodData, image: selectedImage);
-              Navigator.pop(dialogCtx);
-              ErrorDisplay.successSnackBar(context: context, message: 'Producto actualizado correctamente');
-              controller.fetchProducts(isRefresh: true);
-            } catch (e) {
-              final errMsg = e is ApiException ? e.message : e.toString();
-              final hint = ErrorDisplay.hintFromMessage(errMsg);
-              if (context.mounted) {
-                ErrorDisplay.dialog(context: context, message: errMsg, hint: hint, title: 'Error al guardar');
-              }
-            }
-          }
-
-          return StatefulBuilder(
-            builder: (ctx, setDialogState) {
-              return Dialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                clipBehavior: Clip.antiAlias,
-                child: Container(
-                  width: 600,
-                  decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.8)]),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                              child: const Icon(Icons.edit_rounded, color: Colors.white, size: 28),
-                            ),
-                            const SizedBox(width: 18),
-                            const Text('Editar Medicamento',
-                                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
-                            const Spacer(),
-                            IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white), onPressed: () => Navigator.pop(dialogCtx)),
-                          ],
-                        ),
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              clipBehavior: Clip.antiAlias,
+              child: Container(
+                width: 600,
+                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.8)]),
                       ),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(32, 24, 32, 32),
-                          child: Form(
-                            key: formKey,
-                            child: Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                side: BorderSide(color: AppTheme.ayanamiBlue.withValues(alpha: 0.12)),
-                              ),
-                              color: Theme.of(context).cardTheme.color,
-                              child: Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
-                                    const SizedBox(height: 16),
-                                    Center(
-                                      child: _buildImagePicker(context, currentImageUrl, selectedImage,
-                                          (img) => setDialogState(() => selectedImage = img)),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    _premiumField(context, 'Código de Barras *', codigoCtrl, Icons.qr_code_scanner_rounded,
-                                        req: true, focusNode: fnCodigo, textInputAction: TextInputAction.next,
-                                        onFieldSubmitted: (_) => fnNombre.requestFocus()),
-                                    _premiumField(context, 'Nombre Comercial *', nombreCtrl, Icons.medication_rounded,
-                                        req: true, focusNode: fnNombre, textInputAction: TextInputAction.next,
-                                        onFieldSubmitted: (_) => fnNombreGenerico.requestFocus()),
-                                    _premiumField(context, 'Nombre Genérico *', nombreGenericoCtrl, Icons.biotech_rounded,
-                                        req: true, focusNode: fnNombreGenerico, textInputAction: TextInputAction.next,
-                                        onFieldSubmitted: (_) => fnConcentracion.requestFocus()),
-                                    _premiumField(context, 'Concentración *', concentracionCtrl, Icons.science_rounded,
-                                        req: true, focusNode: fnConcentracion, textInputAction: TextInputAction.next,
-                                        onFieldSubmitted: (_) => fnDesc.requestFocus()),
-                                    _premiumField(context, 'Descripción / Notas', descCtrl, Icons.notes_rounded,
-                                        maxLines: 2, focusNode: fnDesc, textInputAction: TextInputAction.next,
-                                        onFieldSubmitted: (_) => fnPrecio.requestFocus()),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _premiumDropdown(context, 'Categoría', catId,
-                                              controller.categorias, 'categoriaId', 'nombre',
-                                              (v) => setDialogState(() => catId = v),
-                                              controller: controller, setDialogState: setDialogState),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: _premiumDropdown(context, 'Presentación', presId,
-                                              controller.presentaciones, 'presentacionId', 'nombre',
-                                              (v) => setDialogState(() => presId = v),
-                                              controller: controller, setDialogState: setDialogState),
-                                        ),
-                                      ],
-                                    ),
-                                    _premiumDropdown(context, 'Casa Farmacéutica', casaId,
-                                        controller.casas, 'casaId', 'nombre',
-                                        (v) => setDialogState(() => casaId = v),
-                                        controller: controller, setDialogState: setDialogState),
-                                    _premiumField(context, 'Precio de Venta *', precioCtrl, Icons.sell_rounded,
-                                        req: true, keyboard: TextInputType.number,
-                                        focusNode: fnPrecio, textInputAction: TextInputAction.done,
-                                        onFieldSubmitted: (_) => handleEditSave()),
-                                  ],
-                                ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+                            child: const Icon(Icons.edit_rounded, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 18),
+                          const Text('Editar Medicamento',
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
+                          const Spacer(),
+                          IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white), onPressed: () => Navigator.pop(dialogCtx)),
+                        ],
+                      ),
+                    ),
+                    // Body
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(32, 24, 32, 32),
+                        child: Form(
+                          key: formKey,
+                          child: Card(
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: AppTheme.ayanamiBlue.withValues(alpha: 0.12)),
+                            ),
+                            color: Theme.of(context).cardTheme.color,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
+                                  const SizedBox(height: 16),
+                                  Center(
+                                    child: _buildImagePicker(context, currentImageUrl, selectedImage,
+                                        (img) => setDialogState(() => selectedImage = img)),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _premiumField(context, 'Código de Barras *', codigoCtrl, Icons.qr_code_scanner_rounded, req: true),
+                                  _premiumField(context, 'Nombre Comercial *', nombreCtrl, Icons.medication_rounded, req: true),
+                                  _premiumField(context, 'Nombre Genérico *', nombreGenericoCtrl, Icons.biotech_rounded, req: true),
+                                  _premiumField(context, 'Concentración *', concentracionCtrl, Icons.science_rounded, req: true),
+                                  _premiumField(context, 'Descripción / Notas', descCtrl, Icons.notes_rounded, maxLines: 2),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _premiumDropdown(context, 'Categoría', catId,
+                                            controller.categorias, 'categoriaId', 'nombre',
+                                            (v) => setDialogState(() => catId = v),
+                                            controller: controller, setDialogState: setDialogState),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: _premiumDropdown(context, 'Presentación', presId,
+                                            controller.presentaciones, 'presentacionId', 'nombre',
+                                            (v) => setDialogState(() => presId = v),
+                                            controller: controller, setDialogState: setDialogState),
+                                      ),
+                                    ],
+                                  ),
+                                  _premiumDropdown(context, 'Casa Farmacéutica', casaId,
+                                      controller.casas, 'casaId', 'nombre',
+                                      (v) => setDialogState(() => casaId = v),
+                                      controller: controller, setDialogState: setDialogState),
+                                  _premiumField(context, 'Precio de Venta *', precioCtrl, Icons.sell_rounded,
+                                      req: true, keyboard: TextInputType.number),
+                                ],
                               ),
                             ),
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                                onPressed: () => Navigator.pop(dialogCtx),
-                                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)),
-                                child: const Text('CANCELAR', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  elevation: 8, shadowColor: AppTheme.ayanamiBlue.withValues(alpha: 0.4)),
-                              onPressed: handleEditSave,
-                              child: const Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                            ),
-                          ],
-                        ),
+                    ),
+                    // Actions
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(dialogCtx),
+                              style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)),
+                              child: const Text('CANCELAR', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))),
+                          const SizedBox(width: 16),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.ayanamiBlue, foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 8, shadowColor: AppTheme.ayanamiBlue.withValues(alpha: 0.4)),
+                            onPressed: () async {
+                              if (!formKey.currentState!.validate()) return;
+                              final pId = prod['productoId']?.toString();
+                              if (pId == null || pId.isEmpty) return;
+
+                              try {
+                                final Map<String, dynamic> prodData = {};
+                                if (codigoCtrl.text.trim().isNotEmpty) prodData['codigoBarras'] = codigoCtrl.text.trim();
+                                if (nombreCtrl.text.trim().isNotEmpty) prodData['nombre'] = nombreCtrl.text.trim();
+                                if (nombreGenericoCtrl.text.trim().isNotEmpty) prodData['nombreGenerico'] = nombreGenericoCtrl.text.trim();
+                                if (concentracionCtrl.text.trim().isNotEmpty) prodData['concentracion'] = concentracionCtrl.text.trim();
+                                if (descCtrl.text.trim().isNotEmpty) prodData['descripcion'] = descCtrl.text.trim();
+                                if (catId != null) prodData['categoriaId'] = catId;
+                                if (presId != null) prodData['presentacionId'] = presId;
+                                if (precioCtrl.text.trim().isNotEmpty) prodData['precioPorUnidad'] = double.tryParse(precioCtrl.text.replaceAll(',', '.')) ?? 0.0;
+
+                                 await controller.saveProduct(
+                                     isEdit: true, productId: pId, data: prodData, image: selectedImage);
+                                  Navigator.pop(dialogCtx);
+                                  ErrorDisplay.successSnackBar(context: context, message: 'Producto actualizado correctamente');
+                                  controller.fetchProducts(isRefresh: true);
+                                 } catch (e) {
+                                   final errMsg = e is ApiException ? e.message : e.toString();
+                                   final hint = ErrorDisplay.hintFromMessage(errMsg);
+                                   if (context.mounted) {
+                                     ErrorDisplay.dialog(context: context, message: errMsg, hint: hint, title: 'Error al guardar');
+                                   }
+                                 }
+                            },
+                            child: const Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          );
-        },
-      );
-    } finally {
-      fnCodigo.dispose();
-      fnNombre.dispose();
-      fnNombreGenerico.dispose();
-      fnConcentracion.dispose();
-      fnDesc.dispose();
-      fnPrecio.dispose();
-    }
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   static Future<void> showAddEditProduct(BuildContext context,
@@ -349,25 +324,13 @@ class InventoryDialogs {
       casaId = prefillBatch['casasId'][0]?.toString();
     }
 
-    // ---------- Focus nodes for keyboard navigation ----------
-    final fnCodigo = FocusNode();
-    final fnNombre = FocusNode();
-    final fnNombreGenerico = FocusNode();
-    final fnConcentracion = FocusNode();
-    final fnDesc = FocusNode();
-    final fnBatchName = FocusNode();
-    final fnPrecio = FocusNode();
-    final fnPrecioCompra = FocusNode();
-    final fnStock = FocusNode();
-
-    // ---------- Show dialog IMMEDIATELY ----------
-    try {
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogCtx) {
-          return StatefulBuilder(
-            builder: (ctx, setDialogState) {
+    // ---------- Show dialog IMMEDIATELY (no await before this) ----------
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
             // Load batch data async the FIRST TIME (when expiryDate is still null for an edit)
             if (prod != null && !isBatchOnlyEdit && expiryDate == null) {
               expiryDate = DateTime(9999); // sentinel to prevent multiple calls
@@ -459,11 +422,7 @@ class InventoryDialogs {
                                     expiryDate,
                                     (v) => setDialogState(() => provId = v),
                                     (v) =>
-                                        setDialogState(() => expiryDate = v),
-                                    fnBatchName: fnBatchName,
-                                    fnPrecio: fnPrecio,
-                                    fnPrecioCompra: fnPrecioCompra,
-                                    fnStock: fnStock),
+                                        setDialogState(() => expiryDate = v)),
                               ] else ...[
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,12 +446,7 @@ class InventoryDialogs {
                       (v) => setDialogState(() => catId = v),
                       (v) => setDialogState(() => presId = v),
                       (v) => setDialogState(() => casaId = v),
-                      setDialogState: setDialogState,
-                      fnCodigo: fnCodigo,
-                      fnNombre: fnNombre,
-                      fnNombreGenerico: fnNombreGenerico,
-                      fnConcentracion: fnConcentracion,
-                      fnDesc: fnDesc),
+                      setDialogState: setDialogState),
                                   const SizedBox(width: 24),
                                   _buildBatchCardSection(
                                       ctx,
@@ -507,11 +461,7 @@ class InventoryDialogs {
                                       expiryDate,
                                       (v) => setDialogState(() => provId = v),
                                       (v) =>
-                                          setDialogState(() => expiryDate = v),
-                                      fnBatchName: fnBatchName,
-                                      fnPrecio: fnPrecio,
-                                      fnPrecioCompra: fnPrecioCompra,
-                                      fnStock: fnStock),
+                                          setDialogState(() => expiryDate = v)),
                                 ],
                               ),
                               ],
@@ -556,17 +506,6 @@ class InventoryDialogs {
         );
       },
     );
-    } finally {
-      fnCodigo.dispose();
-      fnNombre.dispose();
-      fnNombreGenerico.dispose();
-      fnConcentracion.dispose();
-      fnDesc.dispose();
-      fnBatchName.dispose();
-      fnPrecio.dispose();
-      fnPrecioCompra.dispose();
-      fnStock.dispose();
-    }
   }
 
   static Widget _buildPremiumHeader(bool isEdit, bool isNewBatch,
@@ -633,9 +572,7 @@ class InventoryDialogs {
       Function(String?) onCat,
       Function(String?) onPres,
       Function(String?) onCasa,
-      {StateSetter? setDialogState,
-      FocusNode? fnCodigo, FocusNode? fnNombre, FocusNode? fnNombreGenerico,
-      FocusNode? fnConcentracion, FocusNode? fnDesc}) {
+      {StateSetter? setDialogState}) {
     return Expanded(
       child: Container(
         decoration: BoxDecoration(
@@ -652,28 +589,14 @@ class InventoryDialogs {
               _subHeader(Icons.inventory_2_outlined, 'DATOS DEL PRODUCTO'),
               const SizedBox(height: 20),
               _formRow([
-                _formField(context, 'Código de Barras *', codigo, Icons.qr_code_scanner_rounded,
-                    req: true, readOnly: readOnly,
-                    focusNode: fnCodigo, textInputAction: TextInputAction.next,
-                    onFieldSubmitted: (_) => fnNombre?.requestFocus()),
-                _formField(context, 'Nombre Comercial *', nombre, Icons.medication_rounded,
-                    req: true, readOnly: readOnly,
-                    focusNode: fnNombre, textInputAction: TextInputAction.next,
-                    onFieldSubmitted: (_) => fnNombreGenerico?.requestFocus()),
+                _formField(context, 'Código de Barras *', codigo, Icons.qr_code_scanner_rounded, req: true, readOnly: readOnly),
+                _formField(context, 'Nombre Comercial *', nombre, Icons.medication_rounded, req: true, readOnly: readOnly),
               ]),
               _formRow([
-                _formField(context, 'Nombre Genérico *', nombreGenerico, Icons.biotech_rounded,
-                    req: true, readOnly: readOnly,
-                    focusNode: fnNombreGenerico, textInputAction: TextInputAction.next,
-                    onFieldSubmitted: (_) => fnConcentracion?.requestFocus()),
-                _formField(context, 'Concentración *', concentracion, Icons.science_rounded,
-                    req: true, readOnly: readOnly,
-                    focusNode: fnConcentracion, textInputAction: TextInputAction.next,
-                    onFieldSubmitted: (_) => fnDesc?.requestFocus()),
+                _formField(context, 'Nombre Genérico *', nombreGenerico, Icons.biotech_rounded, req: true, readOnly: readOnly),
+                _formField(context, 'Concentración *', concentracion, Icons.science_rounded, req: true, readOnly: readOnly),
               ]),
-              _formField(context, 'Descripción / Notas', desc, Icons.notes_rounded,
-                  maxLines: 2, readOnly: readOnly,
-                  focusNode: fnDesc, textInputAction: TextInputAction.done),
+              _formField(context, 'Descripción / Notas', desc, Icons.notes_rounded, maxLines: 2, readOnly: readOnly),
               const SizedBox(height: 8),
               _sectionDivider(context),
               const SizedBox(height: 12),
@@ -761,8 +684,7 @@ class InventoryDialogs {
       TextEditingController batchName,
       DateTime? expiryDate,
       Function(String?) onProv,
-      Function(DateTime?) onDate,
-      {FocusNode? fnBatchName, FocusNode? fnPrecio, FocusNode? fnPrecioCompra, FocusNode? fnStock}) {
+      Function(DateTime?) onDate) {
     final batchContent = Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
@@ -777,9 +699,7 @@ class InventoryDialogs {
           children: [
             _subHeader(Icons.layers_outlined, 'DETALLES DEL LOTE'),
             const SizedBox(height: 20),
-            _formField(context, 'Nombre/ID del Lote *', batchName, Icons.tag_rounded,
-                req: true, focusNode: fnBatchName, textInputAction: TextInputAction.next,
-                onFieldSubmitted: (_) => fnPrecio?.requestFocus()),
+            _formField(context, 'Nombre/ID del Lote *', batchName, Icons.tag_rounded, req: true),
             if (!isBatchEdit)
               _premiumDropdown(context, 'Proveedor *', provId, controller.proveedores, 'proveedorId', 'nombre', onProv,
                   controller: controller, setDialogState: setDialogState),
@@ -794,14 +714,8 @@ class InventoryDialogs {
             ]),
             const SizedBox(height: 12),
             _formRow([
-              _formField(context, 'Precio Venta *', precio, Icons.sell_rounded,
-                  req: true, keyboard: TextInputType.number,
-                  focusNode: fnPrecio, textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => fnPrecioCompra?.requestFocus()),
-              _formField(context, 'Costo Compra *', precioCompra, Icons.shopping_cart_rounded,
-                  req: true, keyboard: TextInputType.number,
-                  focusNode: fnPrecioCompra, textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => fnStock?.requestFocus()),
+              _formField(context, 'Precio Venta *', precio, Icons.sell_rounded, req: true, keyboard: TextInputType.number),
+              _formField(context, 'Costo Compra *', precioCompra, Icons.shopping_cart_rounded, req: true, keyboard: TextInputType.number),
             ]),
             const SizedBox(height: 8),
             _sectionDivider(context),
@@ -814,9 +728,7 @@ class InventoryDialogs {
             ]),
             const SizedBox(height: 12),
             _formRow([
-              _formField(context, 'Stock *', stock, Icons.warehouse_rounded,
-                  req: true, keyboard: TextInputType.number,
-                  focusNode: fnStock, textInputAction: TextInputAction.done),
+              _formField(context, 'Stock *', stock, Icons.warehouse_rounded, req: true, keyboard: TextInputType.number),
               _premiumDatePicker(context, setDialogState, expiryDate, onDate),
             ]),
           ],
@@ -855,16 +767,12 @@ class InventoryDialogs {
   }
 
   static Widget _formField(BuildContext context, String label, TextEditingController ctrl, IconData icon,
-      {bool req = false, bool readOnly = false, int maxLines = 1, TextInputType keyboard = TextInputType.text,
-      FocusNode? focusNode, TextInputAction? textInputAction, ValueChanged<String>? onFieldSubmitted}) {
+      {bool req = false, bool readOnly = false, int maxLines = 1, TextInputType keyboard = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: ctrl, readOnly: readOnly, maxLines: maxLines,
         keyboardType: keyboard,
-        focusNode: focusNode,
-        textInputAction: textInputAction,
-        onFieldSubmitted: onFieldSubmitted,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
@@ -896,10 +804,7 @@ class InventoryDialogs {
       {bool req = false,
       bool readOnly = false,
       int maxLines = 1,
-      TextInputType keyboard = TextInputType.text,
-      FocusNode? focusNode,
-      TextInputAction? textInputAction,
-      ValueChanged<String>? onFieldSubmitted}) {
+      TextInputType keyboard = TextInputType.text}) {
     
     // Configurar restricciones de entrada automáticas
     List<TextInputFormatter> formatters = [];
@@ -919,9 +824,6 @@ class InventoryDialogs {
         readOnly: readOnly,
         maxLines: maxLines,
         keyboardType: keyboard,
-        focusNode: focusNode,
-        textInputAction: textInputAction,
-        onFieldSubmitted: onFieldSubmitted,
         inputFormatters: formatters,
         autovalidateMode: AutovalidateMode.onUserInteraction, // Validación inmediata
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
@@ -1094,75 +996,12 @@ class InventoryDialogs {
     final formKey = GlobalKey<FormState>();
     bool isCreating = false;
 
-    final fnNombre = FocusNode();
-    final fnDesc = FocusNode();
-    final fnTel = FocusNode();
-    final fnEmail = FocusNode();
-
     final tipoLabel = tipo == 'categoria' ? 'categoría' : tipo == 'presentacion' ? 'presentación' : tipo == 'casa' ? 'casa' : 'proveedor';
 
     await showDialog(
       context: parentContext,
       barrierDismissible: false,
       builder: (ctx) {
-        Future<void> doQuickSave(StateSetter setSt, BuildContext dialogCtx) async {
-          if (!formKey.currentState!.validate()) return;
-          setSt(() => isCreating = true);
-          try {
-            Map<String, dynamic> data = {
-              'nombre': nameCtrl.text.trim(),
-            };
-            if (tipo == 'proveedor') {
-              if (descCtrl.text.trim().isNotEmpty) data['direccion'] = descCtrl.text.trim();
-              if (telCtrl.text.trim().isNotEmpty) data['telefono'] = telCtrl.text.trim();
-              if (emailCtrl.text.trim().isNotEmpty) data['email'] = emailCtrl.text.trim();
-            } else if (tipo == 'casa') {
-              if (descCtrl.text.trim().isNotEmpty) data['paisDeOrigen'] = descCtrl.text.trim();
-            } else {
-              if (descCtrl.text.trim().isNotEmpty) data['descripcion'] = descCtrl.text.trim();
-            }
-            Map<String, dynamic> res;
-            if (tipo == 'categoria') {
-              res = await ApiService.createCategory(data);
-              createdId = (res['data']?['categoriaId'] ?? res['data']?['id'])?.toString();
-              await controller?.fetchCategorias();
-            } else if (tipo == 'presentacion') {
-              res = await ApiService.createPresentation(data);
-              createdId = (res['data']?['presentacionId'] ?? res['data']?['id'])?.toString();
-              await controller?.fetchPresentaciones();
-            } else if (tipo == 'casa') {
-              res = await ApiService.createHouse(data);
-              createdId = (res['data']?['casaId'] ?? res['data']?['id'])?.toString();
-              await controller?.fetchCasas();
-            } else {
-              res = await ApiService.createSupplier(data);
-              createdId = (res['data']?['proveedorId'] ?? res['data']?['id'])?.toString();
-              await controller?.fetchProveedores();
-            }
-            if (Navigator.of(dialogCtx).canPop()) {
-              Navigator.pop(dialogCtx);
-              ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
-                  content: Text('$tipoLabel registrada correctamente'),
-                  backgroundColor: AppTheme.greenMetal));
-            }
-            setDialogState?.call(() {});
-          } catch (e) {
-            String errMsg = e.toString();
-            try {
-              final serverMsg = (e as dynamic)?.response?.data?['message'] ??
-                  (e as dynamic)?.response?.data?['error'];
-              if (serverMsg != null) errMsg = serverMsg.toString();
-            } catch (_) {}
-            if (Navigator.of(dialogCtx).canPop()) {
-              ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
-                  content: Text('Error: $errMsg'),
-                  backgroundColor: AppTheme.reiOrangeRed));
-            }
-          } finally {
-            setSt(() => isCreating = false);
-          }
-        }
-
         return StatefulBuilder(
           builder: (ctx2, setSt) {
             return Dialog(
@@ -1199,9 +1038,6 @@ class InventoryDialogs {
                       TextFormField(
                         controller: nameCtrl,
                         autofocus: true,
-                        focusNode: fnNombre,
-                        textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (_) => fnDesc.requestFocus(),
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
@@ -1223,11 +1059,6 @@ class InventoryDialogs {
                       TextFormField(
                         controller: descCtrl,
                         maxLines: 2,
-                        focusNode: fnDesc,
-                        textInputAction: tipo == 'proveedor' ? TextInputAction.next : TextInputAction.done,
-                        onFieldSubmitted: tipo == 'proveedor'
-                            ? (_) => fnTel.requestFocus()
-                            : (_) => doQuickSave(setSt, ctx2),
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
                           labelText: tipo == 'proveedor' ? 'Dirección (opcional)' : tipo == 'casa' ? 'País de Origen (opcional)' : 'Descripción (opcional)',
@@ -1247,9 +1078,6 @@ class InventoryDialogs {
                         TextFormField(
                           controller: telCtrl,
                           keyboardType: TextInputType.phone,
-                          focusNode: fnTel,
-                          textInputAction: TextInputAction.next,
-                          onFieldSubmitted: (_) => fnEmail.requestFocus(),
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
                             labelText: 'Teléfono (opcional)',
@@ -1265,9 +1093,6 @@ class InventoryDialogs {
                         TextFormField(
                           controller: emailCtrl,
                           keyboardType: TextInputType.emailAddress,
-                          focusNode: fnEmail,
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => doQuickSave(setSt, ctx2),
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
                             labelText: 'Email (opcional)',
@@ -1295,7 +1120,81 @@ class InventoryDialogs {
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                            onPressed: isCreating ? null : () => doQuickSave(setSt, ctx2),
+                            onPressed: isCreating
+                                ? null
+                                : () async {
+                                     if (!formKey.currentState!.validate()) return;
+                                    setSt(() => isCreating = true);
+                                    try {
+                                      Map<String, dynamic> data = {
+                                        'nombre': nameCtrl.text.trim(),
+                                      };
+
+                                      if (tipo == 'proveedor') {
+                                        if (descCtrl.text.trim().isNotEmpty) {
+                                          data['direccion'] = descCtrl.text.trim();
+                                        }
+                                        if (telCtrl.text.trim().isNotEmpty) {
+                                          data['telefono'] = telCtrl.text.trim();
+                                        }
+                                        if (emailCtrl.text.trim().isNotEmpty) {
+                                          data['email'] = emailCtrl.text.trim();
+                                        }
+                                      } else if (tipo == 'casa') {
+                                        // La API de casas usa 'paisDeOrigen', no 'descripcion'
+                                        if (descCtrl.text.trim().isNotEmpty) {
+                                          data['paisDeOrigen'] = descCtrl.text.trim();
+                                        }
+                                      } else {
+                                        if (descCtrl.text.trim().isNotEmpty) {
+                                          data['descripcion'] = descCtrl.text.trim();
+                                        }
+                                      }
+
+                                      Map<String, dynamic> res;
+                                      if (tipo == 'categoria') {
+                                        res = await ApiService.createCategory(data);
+                                        createdId = (res['data']?['categoriaId'] ?? res['data']?['id'])?.toString();
+                                        await controller?.fetchCategorias();
+                                      } else if (tipo == 'presentacion') {
+                                        res = await ApiService.createPresentation(data);
+                                        createdId = (res['data']?['presentacionId'] ?? res['data']?['id'])?.toString();
+                                        await controller?.fetchPresentaciones();
+                                      } else if (tipo == 'casa') {
+                                        res = await ApiService.createHouse(data);
+                                        createdId = (res['data']?['casaId'] ?? res['data']?['id'])?.toString();
+                                        await controller?.fetchCasas();
+                                      } else {
+                                        res = await ApiService.createSupplier(data);
+                                        createdId = (res['data']?['proveedorId'] ?? res['data']?['id'])?.toString();
+                                        await controller?.fetchProveedores();
+                                      }
+
+                                      if (Navigator.of(ctx2).canPop()) {
+                                        Navigator.pop(ctx2);
+                                        ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
+                                            content: Text('$tipoLabel registrada correctamente'),
+                                            backgroundColor: AppTheme.greenMetal));
+                                      }
+
+                                      // Trigger parent dialog rebuild so dropdown shows new item
+                                      setDialogState?.call(() {});
+                                    } catch (e) {
+                                      String errMsg = e.toString();
+                                      try {
+                                        final serverMsg = (e as dynamic)?.response?.data?['message'] ??
+                                            (e as dynamic)?.response?.data?['error'];
+                                        if (serverMsg != null) errMsg = serverMsg.toString();
+                                      } catch (_) {}
+                                      if (Navigator.of(ctx2).canPop()) {
+                                        ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
+                                            content: Text('Error: $errMsg'),
+                                            backgroundColor: AppTheme.reiOrangeRed));
+                                      }
+                                    } finally {
+                                      setSt(() => isCreating = false);
+                                    }
+                                  },
                             child: isCreating
                                 ? const SizedBox(
                                     width: 18, height: 18,
@@ -1314,10 +1213,6 @@ class InventoryDialogs {
         );
       },
     );
-    fnNombre.dispose();
-    fnDesc.dispose();
-    fnTel.dispose();
-    fnEmail.dispose();
     return createdId;
   }
 

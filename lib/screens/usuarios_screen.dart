@@ -393,7 +393,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
 
   // ─── DIALOG ──────────────────────────────────────────────
 
-  Future<void> _showAddEditDialog({Map<String, dynamic>? user}) async {
+  void _showAddEditDialog({Map<String, dynamic>? user}) {
     final isEdit = user != null;
     final formKey = GlobalKey<FormState>();
     final usernameCtrl = TextEditingController(text: user?['username'] ?? '');
@@ -403,49 +403,17 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     bool showPass = false;
     bool showCurrent = false;
 
-    final usernameFocus = FocusNode();
-    final emailFocus = FocusNode();
-    final passFocus = FocusNode();
-    final currentPassFocus = FocusNode();
-
-    Future<void> handleSubmit(BuildContext ctx, GlobalKey<FormState> fKey) async {
-      if (!fKey.currentState!.validate()) return;
-      final data = <String, dynamic>{
-        'username': usernameCtrl.text.trim(),
-        'email': emailCtrl.text.trim(),
-      };
-      if (passCtrl.text.isNotEmpty) data['password'] = passCtrl.text;
-      if (isEdit && currentPassCtrl.text.isNotEmpty) data['currentPassword'] = currentPassCtrl.text;
-      try {
-        if (isEdit) {
-          await _ctrl.updateUser(user['usuarioId'], data);
-        } else {
-          await _ctrl.createUser(data);
-        }
-        if (ctx.mounted) Navigator.pop(ctx);
-        if (context.mounted) {
-          ErrorDisplay.successSnackBar(context: context, message: '¡Operación realizada con éxito!');
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ErrorDisplay.snackBar(context: context, message: '$e');
-        }
-      }
-    }
-
-    try {
-      await showDialog(
-        context: context,
-        barrierColor: Colors.black87.withValues(alpha: 0.8),
-        builder: (ctx) {
-          return StatefulBuilder(
-            builder: (ctx, setDState) {
-              return Dialog(
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87.withValues(alpha: 0.8),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDState) {
+            return Dialog(
               backgroundColor: Colors.transparent,
               insetPadding: const EdgeInsets.all(20),
               clipBehavior: Clip.antiAlias,
-              child: GlassContainer(
-                child: Container(
+              child: Container(
                 width: 480,
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardTheme.color,
@@ -467,32 +435,18 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                               _section('ACCESO AL SISTEMA'),
                               const SizedBox(height: 16),
                               _formField('Usuario *', usernameCtrl, Icons.alternate_email_rounded,
-                                  hint: 'Ej: juan.perez',
-                                  focusNode: usernameFocus,
-                                  textInputAction: TextInputAction.next,
-                                  onFieldSubmitted: (_) => FocusScope.of(ctx).requestFocus(emailFocus)),
+                                  hint: 'Ej: juan.perez'),
                               const SizedBox(height: 4),
                               _formField('Email *', emailCtrl, Icons.email_outlined,
-                                  keyboard: TextInputType.emailAddress, hint: 'ejemplo@correo.com',
-                                  focusNode: emailFocus,
-                                  textInputAction: TextInputAction.next,
-                                  onFieldSubmitted: (_) => FocusScope.of(ctx).requestFocus(passFocus)),
+                                  keyboard: TextInputType.emailAddress, hint: 'ejemplo@correo.com'),
                               const SizedBox(height: 4),
                               _passField('Contraseña', passCtrl, showPass, () => setDState(() => showPass = !showPass),
-                                  isEdit: isEdit,
-                                  focusNode: passFocus,
-                                  textInputAction: isEdit ? TextInputAction.next : TextInputAction.done,
-                                  onFieldSubmitted: isEdit
-                                      ? (_) => FocusScope.of(ctx).requestFocus(currentPassFocus)
-                                      : (_) => handleSubmit(ctx, formKey)),
+                                  isEdit: isEdit),
                               if (isEdit) ...[
                                 const SizedBox(height: 4),
                                 _passField('Contraseña actual *', currentPassCtrl, showCurrent,
                                     () => setDState(() => showCurrent = !showCurrent),
-                                    hint: 'Necesaria para confirmar cambios',
-                                    focusNode: currentPassFocus,
-                                    textInputAction: TextInputAction.done,
-                                    onFieldSubmitted: (_) => handleSubmit(ctx, formKey)),
+                                    hint: 'Necesaria para confirmar cambios'),
                               ],
                               const SizedBox(height: 4),
                               if (!isEdit)
@@ -512,23 +466,15 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                         ),
                       ),
                     ),
-                    _dialogActions(ctx, formKey, isEdit, usernameCtrl, emailCtrl, passCtrl, currentPassCtrl, user,
-                        () => handleSubmit(ctx, formKey)),
+                    _dialogActions(ctx, formKey, isEdit, usernameCtrl, emailCtrl, passCtrl, currentPassCtrl, user),
                   ],
                 ),
-              ),
               ),
             );
           },
         );
       },
     );
-    } finally {
-      usernameFocus.dispose();
-      emailFocus.dispose();
-      passFocus.dispose();
-      currentPassFocus.dispose();
-    }
   }
 
   Widget _section(String text) {
@@ -575,8 +521,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
   }
 
   Widget _formField(String label, TextEditingController ctrl, IconData icon,
-      {TextInputType keyboard = TextInputType.text, String hint = '',
-      FocusNode? focusNode, TextInputAction? textInputAction, ValueChanged<String>? onFieldSubmitted}) {
+      {TextInputType keyboard = TextInputType.text, String hint = ''}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -586,9 +531,6 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
           const SizedBox(height: 6),
           TextFormField(
             controller: ctrl,
-            focusNode: focusNode,
-            textInputAction: textInputAction,
-            onFieldSubmitted: onFieldSubmitted,
             keyboardType: keyboard,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             decoration: InputDecoration(
@@ -624,8 +566,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
   }
 
   Widget _passField(String label, TextEditingController ctrl, bool obscure, VoidCallback toggle,
-      {bool isEdit = false, String hint = 'Mínimo 8 caracteres',
-      FocusNode? focusNode, TextInputAction? textInputAction, ValueChanged<String>? onFieldSubmitted}) {
+      {bool isEdit = false, String hint = 'Mínimo 8 caracteres'}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -635,9 +576,6 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
           const SizedBox(height: 6),
           TextFormField(
             controller: ctrl,
-            focusNode: focusNode,
-            textInputAction: textInputAction,
-            onFieldSubmitted: onFieldSubmitted,
             obscureText: !obscure,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             decoration: InputDecoration(
@@ -683,7 +621,6 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     TextEditingController passCtrl,
     TextEditingController currentPassCtrl,
     Map<String, dynamic>? user,
-    VoidCallback? onSubmit,
   ) {
     return Container(
       padding: const EdgeInsets.fromLTRB(32, 20, 32, 24),
@@ -705,7 +642,30 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
           Expanded(
             flex: 2,
             child: ElevatedButton(
-              onPressed: onSubmit,
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                final data = <String, dynamic>{
+                  'username': usernameCtrl.text.trim(),
+                  'email': emailCtrl.text.trim(),
+                };
+                if (passCtrl.text.isNotEmpty) data['password'] = passCtrl.text;
+                if (isEdit && currentPassCtrl.text.isNotEmpty) data['currentPassword'] = currentPassCtrl.text;
+                try {
+                  if (isEdit) {
+                    await _ctrl.updateUser(user!['usuarioId'], data);
+                  } else {
+                    await _ctrl.createUser(data);
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    ErrorDisplay.successSnackBar(context: context, message: '¡Operación realizada con éxito!');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ErrorDisplay.snackBar(context: context, message: '$e');
+                  }
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: _accent,
                 foregroundColor: Colors.white,

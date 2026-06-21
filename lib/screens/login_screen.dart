@@ -264,17 +264,8 @@ class _AnimatedLogoState extends State<_AnimatedLogo>
           offset: Offset(0, _floatAnim.value),
           child: Column(
             children: [
-              // Cropped logo with transparent background for premium look
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  height: 80,
-                  width: 80,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(height: 12),
+              Image.asset('assets/images/logo.png', height: 100, width: 100, fit: BoxFit.contain),
+              const SizedBox(height: 16),
               const Text(
                 'FarmaBook',
                 style: TextStyle(
@@ -319,8 +310,6 @@ class _LoginFormState extends State<_LoginForm>
   late AnimationController _ctrl;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
-  final _userFocusNode = FocusNode();
-  final _passwordFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -336,8 +325,6 @@ class _LoginFormState extends State<_LoginForm>
   @override
   void dispose() {
     _ctrl.dispose();
-    _userFocusNode.dispose();
-    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -362,9 +349,6 @@ class _LoginFormState extends State<_LoginForm>
                   controller: widget.controller.emailController,
                   label: 'Usuario',
                   icon: Icons.person_outline,
-                  focusNode: _userFocusNode,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_passwordFocusNode),
                 ),
                 const SizedBox(height: 14),
                 _Field(
@@ -372,9 +356,6 @@ class _LoginFormState extends State<_LoginForm>
                   label: 'Contraseña',
                   icon: Icons.lock_outline,
                   obscureText: widget.controller.obscurePassword,
-                  focusNode: _passwordFocusNode,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => widget.onLogin(),
                   suffix: GestureDetector(
                     onTap: widget.controller.togglePasswordVisibility,
                     child: Icon(
@@ -418,9 +399,6 @@ class _Field extends StatefulWidget {
   final IconData icon;
   final bool obscureText;
   final Widget? suffix;
-  final FocusNode? focusNode;
-  final TextInputAction? textInputAction;
-  final ValueChanged<String>? onFieldSubmitted;
 
   const _Field({
     required this.controller,
@@ -428,9 +406,6 @@ class _Field extends StatefulWidget {
     required this.icon,
     this.obscureText = false,
     this.suffix,
-    this.focusNode,
-    this.textInputAction,
-    this.onFieldSubmitted,
   });
 
   @override
@@ -441,36 +416,9 @@ class _FieldState extends State<_Field> {
   bool _focused = false;
 
   @override
-  void initState() {
-    super.initState();
-    widget.focusNode?.addListener(_onFocusChange);
-  }
-
-  @override
-  void didUpdateWidget(_Field old) {
-    super.didUpdateWidget(old);
-    if (old.focusNode != widget.focusNode) {
-      old.focusNode?.removeListener(_onFocusChange);
-      widget.focusNode?.addListener(_onFocusChange);
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.focusNode?.removeListener(_onFocusChange);
-    super.dispose();
-  }
-
-  void _onFocusChange() {
-    if (mounted) setState(() => _focused = widget.focusNode?.hasFocus ?? false);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Focus(
-      onFocusChange: (v) {
-        if (widget.focusNode == null) setState(() => _focused = v);
-      },
+      onFocusChange: (v) => setState(() => _focused = v),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
@@ -484,10 +432,7 @@ class _FieldState extends State<_Field> {
         ),
         child: TextFormField(
           controller: widget.controller,
-          focusNode: widget.focusNode,
           obscureText: widget.obscureText,
-          textInputAction: widget.textInputAction,
-          onFieldSubmitted: widget.onFieldSubmitted,
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             labelText: widget.label,

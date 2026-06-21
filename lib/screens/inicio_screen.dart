@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -34,7 +34,7 @@ class _InicioScreenState extends State<InicioScreen> {
 
   String _greet() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Buenos días';
+    if (h < 12) return 'Buenos d├¡as';
     if (h < 19) return 'Buenas tardes';
     return 'Buenas noches';
   }
@@ -66,7 +66,7 @@ class _InicioScreenState extends State<InicioScreen> {
           padding: const EdgeInsets.fromLTRB(40, 100, 40, 60),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-            // ── GREETING + SUMMARY ──
+            // ÔöÇÔöÇ GREETING + SUMMARY ÔöÇÔöÇ
             AnimatedEntry(
               index: 0,
               child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -115,7 +115,7 @@ class _InicioScreenState extends State<InicioScreen> {
             ),
             const SizedBox(height: 32),
 
-            // ── KPIs ──
+            // ÔöÇÔöÇ KPIs ÔöÇÔöÇ
             Row(children: [
               _kpi('Ingresos', formatCop(_ctrl.ingresos), Icons.trending_up_rounded, AppTheme.greenMetal, _ctrl.ingresos, () => _go(4), index: 1),
               const SizedBox(width: 16),
@@ -129,7 +129,7 @@ class _InicioScreenState extends State<InicioScreen> {
             ]),
             const SizedBox(height: 32),
 
-            // ── CONTENT ROW: Left (Sales + Products) | Right (Alerts + Quick) ──
+            // ÔöÇÔöÇ CONTENT ROW: Left (Sales + Products) | Right (Alerts + Quick) ÔöÇÔöÇ
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(
                 flex: 3,
@@ -137,7 +137,7 @@ class _InicioScreenState extends State<InicioScreen> {
                   index: 5,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                // ── VENTAS RECIENTES ──
+                // ÔöÇÔöÇ VENTAS RECIENTES ÔöÇÔöÇ
                 _sectionH('VENTAS RECIENTES', Icons.receipt_long_rounded, AppTheme.greenMetal, _ctrl.recentSales.isNotEmpty
                   ? TextButton(onPressed: () => _go(2), child: const Text('Ver todas', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700))) : null),
                 const SizedBox(height: 12),
@@ -173,7 +173,7 @@ class _InicioScreenState extends State<InicioScreen> {
                   }),
                 const SizedBox(height: 20),
 
-                // ── TOP PRODUCTOS ──
+                // ÔöÇÔöÇ TOP PRODUCTOS ÔöÇÔöÇ
                 _sectionH('PRODUCTOS TOP', Icons.workspace_premium_rounded, const Color(0xFFF59E0B), null),
                 const SizedBox(height: 12),
                 if (_ctrl.topProducts.isEmpty)
@@ -219,14 +219,14 @@ class _InicioScreenState extends State<InicioScreen> {
 
               const SizedBox(width: 24),
 
-              // ── RIGHT COLUMN ──
+              // ÔöÇÔöÇ RIGHT COLUMN ÔöÇÔöÇ
               Expanded(
                 flex: 2,
                 child: AnimatedEntry(
                   index: 6,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-                // ── STOCK HEALTH ──
+                // ÔöÇÔöÇ STOCK HEALTH ÔöÇÔöÇ
                 Container(
                   width: double.infinity, padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(20),
@@ -251,7 +251,7 @@ class _InicioScreenState extends State<InicioScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── ALERTAS ──
+                // ÔöÇÔöÇ ALERTAS ÔöÇÔöÇ
                 _sectionH('ALERTAS', Icons.notifications_active_rounded, AppTheme.reiOrangeRed, null),
                 const SizedBox(height: 12),
                 if (_ctrl.alertsStock.isEmpty && _ctrl.alertsVencimiento.isEmpty)
@@ -307,13 +307,13 @@ class _InicioScreenState extends State<InicioScreen> {
                 ],
                 const SizedBox(height: 20),
 
-                // ── ACCESO RÁPIDO ──
-                _sectionH('ACCESO RÁPIDO', Icons.flash_on_rounded, const Color(0xFF8B5CF6), null),
+                // ÔöÇÔöÇ ACCESO R├üPIDO ÔöÇÔöÇ
+                _sectionH('ACCESO R├üPIDO', Icons.flash_on_rounded, const Color(0xFF8B5CF6), null),
                 const SizedBox(height: 12),
                 Row(children: [
                   _moduleBtn('Venta', Icons.point_of_sale_rounded, AppTheme.greenMetal, () => _go(2)),
                   const SizedBox(width: 10),
-                  _moduleBtn('Almacén', Icons.inventory_2_rounded, AppTheme.ayanamiBlue, () => _go(1)),
+                  _moduleBtn('Almac├®n', Icons.inventory_2_rounded, AppTheme.ayanamiBlue, () => _go(1)),
                 ]),
                 const SizedBox(height: 10),
                 Row(children: [
@@ -327,7 +327,7 @@ class _InicioScreenState extends State<InicioScreen> {
         ]),
         ),
 
-        // ── HEADER ──
+        // ÔöÇÔöÇ HEADER ÔöÇÔöÇ
         Positioned(top: 0, left: 0, right: 0,
           child: Container(height: 80, padding: const EdgeInsets.symmetric(horizontal: 40),
             decoration: BoxDecoration(color: bg,
@@ -367,45 +367,39 @@ class _InicioScreenState extends State<InicioScreen> {
   Widget _kpi(String label, String value, IconData icon, Color color, double raw, VoidCallback onTap, {bool isPct = false, required int index}) {
     return Expanded(child: AnimatedEntry(
       index: index,
-      style: EntryStyle.bounce,
-      delay: const Duration(milliseconds: 100),
-      child: GlowEffect(
-        color: color,
-        radius: 4,
-        child: HoverScale(
-          scale: 1.02,
-          elevation: 8,
-          glowColor: color,
-          onTap: onTap,
-          child: InkWell(
-            onTap: onTap, borderRadius: BorderRadius.circular(20),
-            child: GlassContainer(
-              padding: const EdgeInsets.all(22),
-              borderRadius: 20,
-              blur: 12,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
-                    child: Icon(icon, color: color, size: 18)),
-                  Container(
-                    width: 10, height: 10,
-                    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
-                  ),
-                ]),
-                const SizedBox(height: 14),
-                Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: color, letterSpacing: -0.8)),
-                const SizedBox(height: 4),
-                Row(children: [
-                  Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w700)),
-                  const Spacer(),
-                  if (isPct)
-                    ClipRRect(borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(value: raw.clamp(0, 1), minHeight: 3, backgroundColor: color.withValues(alpha: 0.08), valueColor: AlwaysStoppedAnimation(color))),
-                  if (!isPct && raw != 0)
-                    Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withValues(alpha: 0.3)),
-                ]),
-              ]),
+      child: HoverScale(
+        scale: 1.015,
+        elevation: 6,
+        onTap: onTap,
+        child: InkWell(
+          onTap: onTap, borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withValues(alpha: 0.12)),
+              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
             ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: color, size: 18)),
+                Container(width: 8, height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+              ]),
+              const SizedBox(height: 14),
+              Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: color, letterSpacing: -0.8)),
+              const SizedBox(height: 4),
+              Row(children: [
+                Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w700)),
+                const Spacer(),
+                if (isPct)
+                  ClipRRect(borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(value: raw.clamp(0, 1), minHeight: 3, backgroundColor: color.withValues(alpha: 0.08), valueColor: AlwaysStoppedAnimation(color))),
+                if (!isPct && raw != 0)
+                  Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withValues(alpha: 0.3)),
+              ]),
+            ]),
           ),
         ),
       ),

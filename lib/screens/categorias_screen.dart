@@ -4,7 +4,6 @@ import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import 'package:flutter/services.dart';
-import '../widgets/animations.dart';
 
 class CategoriasScreen extends StatefulWidget {
   const CategoriasScreen({super.key});
@@ -59,163 +58,153 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       _controller.descripcionCtrl.clear();
     }
 
-    final _nombreFocus = FocusNode();
-    final _descFocus = FocusNode();
-
-    void _saveAndPop(BuildContext ctx) async {
-      if (!formKey.currentState!.validate()) return;
-      bool success;
-      if (isEdit) {
-        success = await _controller.actualizarCategoria(cat['categoriaId']);
-      } else {
-        success = await _controller.agregarCategoria();
-      }
-      if (mounted) {
-        Navigator.pop(ctx);
-        if (success) {
-          ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Categoría actualizada' : 'Categoría registrada');
-        } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error', hint: 'Revisa los datos e intenta de nuevo.');
-        }
-      }
-    }
-
-    try {
-      await showGeneralDialog(
-        context: context,
-        barrierDismissible: true,
-        barrierLabel: '',
-        barrierColor: Colors.black54,
-        transitionDuration: const Duration(milliseconds: 300),
-        transitionBuilder: (ctx, anim, _, child) {
-          return FadeTransition(
-            opacity: anim,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.85, end: 1.0).animate(
-                CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
-              ),
-              child: child,
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (ctx, anim, _, child) {
+        return FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+              CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
             ),
-          );
-        },
-        pageBuilder: (ctx, _, __) {
-          return Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              width: 520,
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardTheme.color,
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, 12)),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(28, 24, 20, 20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [_accent, _accent.withValues(alpha: 0.85)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (ctx, _, __) {
+        return Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            width: 520,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, 12)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 20, 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [_accent, _accent.withValues(alpha: 0.85)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(isEdit ? Icons.edit_rounded : Icons.category_rounded, color: Colors.white, size: 24),
                           ),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(isEdit ? Icons.edit_rounded : Icons.category_rounded, color: Colors.white, size: 24),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(isEdit ? 'Editar Categoría' : 'Nueva Categoría',
+                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                                Text(isEdit ? 'Modifica los datos de la categoría' : 'Registra una nueva clasificación',
+                                    style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
+                              ],
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(isEdit ? 'Editar Categoría' : 'Nueva Categoría',
-                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
-                                  Text(isEdit ? 'Modifica los datos de la categoría' : 'Registra una nueva clasificación',
-                                      style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close_rounded, color: Colors.white),
-                              onPressed: () => Navigator.pop(ctx),
-                            ),
-                          ],
-                        ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Colors.white),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildField('Nombre de la Categoría', _controller.nombreCtrl, Icons.category_rounded, req: true, focusNode: _nombreFocus, textInputAction: TextInputAction.next, onFieldSubmitted: (_) => FocusScope.of(ctx).requestFocus(_descFocus)),
-                            _buildField('Descripción (Opcional)', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3, focusNode: _descFocus, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _saveAndPop(ctx)),
-                          ],
-                        ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildField('Nombre de la Categoría', _controller.nombreCtrl, Icons.category_rounded, req: true),
+                          _buildField('Descripción (Opcional)', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Cancelar'),
-                            ),
-                            const SizedBox(width: 12),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [_accent, const Color(0xFF7C3AED)],
-                                  begin: Alignment.centerLeft, end: Alignment.centerRight,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(color: _accent.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
-                                ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancelar'),
+                          ),
+                          const SizedBox(width: 12),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [_accent, const Color(0xFF7C3AED)],
+                                begin: Alignment.centerLeft, end: Alignment.centerRight,
                               ),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  elevation: 0,
-                                  shadowColor: Colors.transparent,
-                                ),
-                                onPressed: () => _saveAndPop(ctx),
-                                child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Categoría',
-                                    style: const TextStyle(fontWeight: FontWeight.w900)),
-                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(color: _accent.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                              ],
                             ),
-                          ],
-                        ),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ),
+                              onPressed: () async {
+                                if (!formKey.currentState!.validate()) return;
+                                bool success;
+                                if (isEdit) {
+                                  success = await _controller.actualizarCategoria(cat['categoriaId']);
+                                } else {
+                                  success = await _controller.agregarCategoria();
+                                }
+                                if (mounted) {
+                                  Navigator.pop(ctx);
+                                  if (success) {
+                                    ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Categoría actualizada' : 'Categoría registrada');
+                                  } else {
+                                    ErrorDisplay.snackBar(context: context, message: 'Error', hint: 'Revisa los datos e intenta de nuevo.');
+                                  }
+                                }
+                              },
+                              child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Categoría',
+                                  style: const TextStyle(fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
-      );
-    } finally {
-      _nombreFocus.dispose();
-      _descFocus.dispose();
-    }
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _confirmDelete(Map<String, dynamic> cat) async {
@@ -248,14 +237,11 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
     }
   }
 
-  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, int maxLines = 1, TextInputType keyboard = TextInputType.text, FocusNode? focusNode, TextInputAction? textInputAction, ValueChanged<String>? onFieldSubmitted}) {
+  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, int maxLines = 1, TextInputType keyboard = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: ctrl,
-        focusNode: focusNode,
-        textInputAction: textInputAction,
-        onFieldSubmitted: onFieldSubmitted,
         maxLines: maxLines,
         keyboardType: keyboard,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -326,22 +312,19 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
             if (list.isEmpty)
               _buildEmptyState(accent)
             else
-              ...list.asMap().entries.map((entry) => AnimatedEntry(
+              ...list.asMap().entries.map((entry) => _AnimatedCatCard(
+                key: ValueKey(entry.value['categoriaId']),
                 index: entry.key,
-                child: _AnimatedCatCard(
-                  key: ValueKey(entry.value['categoriaId']),
-                  index: entry.key,
-                  cat: entry.value,
-                  accent: accent,
-                  text: text,
-                  card: card,
-                  onEdit: () => _showAddEditDialog(cat: entry.value),
-                  onDelete: () => _confirmDelete(entry.value),
-                ),
+                cat: entry.value,
+                accent: accent,
+                text: text,
+                card: card,
+                onEdit: () => _showAddEditDialog(cat: entry.value),
+                onDelete: () => _confirmDelete(entry.value),
               )),
           ]),
         ),
-        Positioned(top: 0, left: 0, right: 0, child: AnimatedEntry(index: 0, child: _buildHeader(bg, text, accent))),
+        Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
         Positioned(bottom: 24, right: 40,
           child: FloatingActionButton(
             backgroundColor: accent,

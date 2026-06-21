@@ -7,7 +7,6 @@ import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../utils/inventory_dialogs.dart';
 import '../utils/price_formatter.dart';
-import '../widgets/animations.dart';
 
 class LotesScreen extends StatefulWidget {
   const LotesScreen({super.key});
@@ -156,42 +155,38 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
       child: Row(
         children: [
-          Expanded(child: AnimatedEntry(index: 0, child: _buildMetricCard(title: 'LOTES ACTIVOS', value: lotesCtrl.activeBatches.length.toString(), icon: Icons.inventory_2_rounded, color: AppTheme.ayanamiBlue))),
+          Expanded(child: _buildMetricCard(title: 'LOTES ACTIVOS', value: lotesCtrl.activeBatches.length.toString(), icon: Icons.inventory_2_rounded, color: AppTheme.ayanamiBlue)),
           const SizedBox(width: 20),
-          Expanded(child: AnimatedEntry(index: 1, child: _buildMetricCard(title: 'EN RIESGO', value: lotesCtrl.porVencer.length.toString(), icon: Icons.warning_amber_rounded, color: Colors.orange))),
+          Expanded(child: _buildMetricCard(title: 'EN RIESGO', value: lotesCtrl.porVencer.length.toString(), icon: Icons.warning_amber_rounded, color: Colors.orange)),
           const SizedBox(width: 20),
-          Expanded(child: AnimatedEntry(index: 2, child: _buildMetricCard(title: 'VENCIDOS', value: lotesCtrl.vencidos.length.toString(), icon: Icons.error_outline_rounded, color: AppTheme.reiOrangeRed))),
+          Expanded(child: _buildMetricCard(title: 'VENCIDOS', value: lotesCtrl.vencidos.length.toString(), icon: Icons.error_outline_rounded, color: AppTheme.reiOrangeRed)),
         ],
       ),
     );
   }
 
   Widget _buildMetricCard({required String title, required String value, required IconData icon, required Color color}) {
-    return HoverScale(
-      scale: 1.015,
-      elevation: 4,
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: color.withValues(alpha: 0.1)),
-          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 10))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 20)),
-                Text(title, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, height: 1, letterSpacing: -1)),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 10))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 20)),
+              Text(title, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, height: 1, letterSpacing: -1)),
+        ],
       ),
     );
   }
@@ -399,10 +394,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     return ListView.builder(
       padding: const EdgeInsets.all(32),
       itemCount: filtered.length,
-      itemBuilder: (ctx, i) => AnimatedEntry(
-        index: i,
-        child: _buildBatchCard(filtered[i], almacenCtrl, lotesCtrl),
-      ),
+      itemBuilder: (ctx, i) => _buildBatchCard(filtered[i], almacenCtrl, lotesCtrl),
     );
   }
 
@@ -430,10 +422,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     return ListView.builder(
       padding: const EdgeInsets.all(32),
       itemCount: filtered.length,
-      itemBuilder: (ctx, i) => AnimatedEntry(
-        index: i,
-        child: _buildArchivedCard(filtered[i]),
-      ),
+      itemBuilder: (ctx, i) => _buildArchivedCard(filtered[i]),
     );
   }
 
@@ -453,17 +442,14 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       archiveColor = AppTheme.reiOrangeRed;
     }
 
-    return HoverScale(
-      scale: 1.01,
-      elevation: 4,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
       child: Column(
         children: [
           Container(
@@ -545,7 +531,6 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
           ),
         ],
       ),
-    ),
     );
   }
 
@@ -576,17 +561,14 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       statusIcon = Icons.trending_down_rounded;
     }
 
-    return HoverScale(
-      scale: 1.01,
-      elevation: 4,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
       child: Column(
         children: [
           Container(
@@ -673,7 +655,6 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
           ),
         ],
       ),
-    ),
     );
   }
 

@@ -115,123 +115,95 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
     final telefono = TextEditingController(text: supplier?['telefono'] ?? '');
     final email = TextEditingController(text: supplier?['email'] ?? '');
 
-    final nombreFn = FocusNode();
-    final direccionFn = FocusNode();
-    final telefonoFn = FocusNode();
-    final emailFn = FocusNode();
-
-    Future<void> submit(BuildContext diaCtx) async {
-      if (!formKey.currentState!.validate()) return;
-
-      final data = {
-        'nombre': nombre.text.trim(),
-        'direccion': direccion.text.trim(),
-        'telefono': telefono.text.trim(),
-        'email': email.text.trim(),
-      };
-
-      bool success;
-      if (isEdit) {
-        success = await _controller.actualizarProveedor(supplier['proveedorId'], data);
-      } else {
-        _controller.nombreCtrl.text = data['nombre']!;
-        _controller.direccionCtrl.text = data['direccion']!;
-        _controller.telefonoCtrl.text = data['telefono']!;
-        _controller.emailCtrl.text = data['email']!;
-        success = await _controller.agregarProveedor();
-      }
-
-      if (mounted) {
-        Navigator.pop(diaCtx);
-        if (success) {
-          ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Proveedor actualizado' : 'Proveedor registrado');
-        } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
-        }
-      }
-    }
-
-    try {
-      showDialog(
-        context: context,
-        builder: (diaCtx) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: Theme.of(context).cardTheme.color,
-          child: Container(
-            width: 500,
-            padding: const EdgeInsets.all(32),
-            child: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(isEdit ? 'Editar Proveedor' : 'Nuevo Proveedor',
-                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color)),
-                        IconButton(icon: Icon(Icons.close, color: Theme.of(context).textTheme.bodyLarge?.color), onPressed: () => Navigator.pop(diaCtx)),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildField('Nombre de la Empresa *', nombre, Icons.business, req: true,
-                        focusNode: nombreFn, textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(direccionFn)),
-                    _buildField('Dirección', direccion, Icons.location_on,
-                        focusNode: direccionFn, textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(telefonoFn)),
-                    _buildField('Teléfono', telefono, Icons.phone, keyboard: TextInputType.phone,
-                        focusNode: telefonoFn, textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(emailFn)),
-                    _buildField('Email', email, Icons.email, keyboard: TextInputType.emailAddress,
-                        focusNode: emailFn, textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => submit(diaCtx)),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(onPressed: () => Navigator.pop(diaCtx), child: Text('Cancelar', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color))),
-                        const SizedBox(width: 16),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _accent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: () => submit(diaCtx),
-                          child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Proveedor', style: const TextStyle(fontWeight: FontWeight.w900)),
+    showDialog(
+      context: context,
+      builder: (diaCtx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        child: Container(
+          width: 500,
+          padding: const EdgeInsets.all(32),
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(isEdit ? 'Editar Proveedor' : 'Nuevo Proveedor',
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color)),
+                      IconButton(icon: Icon(Icons.close, color: Theme.of(context).textTheme.bodyLarge?.color), onPressed: () => Navigator.pop(diaCtx)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildField('Nombre de la Empresa *', nombre, Icons.business, req: true),
+                  _buildField('Dirección', direccion, Icons.location_on),
+                  _buildField('Teléfono', telefono, Icons.phone, keyboard: TextInputType.phone),
+                  _buildField('Email', email, Icons.email, keyboard: TextInputType.emailAddress),
+                  const SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(onPressed: () => Navigator.pop(diaCtx), child: Text('Cancelar', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color))),
+                      const SizedBox(width: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _accent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                      ],
-                    )
-                  ],
-                ),
+                        onPressed: () async {
+                          if (!formKey.currentState!.validate()) return;
+                          
+                          final data = {
+                            'nombre': nombre.text.trim(),
+                            'direccion': direccion.text.trim(),
+                            'telefono': telefono.text.trim(),
+                            'email': email.text.trim(),
+                          };
+
+                          bool success;
+                          if (isEdit) {
+                            success = await _controller.actualizarProveedor(supplier['proveedorId'], data);
+                          } else {
+                            _controller.nombreCtrl.text = data['nombre']!;
+                            _controller.direccionCtrl.text = data['direccion']!;
+                            _controller.telefonoCtrl.text = data['telefono']!;
+                            _controller.emailCtrl.text = data['email']!;
+                            success = await _controller.agregarProveedor();
+                          }
+
+                          if (mounted) {
+                            Navigator.pop(diaCtx);
+                              if (success) {
+                                ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Proveedor actualizado' : 'Proveedor registrado');
+                              } else {
+                                ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
+                              }
+                          }
+                        },
+                        child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Proveedor', style: const TextStyle(fontWeight: FontWeight.w900)),
+                      ),
+                    ],
+                  )
+                ],
               ),
             ),
           ),
         ),
-      );
-    } finally {
-      nombreFn.dispose();
-      direccionFn.dispose();
-      telefonoFn.dispose();
-      emailFn.dispose();
-    }
+      ),
+    );
   }
 
-  Widget _buildField(String label, TextEditingController ctrl, IconData icon,
-      {bool req = false, TextInputType keyboard = TextInputType.text,
-       FocusNode? focusNode, TextInputAction? textInputAction,
-       ValueChanged<String>? onFieldSubmitted}) {
+  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, TextInputType keyboard = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: ctrl,
-        focusNode: focusNode,
-        textInputAction: textInputAction,
-        onFieldSubmitted: onFieldSubmitted,
         keyboardType: keyboard,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         inputFormatters: [
@@ -310,16 +282,13 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         ),
         Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
         Positioned(bottom: 24, right: 40,
-          child: HoverScale(
-            glowColor: accent,
-            child: FloatingActionButton(
-              backgroundColor: accent,
-              foregroundColor: Colors.white,
-              elevation: 8,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              onPressed: () => _showAddEditDialog(),
-              child: const Icon(Icons.add_rounded, size: 28),
-            ),
+          child: FloatingActionButton(
+            backgroundColor: accent,
+            foregroundColor: Colors.white,
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            onPressed: () => _showAddEditDialog(),
+            child: const Icon(Icons.add_rounded, size: 28),
           ),
         ),
       ]),

@@ -160,163 +160,153 @@ class _CasasScreenState extends State<CasasScreen> {
       _controller.paisCtrl.clear();
     }
 
-    final _nombreFocus = FocusNode();
-    final _paisFocus = FocusNode();
-
-    void _saveAndPop(BuildContext ctx) async {
-      if (!formKey.currentState!.validate()) return;
-      bool success;
-      if (isEdit) {
-        success = await _controller.actualizarCasa(casa['casaId']);
-      } else {
-        success = await _controller.agregarCasa();
-      }
-      if (mounted) {
-        Navigator.pop(ctx);
-        if (success) {
-          ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Casa actualizada' : 'Casa registrada');
-        } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error', hint: 'Revisa los datos e intenta de nuevo.');
-        }
-      }
-    }
-
-    try {
-      await showGeneralDialog(
-        context: context,
-        barrierDismissible: true,
-        barrierLabel: '',
-        barrierColor: Colors.black54,
-        transitionDuration: const Duration(milliseconds: 300),
-        transitionBuilder: (ctx, anim, _, child) {
-          return FadeTransition(
-            opacity: anim,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.85, end: 1.0).animate(
-                CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
-              ),
-              child: child,
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (ctx, anim, _, child) {
+        return FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+              CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
             ),
-          );
-        },
-        pageBuilder: (ctx, _, __) {
-          return Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              width: 520,
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardTheme.color,
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, 12)),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(28, 24, 20, 20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.85)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (ctx, _, __) {
+        return Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            width: 520,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, 12)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 20, 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.85)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(isEdit ? Icons.edit_rounded : Icons.business_rounded, color: Colors.white, size: 24),
                           ),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(isEdit ? Icons.edit_rounded : Icons.business_rounded, color: Colors.white, size: 24),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(isEdit ? 'Editar Casa' : 'Nueva Casa',
+                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                                Text(isEdit ? 'Modifica los datos de la casa' : 'Registra una casa farmacéutica',
+                                    style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
+                              ],
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(isEdit ? 'Editar Casa' : 'Nueva Casa',
-                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
-                                  Text(isEdit ? 'Modifica los datos de la casa' : 'Registra una casa farmacéutica',
-                                      style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close_rounded, color: Colors.white),
-                              onPressed: () => Navigator.pop(ctx),
-                            ),
-                          ],
-                        ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Colors.white),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildField('Nombre de la Casa', _controller.nombreCtrl, Icons.business_rounded, req: true, focusNode: _nombreFocus, textInputAction: TextInputAction.next, onFieldSubmitted: (_) => FocusScope.of(ctx).requestFocus(_paisFocus)),
-                            _buildField('País de Origen *', _controller.paisCtrl, Icons.public_rounded, req: true, focusNode: _paisFocus, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _saveAndPop(ctx)),
-                          ],
-                        ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildField('Nombre de la Casa', _controller.nombreCtrl, Icons.business_rounded, req: true),
+                          _buildField('País de Origen *', _controller.paisCtrl, Icons.public_rounded, req: true),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Cancelar'),
-                            ),
-                            const SizedBox(width: 12),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [AppTheme.ayanamiBlue, Color(0xFF4A8BC4)],
-                                  begin: Alignment.centerLeft, end: Alignment.centerRight,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(color: AppTheme.ayanamiBlue.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
-                                ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancelar'),
+                          ),
+                          const SizedBox(width: 12),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [AppTheme.ayanamiBlue, Color(0xFF4A8BC4)],
+                                begin: Alignment.centerLeft, end: Alignment.centerRight,
                               ),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  elevation: 0,
-                                  shadowColor: Colors.transparent,
-                                ),
-                                onPressed: () => _saveAndPop(ctx),
-                                child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Casa',
-                                    style: const TextStyle(fontWeight: FontWeight.w900)),
-                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(color: AppTheme.ayanamiBlue.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                              ],
                             ),
-                          ],
-                        ),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ),
+                              onPressed: () async {
+                                if (!formKey.currentState!.validate()) return;
+                                bool success;
+                                if (isEdit) {
+                                  success = await _controller.actualizarCasa(casa['casaId']);
+                                } else {
+                                  success = await _controller.agregarCasa();
+                                }
+                                if (mounted) {
+                                  Navigator.pop(ctx);
+                                  if (success) {
+                                    ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Casa actualizada' : 'Casa registrada');
+                                  } else {
+                                    ErrorDisplay.snackBar(context: context, message: 'Error', hint: 'Revisa los datos e intenta de nuevo.');
+                                  }
+                                }
+                              },
+                              child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Casa',
+                                  style: const TextStyle(fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
-      );
-    } finally {
-      _nombreFocus.dispose();
-      _paisFocus.dispose();
-    }
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _confirmDelete(Map<String, dynamic> casa) async {
@@ -349,14 +339,11 @@ class _CasasScreenState extends State<CasasScreen> {
     }
   }
 
-  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, int maxLines = 1, TextInputType keyboard = TextInputType.text, FocusNode? focusNode, TextInputAction? textInputAction, ValueChanged<String>? onFieldSubmitted}) {
+  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, int maxLines = 1, TextInputType keyboard = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: ctrl,
-        focusNode: focusNode,
-        textInputAction: textInputAction,
-        onFieldSubmitted: onFieldSubmitted,
         maxLines: maxLines,
         keyboardType: keyboard,
         autovalidateMode: AutovalidateMode.onUserInteraction,

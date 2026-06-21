@@ -7,7 +7,6 @@ import '../theme/app_theme.dart';
 import '../utils/user_session.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
-import '../widgets/animations.dart';
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -94,78 +93,72 @@ class _ConfigScreenState extends State<ConfigScreen> {
       ),
       body: _controller.isLoading
           ? const ShimmerList(itemCount: 4, itemHeight: 100)
-          : Stack(
-              children: [
-                const Positioned.fill(
-                  child: ParticleBackground(color: AppTheme.ayanamiBlue, particleCount: 12),
-                ),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 900),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildProfileCard(),
+                      const SizedBox(height: 40),
+                      _buildSettingsGroup(
+                        title: 'MI CUENTA',
                         children: [
-                          _buildProfileCard(),
-                          const SizedBox(height: 40),
-                          AnimatedEntry(index: 1, child: _buildSettingsGroup(
-                            title: 'MI CUENTA',
-                            children: [
-                              HoverScale(scale: 1.01, elevation: 4, child: ListTile(
-                                contentPadding: const EdgeInsets.all(24),
-                                leading: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                        color: AppTheme.reiPurple.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(16)),
-                                    child: const Icon(Icons.person_rounded, color: AppTheme.reiPurple, size: 24)),
-                                title: const Text('Información Personal', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                                subtitle: Text('${UserSession.role ?? "—"} · ${UserSession.email ?? "—"}',
-                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-                                trailing: const Icon(Icons.chevron_right_rounded),
-                                onTap: () => _showMyAccountDialog(),
-                              )),
-                            ],
-                          )),
-                          const SizedBox(height: 40),
-                          AnimatedEntry(index: 2, child: _buildSettingsGroup(
-                            title: 'GESTIÓN DE EQUIPO',
-                            children: [
-                              HoverScale(scale: 1.01, elevation: 4, child: ListTile(
-                                contentPadding: const EdgeInsets.all(24),
-                                leading: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
-                                    child: const Icon(Icons.people_alt_rounded, color: Colors.orange, size: 24)),
-                                title: const Text('Personal y Roles', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                                subtitle: const Text('Gestiona usuarios, permisos y accesos al sistema'),
-                                trailing: const Icon(Icons.chevron_right_rounded),
-                                onTap: () {
-                                    dashController.onItemTapped(10); 
-                                    Navigator.pop(context);
-                                },
-                              )),
-                            ],
-                          )),
-                          const SizedBox(height: 40),
-                          AnimatedEntry(index: 3, child: _buildSettingsGroup(
-                            title: 'EXPERIENCIA Y PREFERENCIAS',
-                            children: [
-                              _buildSwitchTile(
-                                  'Modo Oscuro',
-                                  'Adaptación visual premium estilo consola Rei',
-                                  Icons.dark_mode_rounded,
-                                  isDark,
-                                  _handleThemeToggle),
-                            ],
-                          )),
+                          ListTile(
+                            contentPadding: const EdgeInsets.all(24),
+                            leading: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                    color: AppTheme.reiPurple.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(16)),
+                                child: const Icon(Icons.person_rounded, color: AppTheme.reiPurple, size: 24)),
+                            title: const Text('Información Personal', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                            subtitle: Text('${UserSession.role ?? "—"} · ${UserSession.email ?? "—"}',
+                                style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => _showMyAccountDialog(),
+                          ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 40),
+                      _buildSettingsGroup(
+                        title: 'GESTIÓN DE EQUIPO',
+                        children: [
+                          ListTile(
+                            contentPadding: const EdgeInsets.all(24),
+                            leading: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                                child: const Icon(Icons.people_alt_rounded, color: Colors.orange, size: 24)),
+                            title: const Text('Personal y Roles', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                            subtitle: const Text('Gestiona usuarios, permisos y accesos al sistema'),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () {
+                                dashController.onItemTapped(10); 
+                                Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                      _buildSettingsGroup(
+                        title: 'EXPERIENCIA Y PREFERENCIAS',
+                        children: [
+                          _buildSwitchTile(
+                              'Modo Oscuro',
+                              'Adaptación visual premium estilo consola Rei',
+                              Icons.dark_mode_rounded,
+                              isDark,
+                              _handleThemeToggle),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ]),
+              ),
+            ),
     );
   }
 
@@ -219,13 +212,16 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 
   Widget _buildProfileCard() {
-    return AnimatedEntry(index: 0, style: EntryStyle.bounce, child: GlowEffect(
-      color: AppTheme.ayanamiBlue,
-      radius: 6,
-      child: GlassContainer(
+    return Container(
       padding: const EdgeInsets.all(32),
-      borderRadius: 32,
-      blur: 16,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 10))
+        ],
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+      ),
       child: Row(
         children: [
           Container(
@@ -256,7 +252,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
           ),
         ],
       ),
-    )));
+    );
   }
 
   Widget _buildSettingsGroup({required String title, required List<Widget> children}) {
@@ -265,11 +261,18 @@ class _ConfigScreenState extends State<ConfigScreen> {
       children: [
         Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
         const SizedBox(height: 20),
-        GlassContainer(
-          borderRadius: 32,
-          blur: 12,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(children: children),
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 30, offset: const Offset(0, 10))
+            ],
+          ),
+          child: Column(
+            children: children,
+          ),
         ),
       ],
     );

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -46,10 +46,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       drawer: Drawer(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        child: GlassContainer(
+        child: Container(
           margin: const EdgeInsets.fromLTRB(16, 16, 0, 16),
-          borderRadius: 32,
-          blur: 24,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color?.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 40,
+                offset: const Offset(10, 0),
+              ),
+            ],
+          ),
           child: Column(
             children: [
               _buildDrawerHeader(),
@@ -59,10 +68,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
                     AnimatedEntry(index: 0, child: _buildDrawerItem(Icons.dashboard_rounded, 'Panel Inicio', 0)),
-                    AnimatedEntry(index: 1, child: _buildDrawerItem(Icons.inventory_2_rounded, 'Almacén Central', 1)),
+                    AnimatedEntry(index: 1, child: _buildDrawerItem(Icons.inventory_2_rounded, 'Almac├®n Central', 1)),
                     AnimatedEntry(index: 2, child: _buildDrawerItem(Icons.point_of_sale_rounded, 'Punto de Venta', 2)),
-                    AnimatedEntry(index: 3, child: _buildDrawerItem(Icons.layers_outlined, 'Gestión de Lotes', 3)),
-                    AnimatedEntry(index: 4, child: _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4)),
+                    AnimatedEntry(index: 3, child: _buildDrawerItem(Icons.layers_outlined, 'Gesti├│n de Lotes', 3)),
+                    AnimatedEntry(index: 4, child: _buildDrawerItem(Icons.analytics_rounded, 'Estad├¡sticas', 4)),
                     AnimatedEntry(index: 5, child: _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11)),
                     
                     const SizedBox(height: 12),
@@ -139,7 +148,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ExpansionTile(
         initiallyExpanded: isCatalogActive,
         leading: Icon(Icons.auto_awesome_motion_rounded, color: isCatalogActive ? AppTheme.ayanamiBlue : Colors.grey.shade500),
-        title: Text('CATÁLOGOS', 
+        title: Text('CAT├üLOGOS', 
           style: TextStyle(
             fontSize: 13, 
             fontWeight: FontWeight.w900, 
@@ -149,7 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         children: [
           _buildDrawerSubItem(Icons.business_rounded, 'Casas', 5),
-          _buildDrawerSubItem(Icons.category_rounded, 'Categorías', 7),
+          _buildDrawerSubItem(Icons.category_rounded, 'Categor├¡as', 7),
           _buildDrawerSubItem(Icons.medication_liquid_rounded, 'Presentaciones', 8),
           _buildDrawerSubItem(Icons.local_shipping_rounded, 'Proveedores', 9),
           _buildDrawerSubItem(Icons.people_alt_rounded, 'Usuarios', 10),
@@ -161,22 +170,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildDrawerHeader() {
     return AnimatedEntry(
       index: 0,
-      style: EntryStyle.bounce,
-      child: GlowEffect(
-        color: AppTheme.ayanamiBlue,
-        radius: 8,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
-          child: Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                'assets/images/logo_base.png',
-                height: 120,
-                width: 120,
-                fit: BoxFit.contain,
-              ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
+        child: Center(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(
+              'assets/images/logo_base.png',
+              height: 120,
+              width: 120,
+              fit: BoxFit.contain,
             ),
           ),
         ),
@@ -334,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: const Icon(Icons.logout_rounded, color: AppTheme.reiOrangeRed, size: 22),
-        title: const Text('Cerrar Sesión',
+        title: const Text('Cerrar Sesi├│n',
           style: TextStyle(color: AppTheme.reiOrangeRed, fontSize: 14, fontWeight: FontWeight.bold),
         ),
         onTap: () async {
@@ -407,7 +411,7 @@ class _AnimatedNotifDialogState extends State<_AnimatedNotifDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                        child: Text('Marcar leídas', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
+                        child: Text('Marcar le├¡das', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
                       ),
                     ),
                 ],
@@ -426,7 +430,7 @@ class _AnimatedNotifDialogState extends State<_AnimatedNotifDialog> {
                     const SizedBox(height: 16),
                     const Text('No hay notificaciones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
                     const SizedBox(height: 4),
-                    const Text('Todo está en orden', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    const Text('Todo est├í en orden', style: TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),
               )
