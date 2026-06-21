@@ -5,9 +5,12 @@ import '../../theme/app_theme.dart';
 import '../../controllers/ventas_controller.dart';
 import '../../utils/price_formatter.dart';
 import 'receipt_dialog.dart';
+import '../../widgets/animations.dart';
 
 class CartSection extends StatelessWidget {
-  const CartSection({super.key});
+  final FocusNode? nombreFocusNode;
+  final FocusNode? cedulaFocusNode;
+  const CartSection({super.key, this.nombreFocusNode, this.cedulaFocusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -96,14 +99,19 @@ class CartSection extends StatelessWidget {
         final id = controller.carrito.keys.elementAt(index);
         final qty = controller.carrito[id]!;
         final prod = controller.cacheProductos[id]!;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.08)),
-          ),
-          child: Row(
+        return AnimatedEntry(
+          index: index,
+          child: HoverScale(
+            scale: 1.02,
+            elevation: 4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.08)),
+              ),
+              child: Row(
             children: [
               Container(
                 width: 32, height: 32,
@@ -159,7 +167,9 @@ class CartSection extends StatelessWidget {
               ),
             ],
           ),
-        );
+        ),
+      ),
+    );
       },
     );
   }
@@ -255,6 +265,8 @@ class CartSection extends StatelessWidget {
               Expanded(
                   child: TextField(
                   controller: controller.clienteIdController,
+                  focusNode: nombreFocusNode,
+                  textInputAction: TextInputAction.next,
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                   decoration: const InputDecoration(
                     hintText: 'Nombre del Cliente',
@@ -263,6 +275,7 @@ class CartSection extends StatelessWidget {
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 6),
                   ),
+                  onSubmitted: (_) => cedulaFocusNode?.requestFocus(),
                 ),
               ),
             ],
@@ -282,6 +295,8 @@ class CartSection extends StatelessWidget {
               Expanded(
                   child: TextField(
                   controller: controller.clienteIdentificacionController,
+                  focusNode: cedulaFocusNode,
+                  textInputAction: TextInputAction.done,
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],

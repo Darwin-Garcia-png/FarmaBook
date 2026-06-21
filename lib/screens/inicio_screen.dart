@@ -51,73 +51,91 @@ class _InicioScreenState extends State<InicioScreen> {
     return Scaffold(
       backgroundColor: bg,
       body: Stack(children: [
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: 0.08,
+              child: const ParticleBackground(
+                color: AppTheme.ayanamiBlue,
+                particleCount: 18,
+              ),
+            ),
+          ),
+        ),
         SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(40, 100, 40, 60),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
             // ── GREETING + SUMMARY ──
-            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(20)),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.wb_sunny_rounded, size: 12, color: AppTheme.ayanamiBlue),
-                      const SizedBox(width: 6),
-                      Text(_greet(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.ayanamiBlue)),
-                    ]),
-                  ),
+            AnimatedEntry(
+              index: 0,
+              child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(20)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.wb_sunny_rounded, size: 12, color: AppTheme.ayanamiBlue),
+                        const SizedBox(width: 6),
+                        Text(_greet(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.ayanamiBlue)),
+                      ]),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(20)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.today_rounded, size: 12, color: AppTheme.greenMetal),
+                        const SizedBox(width: 6),
+                        Text(DateFormat("d MMM yyyy", 'es').format(DateTime.now()).toUpperCase(),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.greenMetal)),
+                      ]),
+                    ),
+                  ]),
                   const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(20)),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.today_rounded, size: 12, color: AppTheme.greenMetal),
-                      const SizedBox(width: 6),
-                      Text(DateFormat("d MMM yyyy", 'es').format(DateTime.now()).toUpperCase(),
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.greenMetal)),
-                    ]),
+                  Text('Panel de Control', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: -1.5, color: text)),
+                ])),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _ctrl.ingresos - _ctrl.egresos >= 0 ? AppTheme.greenMetal.withValues(alpha: 0.08) : AppTheme.reiOrangeRed.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ]),
-                const SizedBox(height: 12),
-                Text('Panel de Control', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: -1.5, color: text)),
-              ])),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: _ctrl.ingresos - _ctrl.egresos >= 0 ? AppTheme.greenMetal.withValues(alpha: 0.08) : AppTheme.reiOrangeRed.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.account_balance_wallet_rounded,
+                      size: 16, color: _ctrl.ingresos - _ctrl.egresos >= 0 ? AppTheme.greenMetal : AppTheme.reiOrangeRed),
+                    const SizedBox(width: 8),
+                    Text('Balance ${formatCop(_ctrl.ingresos - _ctrl.egresos)}',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900,
+                        color: _ctrl.ingresos - _ctrl.egresos >= 0 ? AppTheme.greenMetal : AppTheme.reiOrangeRed)),
+                  ]),
                 ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.account_balance_wallet_rounded,
-                    size: 16, color: _ctrl.ingresos - _ctrl.egresos >= 0 ? AppTheme.greenMetal : AppTheme.reiOrangeRed),
-                  const SizedBox(width: 8),
-                  Text('Balance ${formatCop(_ctrl.ingresos - _ctrl.egresos)}',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900,
-                      color: _ctrl.ingresos - _ctrl.egresos >= 0 ? AppTheme.greenMetal : AppTheme.reiOrangeRed)),
-                ]),
-              ),
-            ]),
+              ]),
+            ),
             const SizedBox(height: 32),
 
             // ── KPIs ──
             Row(children: [
-              _kpi('Ingresos', formatCop(_ctrl.ingresos), Icons.trending_up_rounded, AppTheme.greenMetal, _ctrl.ingresos, () => _go(4)),
+              _kpi('Ingresos', formatCop(_ctrl.ingresos), Icons.trending_up_rounded, AppTheme.greenMetal, _ctrl.ingresos, () => _go(4), index: 1),
               const SizedBox(width: 16),
-              _kpi('Egresos', formatCop(_ctrl.egresos), Icons.trending_down_rounded, AppTheme.reiOrangeRed, _ctrl.egresos, () => _go(4)),
+              _kpi('Egresos', formatCop(_ctrl.egresos), Icons.trending_down_rounded, AppTheme.reiOrangeRed, _ctrl.egresos, () => _go(4), index: 2),
               const SizedBox(width: 16),
               _kpi('Balance', formatCop(_ctrl.ingresos - _ctrl.egresos), Icons.account_balance_rounded, const Color(0xFF8B5CF6),
-                _ctrl.ingresos - _ctrl.egresos, () => _go(4)),
+                _ctrl.ingresos - _ctrl.egresos, () => _go(4), index: 3),
               const SizedBox(width: 16),
               _kpi('Stock', '${(_ctrl.stockHealthPercent * 100).toInt()}%', Icons.inventory_rounded, AppTheme.ayanamiBlue,
-                _ctrl.stockHealthPercent, () => _go(1), isPct: true),
+                _ctrl.stockHealthPercent, () => _go(1), isPct: true, index: 4),
             ]),
             const SizedBox(height: 32),
 
             // ── CONTENT ROW: Left (Sales + Products) | Right (Alerts + Quick) ──
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(
+                flex: 3,
+                child: AnimatedEntry(
+                  index: 5,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                 // ── VENTAS RECIENTES ──
                 _sectionH('VENTAS RECIENTES', Icons.receipt_long_rounded, AppTheme.greenMetal, _ctrl.recentSales.isNotEmpty
@@ -130,23 +148,27 @@ class _InicioScreenState extends State<InicioScreen> {
                     final total = double.tryParse(s['total']?.toString() ?? '0') ?? 0;
                     final id = s['ventaId']?.toString() ?? '';
                     final shortId = id.length >= 8 ? id.substring(0, 8).toUpperCase() : id.toUpperCase();
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14),
-                        border: Border(left: BorderSide(color: AppTheme.greenMetal.withValues(alpha: 0.3), width: 3))),
-                      child: Row(children: [
-                        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                          child: Icon(Icons.receipt_rounded, size: 16, color: AppTheme.greenMetal)),
-                        const SizedBox(width: 12),
-                        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(shortId, style: TextStyle(color: text, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
-                          const SizedBox(height: 2),
-                          Text('Factura #${s['numeroFactura'] ?? id}', style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w600)),
+                    return HoverScale(
+                      scale: 1.015,
+                      elevation: 4,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                        decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14),
+                          border: Border(left: BorderSide(color: AppTheme.greenMetal.withValues(alpha: 0.3), width: 3))),
+                        child: Row(children: [
+                          Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.greenMetal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+                            child: Icon(Icons.receipt_rounded, size: 16, color: AppTheme.greenMetal)),
+                          const SizedBox(width: 12),
+                          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(shortId, style: TextStyle(color: text, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
+                            const SizedBox(height: 2),
+                            Text('Factura #${s['numeroFactura'] ?? id}', style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w600)),
+                          ]),
+                          const Spacer(),
+                          Text(formatCop(total), style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.3)),
                         ]),
-                        const Spacer(),
-                        Text(formatCop(total), style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.3)),
-                      ]),
+                      ),
                     );
                   }),
                 const SizedBox(height: 20),
@@ -162,38 +184,47 @@ class _InicioScreenState extends State<InicioScreen> {
                     final name = p['nombre']?.toString() ?? 'Producto';
                     final qty = (p['unidadesVendidas'] as num? ?? 0).toInt();
                     final colors = [const Color(0xFFF59E0B), Colors.grey.shade400, const Color(0xFFCD7F32)];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: colors[i].withValues(alpha: 0.15))),
-                      child: Row(children: [
-                        Container(
-                          width: 28, height: 28,
-                          decoration: BoxDecoration(color: colors[i].withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-                          child: Center(child: Text('#${i + 1}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: colors[i]))),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(name, style: TextStyle(color: text, fontWeight: FontWeight.w800, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 4),
-                          ClipRRect(borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(value: (3 - i) / 3, minHeight: 3,
-                              backgroundColor: colors[i].withValues(alpha: 0.08), valueColor: AlwaysStoppedAnimation(colors[i]))),
-                        ])),
-                        const SizedBox(width: 12),
-                        Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(color: colors[i].withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
-                          child: Text('$qty uds', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: colors[i]))),
-                      ]),
+                    return HoverScale(
+                      scale: 1.015,
+                      elevation: 4,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: colors[i].withValues(alpha: 0.15))),
+                        child: Row(children: [
+                          Container(
+                            width: 28, height: 28,
+                            decoration: BoxDecoration(color: colors[i].withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+                            child: Center(child: Text('#${i + 1}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: colors[i]))),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(name, style: TextStyle(color: text, fontWeight: FontWeight.w800, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            const SizedBox(height: 4),
+                            ClipRRect(borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(value: (3 - i) / 3, minHeight: 3,
+                                backgroundColor: colors[i].withValues(alpha: 0.08), valueColor: AlwaysStoppedAnimation(colors[i]))),
+                          ])),
+                          const SizedBox(width: 12),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(color: colors[i].withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
+                            child: Text('$qty uds', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: colors[i]))),
+                        ]),
+                      ),
                     );
                   }),
               ])),
+            ),
 
               const SizedBox(width: 24),
 
               // ── RIGHT COLUMN ──
-              Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(
+                flex: 2,
+                child: AnimatedEntry(
+                  index: 6,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                 // ── STOCK HEALTH ──
                 Container(
@@ -235,35 +266,43 @@ class _InicioScreenState extends State<InicioScreen> {
                       Text('Sin alertas activas', style: TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w800, fontSize: 13)),
                     ]))
                 else ...[
-                  if (_ctrl.alertsStock.isNotEmpty) ..._ctrl.alertsStock.take(3).map((a) => Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                    decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12),
-                      border: Border(left: BorderSide(color: AppTheme.reiOrangeRed.withValues(alpha: 0.4), width: 3))),
-                    child: Row(children: [
-                      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(Icons.inventory_rounded, color: AppTheme.reiOrangeRed, size: 14)),
-                      const SizedBox(width: 10),
-                      Expanded(child: Text(a['nombre']?.toString() ?? 'Producto', style: TextStyle(color: text, fontWeight: FontWeight.w700, fontSize: 12))),
-                      Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Stock bajo', style: TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.w800, fontSize: 9))),
-                    ]),
+                  if (_ctrl.alertsStock.isNotEmpty) ..._ctrl.alertsStock.take(3).map((a) => HoverScale(
+                    scale: 1.015,
+                    elevation: 4,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12),
+                        border: Border(left: BorderSide(color: AppTheme.reiOrangeRed.withValues(alpha: 0.4), width: 3))),
+                      child: Row(children: [
+                        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+                          child: const Icon(Icons.inventory_rounded, color: AppTheme.reiOrangeRed, size: 14)),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(a['nombre']?.toString() ?? 'Producto', style: TextStyle(color: text, fontWeight: FontWeight.w700, fontSize: 12))),
+                        Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: AppTheme.reiOrangeRed.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+                          child: const Text('Stock bajo', style: TextStyle(color: AppTheme.reiOrangeRed, fontWeight: FontWeight.w800, fontSize: 9))),
+                      ]),
+                    ),
                   )),
-                  if (_ctrl.alertsVencimiento.isNotEmpty) ..._ctrl.alertsVencimiento.take(3).map((a) => Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                    decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12),
-                      border: Border(left: BorderSide(color: Colors.orange.withValues(alpha: 0.4), width: 3))),
-                    child: Row(children: [
-                      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(Icons.schedule_rounded, color: Colors.orange, size: 14)),
-                      const SizedBox(width: 10),
-                      Expanded(child: Text(a['productoNombre']?.toString() ?? 'Lote', style: TextStyle(color: text, fontWeight: FontWeight.w700, fontSize: 12))),
-                      Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Por vencer', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w800, fontSize: 9))),
-                    ]),
+                  if (_ctrl.alertsVencimiento.isNotEmpty) ..._ctrl.alertsVencimiento.take(3).map((a) => HoverScale(
+                    scale: 1.015,
+                    elevation: 4,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12),
+                        border: Border(left: BorderSide(color: Colors.orange.withValues(alpha: 0.4), width: 3))),
+                      child: Row(children: [
+                        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+                          child: const Icon(Icons.schedule_rounded, color: Colors.orange, size: 14)),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(a['productoNombre']?.toString() ?? 'Lote', style: TextStyle(color: text, fontWeight: FontWeight.w700, fontSize: 12))),
+                        Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+                          child: const Text('Por vencer', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w800, fontSize: 9))),
+                      ]),
+                    ),
                   )),
                 ],
                 const SizedBox(height: 20),
@@ -283,8 +322,9 @@ class _InicioScreenState extends State<InicioScreen> {
                   _moduleBtn('Stats', Icons.insights_rounded, const Color(0xFF8B5CF6), () => _go(4)),
                 ]),
               ])),
-            ]),
+            ),
           ]),
+        ]),
         ),
 
         // ── HEADER ──
@@ -324,42 +364,52 @@ class _InicioScreenState extends State<InicioScreen> {
     ]);
   }
 
-  Widget _kpi(String label, String value, IconData icon, Color color, double raw, VoidCallback onTap, {bool isPct = false}) {
-    return Expanded(child: HoverScale(
-      scale: 1.01,
-      elevation: 8,
-      onTap: onTap,
-      child: InkWell(
-      onTap: onTap, borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.12)),
-          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+  Widget _kpi(String label, String value, IconData icon, Color color, double raw, VoidCallback onTap, {bool isPct = false, required int index}) {
+    return Expanded(child: AnimatedEntry(
+      index: index,
+      style: EntryStyle.bounce,
+      delay: const Duration(milliseconds: 100),
+      child: GlowEffect(
+        color: color,
+        radius: 4,
+        child: HoverScale(
+          scale: 1.02,
+          elevation: 8,
+          glowColor: color,
+          onTap: onTap,
+          child: InkWell(
+            onTap: onTap, borderRadius: BorderRadius.circular(20),
+            child: GlassContainer(
+              padding: const EdgeInsets.all(22),
+              borderRadius: 20,
+              blur: 12,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
+                    child: Icon(icon, color: color, size: 18)),
+                  Container(
+                    width: 10, height: 10,
+                    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+                  ),
+                ]),
+                const SizedBox(height: 14),
+                Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: color, letterSpacing: -0.8)),
+                const SizedBox(height: 4),
+                Row(children: [
+                  Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  if (isPct)
+                    ClipRRect(borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(value: raw.clamp(0, 1), minHeight: 3, backgroundColor: color.withValues(alpha: 0.08), valueColor: AlwaysStoppedAnimation(color))),
+                  if (!isPct && raw != 0)
+                    Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withValues(alpha: 0.3)),
+                ]),
+              ]),
+            ),
+          ),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, color: color, size: 18)),
-            Container(width: 8, height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
-          ]),
-          const SizedBox(height: 14),
-          Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: color, letterSpacing: -0.8)),
-          const SizedBox(height: 4),
-          Row(children: [
-            Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w700)),
-            const Spacer(),
-            if (isPct)
-              ClipRRect(borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(value: raw.clamp(0, 1), minHeight: 3, backgroundColor: color.withValues(alpha: 0.08), valueColor: AlwaysStoppedAnimation(color))),
-            if (!isPct && raw != 0)
-              Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withValues(alpha: 0.3)),
-          ]),
-        ]),
       ),
-    )));
+    ));
   }
 
   Widget _moduleBtn(String label, IconData icon, Color color, VoidCallback onTap) {

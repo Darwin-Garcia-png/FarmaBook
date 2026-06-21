@@ -59,73 +59,82 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
       _controller.descripcionCtrl.clear();
     }
 
-    showDialog(
-      context: context,
-      builder: (diaCtx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-        backgroundColor: Theme.of(context).cardTheme.color,
-        child: Container(
-          width: 500,
-          padding: const EdgeInsets.all(32),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(isEdit ? 'Editar Presentación' : 'Nueva Presentación',
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(diaCtx)),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildField('Nombre del Formato', _controller.nombreCtrl, Icons.local_pharmacy_rounded, req: true),
-                _buildField('Descripción (Opcional)', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(onPressed: () => Navigator.pop(diaCtx), child: const Text('Cancelar')),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _accent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
+    final _nombreFocus = FocusNode();
+    final _descFocus = FocusNode();
+
+    void _saveAndPop(BuildContext diaCtx) async {
+      if (!formKey.currentState!.validate()) return;
+      bool success;
+      if (isEdit) {
+        success = await _controller.actualizarPresentacion(pres['presentacionId']);
+      } else {
+        success = await _controller.agregarPresentacion();
+      }
+      if (mounted) {
+        Navigator.pop(diaCtx);
+        if (success) {
+          ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Presentación actualizada' : 'Presentación registrada');
+        } else {
+          ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
+        }
+      }
+    }
+
+    try {
+      await showDialog(
+        context: context,
+        builder: (diaCtx) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+          backgroundColor: Theme.of(context).cardTheme.color,
+          child: Container(
+            width: 500,
+            padding: const EdgeInsets.all(32),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(isEdit ? 'Editar Presentación' : 'Nueva Presentación',
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                      IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(diaCtx)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildField('Nombre del Formato', _controller.nombreCtrl, Icons.local_pharmacy_rounded, req: true, focusNode: _nombreFocus, textInputAction: TextInputAction.next, onFieldSubmitted: (_) => FocusScope.of(diaCtx).requestFocus(_descFocus)),
+                  _buildField('Descripción (Opcional)', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3, focusNode: _descFocus, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _saveAndPop(diaCtx)),
+                  const SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(onPressed: () => Navigator.pop(diaCtx), child: const Text('Cancelar')),
+                      const SizedBox(width: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _accent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        onPressed: () => _saveAndPop(diaCtx),
+                        child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Presentación', style: const TextStyle(fontWeight: FontWeight.w900)),
                       ),
-                      onPressed: () async {
-                        if (!formKey.currentState!.validate()) return;
-                        bool success;
-                        if (isEdit) {
-                          success = await _controller.actualizarPresentacion(pres['presentacionId']);
-                        } else {
-                          success = await _controller.agregarPresentacion();
-                        }
-                        
-                        if (mounted) {
-                          Navigator.pop(diaCtx);
-                          if (success) {
-                            ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Presentación actualizada' : 'Presentación registrada');
-                          } else {
-                            ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
-                          }
-                        }
-                      },
-                      child: Text(isEdit ? 'Guardar Cambios' : 'Registrar Presentación', style: const TextStyle(fontWeight: FontWeight.w900)),
-                    ),
-                  ],
-                )
-              ],
+                    ],
+                  )
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    } finally {
+      _nombreFocus.dispose();
+      _descFocus.dispose();
+    }
   }
 
   Future<void> _confirmDelete(Map<String, dynamic> pres) async {
@@ -158,11 +167,14 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
     }
   }
 
-  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, int maxLines = 1, TextInputType keyboard = TextInputType.text}) {
+  Widget _buildField(String label, TextEditingController ctrl, IconData icon, {bool req = false, int maxLines = 1, TextInputType keyboard = TextInputType.text, FocusNode? focusNode, TextInputAction? textInputAction, ValueChanged<String>? onFieldSubmitted}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: ctrl,
+        focusNode: focusNode,
+        textInputAction: textInputAction,
+        onFieldSubmitted: onFieldSubmitted,
         maxLines: maxLines,
         keyboardType: keyboard,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -239,7 +251,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
               )),
           ]),
         ),
-        Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
+        Positioned(top: 0, left: 0, right: 0, child: AnimatedEntry(index: 0, child: _buildHeader(bg, text, accent))),
         Positioned(bottom: 24, right: 40,
           child: FloatingActionButton(
             backgroundColor: accent,

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_service.dart';
 import '../utils/app_constants.dart';
+import '../utils/app_logger.dart';
 
 class AuthService {
   static http.Client? _client;
@@ -18,6 +19,7 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     ApiService.clearCachedToken();
+    AppLogger.auth('Login attempt: $email');
     try {
       final uri = Uri.parse('${AppConstants.baseUrl}/auth/login');
       final response = await _http
@@ -39,6 +41,7 @@ class AuthService {
       token ??= body['jwt'] as String?;
       if (token != null && token.isNotEmpty) {
         await ApiService.setToken(token);
+        AppLogger.auth('Login success: $email');
       }
 
       return {
@@ -46,6 +49,7 @@ class AuthService {
         'body': body,
       };
     } catch (e) {
+      AppLogger.auth('Login failed: $email — $e');
       if (e is http.ClientException) {
         return {
           'statusCode': 0,
@@ -86,6 +90,7 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    AppLogger.auth('Logout');
     await ApiService.setToken(null);
   }
 

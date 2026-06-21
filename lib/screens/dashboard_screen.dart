@@ -46,19 +46,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       drawer: Drawer(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        child: Container(
+        child: GlassContainer(
           margin: const EdgeInsets.fromLTRB(16, 16, 0, 16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color?.withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 40,
-                offset: const Offset(10, 0),
-              ),
-            ],
-          ),
+          borderRadius: 32,
+          blur: 24,
           child: Column(
             children: [
               _buildDrawerHeader(),
@@ -67,15 +58,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    _buildDrawerItem(Icons.dashboard_rounded, 'Panel Inicio', 0),
-                    _buildDrawerItem(Icons.inventory_2_rounded, 'Almacén Central', 1),
-                    _buildDrawerItem(Icons.point_of_sale_rounded, 'Punto de Venta', 2),
-                    _buildDrawerItem(Icons.layers_outlined, 'Gestión de Lotes', 3),
-                    _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4),
-                    _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11),
+                    AnimatedEntry(index: 0, child: _buildDrawerItem(Icons.dashboard_rounded, 'Panel Inicio', 0)),
+                    AnimatedEntry(index: 1, child: _buildDrawerItem(Icons.inventory_2_rounded, 'Almacén Central', 1)),
+                    AnimatedEntry(index: 2, child: _buildDrawerItem(Icons.point_of_sale_rounded, 'Punto de Venta', 2)),
+                    AnimatedEntry(index: 3, child: _buildDrawerItem(Icons.layers_outlined, 'Gestión de Lotes', 3)),
+                    AnimatedEntry(index: 4, child: _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 4)),
+                    AnimatedEntry(index: 5, child: _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11)),
                     
                     const SizedBox(height: 12),
-                    _buildExpansionCatalogos(),
+                    AnimatedEntry(index: 6, child: _buildExpansionCatalogos()),
                   ],
                 ),
               ),
@@ -103,6 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Focus(
           autofocus: true,
           child: Stack(children: [
+            const Positioned.fill(child: ParticleBackground(color: AppTheme.ayanamiBlue, particleCount: 15)),
             RepaintBoundary(child: _buildScreen()),
           ]),
         ),
@@ -167,25 +159,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDrawerHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
-      child: Row(
-        children: [
-          Image.asset('assets/images/logo_base.png', height: 40, width: 40, fit: BoxFit.contain),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('FarmaBook',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+    return AnimatedEntry(
+      index: 0,
+      style: EntryStyle.bounce,
+      child: GlowEffect(
+        color: AppTheme.ayanamiBlue,
+        radius: 8,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
+          child: Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/logo_base.png',
+                height: 120,
+                width: 120,
+                fit: BoxFit.contain,
               ),
-              Text('Sistema de Gestión',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
-              ),
-            ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

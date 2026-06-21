@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../utils/app_constants.dart';
+import '../utils/app_logger.dart';
 
 class ApiException implements Exception {
   final int? statusCode;
@@ -83,6 +84,18 @@ class ApiService {
     _cachedToken = null;
   }
 
+  static Future<String?> getUserToken(String username) async {
+    return await _storage.read(key: '${AppConstants.tokenKey}_$username');
+  }
+
+  static Future<void> setUserToken(String username, String? token) async {
+    if (token != null && token.isNotEmpty) {
+      try { await _storage.write(key: '${AppConstants.tokenKey}_$username', value: token); } catch (_) {}
+    } else {
+      try { await _storage.delete(key: '${AppConstants.tokenKey}_$username'); } catch (_) {}
+    }
+  }
+
   static Future<void> releaseMemory() async {
     _cachedToken = null;
     try { await _storage.delete(key: AppConstants.tokenKey); } catch (_) {}
@@ -101,6 +114,7 @@ class ApiService {
   static Future<http.Response> _get(String path, {Map<String, String>? query, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path').replace(queryParameters: query);
     final resp = await _http.get(uri, headers: await _headers(auth: auth)).timeout(AppConstants.connectTimeout!);
+    AppLogger.api('GET', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -115,6 +129,7 @@ class ApiService {
   static Future<http.Response> _post(String path, {Map<String, dynamic>? data, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final resp = await _http.post(uri, headers: await _headers(auth: auth, json: data != null), body: data != null ? jsonEncode(data) : null).timeout(AppConstants.connectTimeout!);
+    AppLogger.api('POST', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -129,6 +144,7 @@ class ApiService {
   static Future<http.Response> _patch(String path, {Map<String, dynamic>? data, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final resp = await _http.patch(uri, headers: await _headers(auth: auth, json: data != null), body: data != null ? jsonEncode(data) : null).timeout(AppConstants.connectTimeout!);
+    AppLogger.api('PATCH', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -143,6 +159,7 @@ class ApiService {
   static Future<http.Response> _delete(String path, {bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final resp = await _http.delete(uri, headers: await _headers(auth: auth)).timeout(AppConstants.connectTimeout!);
+    AppLogger.api('DELETE', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -428,7 +445,13 @@ class ApiService {
 
   static Future<Map<String, dynamic>> createUser(Map<String, dynamic> data) async {
     final r = await _post('/users', data: data);
-    return _parseBody(r);
+    final body = _parseBody(r);
+    final token = body['data']?['token'] as String? ?? body['token'] as String?;
+    if (token != null && token.isNotEmpty) {
+      final username = (data['username'] ?? '').toString().trim();
+      if (username.isNotEmpty) await setUserToken(username, token);
+    }
+    return body;
   }
 
   static Future<Map<String, dynamic>> updateUser(String id, Map<String, dynamic> data) async {

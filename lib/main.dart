@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:farmabook_flutter/router/app_router.dart';
 import 'package:farmabook_flutter/services/api_service.dart';
 import 'package:farmabook_flutter/utils/global_error_handler.dart';
+import 'package:farmabook_flutter/utils/app_logger.dart';
 import 'providers/theme_provider.dart';
 import 'controllers/almacen_controller.dart';
 import 'controllers/lotes_controller.dart';
@@ -27,16 +28,21 @@ void main() async {
   PaintingBinding.instance.imageCache.maximumSize = 20;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 10 << 20;
   FlutterError.onError = (details) {
+    AppLogger.e('Flutter error', details.exception, details.stack);
     FlutterError.presentError(details);
   };
   ui.PlatformDispatcher.instance.onError = (error, stack) {
-    debugPrint('Unhandled error: $error\n$stack');
+    AppLogger.e('Unhandled platform error', error, stack);
     return true;
   };
   await initializeDateFormatting('es', null);
   try {
     await ApiService.init();
-  } catch (_) {}
+    await AppLogger.init();
+    AppLogger.i('App initialized');
+  } catch (e) {
+    debugPrint('Init error: $e');
+  }
   runApp(
     MultiProvider(
       providers: [

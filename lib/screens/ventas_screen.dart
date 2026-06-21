@@ -129,18 +129,21 @@ class _VentasScreenState extends State<VentasScreen> {
   }
 
   Widget _buildHeader(BuildContext context, String title, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        children: [
-          Icon(icon, color: AppTheme.ayanamiBlue, size: 28),
-          const SizedBox(width: 12),
-          Text(title,
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: Theme.of(context).textTheme.titleLarge?.color)),
-        ],
+    return AnimatedEntry(
+      index: 0,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        child: Row(
+          children: [
+            Icon(icon, color: AppTheme.ayanamiBlue, size: 28),
+            const SizedBox(width: 12),
+            Text(title,
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Theme.of(context).textTheme.titleLarge?.color)),
+          ],
+        ),
       ),
     );
   }
@@ -166,23 +169,29 @@ class _VentasScreenState extends State<VentasScreen> {
           child: Column(
             children: [
               const SizedBox(height: 32),
-              _navButton(
-                icon: Icons.add_shopping_cart_rounded,
-                label: 'Vender',
-                isSelected: controller.vistaActual == VentasView.search,
-                onTap: () => controller.setVista(VentasView.search),
+              HoverScale(
+                child: _navButton(
+                  icon: Icons.add_shopping_cart_rounded,
+                  label: 'Vender',
+                  isSelected: controller.vistaActual == VentasView.search,
+                  onTap: () => controller.setVista(VentasView.search),
+                ),
               ),
-              _navButton(
-                icon: Icons.history_rounded,
-                label: 'Historial',
-                isSelected: controller.vistaActual == VentasView.history,
-                onTap: () => controller.setVista(VentasView.history),
+              HoverScale(
+                child: _navButton(
+                  icon: Icons.history_rounded,
+                  label: 'Historial',
+                  isSelected: controller.vistaActual == VentasView.history,
+                  onTap: () => controller.setVista(VentasView.history),
+                ),
               ),
-              _navButton(
-                icon: Icons.receipt_long_rounded,
-                label: 'Recibos',
-                isSelected: controller.vistaActual == VentasView.receipts,
-                onTap: () => controller.setVista(VentasView.receipts),
+              HoverScale(
+                child: _navButton(
+                  icon: Icons.receipt_long_rounded,
+                  label: 'Recibos',
+                  isSelected: controller.vistaActual == VentasView.receipts,
+                  onTap: () => controller.setVista(VentasView.receipts),
+                ),
               ),
               const Spacer(),
               Container(
@@ -252,7 +261,9 @@ class _VentasScreenState extends State<VentasScreen> {
       separatorBuilder: (context, index) => Divider(height: 1, color: Theme.of(context).dividerColor),
       itemBuilder: (context, index) {
         final sale = controller.ventasHistorial[index];
-        return ListTile(
+        return AnimatedEntry(
+          index: index,
+          child: ListTile(
           onTap: () => _showReceipt(context, sale),
           leading: CircleAvatar(
               backgroundColor: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
@@ -287,7 +298,8 @@ class _VentasScreenState extends State<VentasScreen> {
                 child: const Icon(Icons.cancel_outlined, size: 18, color: AppTheme.reiOrangeRed),
               ),
             ),
-          ]),
+            ]),
+          ),
         );
       },
     );
@@ -331,12 +343,12 @@ class _VentasScreenState extends State<VentasScreen> {
     if (controller.ventasHistorial.isEmpty) return const Center(child: Text('No hay recibos disponibles', style: TextStyle(color: Colors.grey)));
 
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 380,
+        mainAxisExtent: 215,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
       ),
       itemCount: controller.ventasHistorial.length,
       itemBuilder: (context, index) {
@@ -359,9 +371,10 @@ class _VentasScreenState extends State<VentasScreen> {
     final hora = _formatTime(_getSafeDate(sale));
     final numFactura = '#${sale['numeroFactura'] ?? sale['ventaId']}';
 
-    return InkWell(
+    return HoverScale(
+      scale: 1.015,
+      elevation: 4,
       onTap: () => _showReceipt(context, sale),
-      borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
@@ -375,7 +388,7 @@ class _VentasScreenState extends State<VentasScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppTheme.ayanamiBlue, AppTheme.ayanamiBlue.withValues(alpha: 0.85)],
@@ -405,7 +418,7 @@ class _VentasScreenState extends State<VentasScreen> {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -444,8 +457,11 @@ class _VentasScreenState extends State<VentasScreen> {
                         );
                       }),
                     if (productos.length > 3)
-                      Text('+${productos.length - 3} más',
-                        style: TextStyle(fontSize: 10, color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700)),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text('+${productos.length - 3} más',
+                          style: const TextStyle(fontSize: 10, color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700)),
+                      ),
                   ],
                 ),
               ),

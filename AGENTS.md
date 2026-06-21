@@ -2,9 +2,9 @@
 
 ## UI Architecture
 - **State management**: Provider + ChangeNotifier
-- **Routing**: GoRouter
+- **Routing**: GoRouter with CustomTransitionPage (fade+slide page transitions)
 - **Theme**: `AppTheme` (light/dark) with Rei Ayanami palette
-- **Animations**: `AnimatedEntry`, `HoverScale`, `ParticleBackground` in `lib/widgets/animations.dart`
+- **Animations widget library**: `lib/widgets/animations.dart` — `AnimatedEntry` (6 entry styles: fadeUp, fadeDown, fadeLeft, fadeRight, zoom, bounce), `StaggeredList`, `HoverScale` (with glow), `GlowEffect` (pulsing glow), `GlassContainer` (glassmorphism), `AnimatedCounter`, `ParticleBackground`
 - **Shimmer loading**: `ShimmerList` in `lib/widgets/shimmer_loading.dart`
 
 ## Key Fixes (Session 2026-06-18)
@@ -25,6 +25,7 @@
 
 ### Login screen (`login_screen.dart`)
 - `_AnimatedLogo` now renders `assets/images/logo.png` (floating animation preserved)
+- Keyboard navigation: Enter en "Usuario" salta a "Contraseña", Enter en "Contraseña" ejecuta inicio de sesión
 
 ### Sidebar drawer (`dashboard_screen.dart`)
 - `_buildDrawerHeader` now renders `assets/images/logo_base.png`
@@ -55,6 +56,15 @@ Atajos de teclado para escritorio (Windows/Linux/Mac):
 | `F2` | Enfocar campo de código de barras |
 | `Escape` | Limpiar búsqueda / volver a búsqueda |
 | `Ctrl+Enter` | Cobrar (procesar venta) |
+
+## Known Issue: UTF-16LE encoding corruption
+If you get cryptic errors mentioning "dot-shorthands", undefined single-letter names (`t`, `f`, `z`, etc.), or the Read tool says "Cannot read binary file", the file was saved as UTF-16LE instead of UTF-8.
+
+**Fix** (PowerShell):
+```powershell
+$content = Get-Content -Path <file> -Encoding Unicode -Raw
+[System.IO.File]::WriteAllText("<file>", $content, [System.Text.Encoding]::UTF8)
+```
 
 ## Build & Deploy
 - `flutter build windows --release` → output in `build\windows\x64\runner\Release\`
