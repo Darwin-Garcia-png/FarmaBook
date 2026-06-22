@@ -317,7 +317,7 @@ class _InicioScreenState extends State<InicioScreen> {
                   _moduleBtn('Almacén', Icons.inventory_2_rounded, AppTheme.ayanamiBlue, () => _go(1)),
                 ]),
                 const SizedBox(height: 10),
-                Row(children: [
+                if (UserSession.isDueno) Row(children: [
                   _moduleBtn('Lotes', Icons.layers_rounded, AppTheme.reiOrangeRed, () => _go(3)),
                   const SizedBox(width: 10),
                   _moduleBtn('Stats', Icons.insights_rounded, const Color(0xFF8B5CF6), () => _go(4)),
