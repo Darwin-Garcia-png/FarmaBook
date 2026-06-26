@@ -7,8 +7,6 @@ class ConfigController extends ChangeNotifier {
 
   bool notificaciones = true;
   String idiomaSeleccionado = 'Español (Colombia)';
-  bool darkMode = false;
-
   // New Local Fields
   String pharmacyName = 'Mi Farmacia';
   String userEmail = '';
@@ -17,7 +15,6 @@ class ConfigController extends ChangeNotifier {
   bool isLoading = false;
 
   Future<void> cargarPreferencias() async {
-    final dark = await _storage.read(key: 'dark_mode') ?? 'false';
     final notif = await _storage.read(key: 'notificaciones') ?? 'true';
     final idioma = await _storage.read(key: 'idioma') ?? 'Español (Colombia)';
     final pName = await _storage.read(key: 'pharmacy_name') ?? 'Mi Farmacia';
@@ -25,7 +22,6 @@ class ConfigController extends ChangeNotifier {
         await _storage.read(key: 'user_email') ?? 'usuario@farmabook.com';
     final backup = await _storage.read(key: 'last_backup');
 
-    darkMode = dark == 'true';
     notificaciones = notif == 'true';
     idiomaSeleccionado = idioma;
     pharmacyName = pName;
@@ -36,12 +32,6 @@ class ConfigController extends ChangeNotifier {
 
   Future<void> guardarPreferencia(String key, String value) async {
     await _storage.write(key: key, value: value);
-  }
-
-  void cambiarTema(bool value) {
-    darkMode = value;
-    guardarPreferencia('dark_mode', value.toString());
-    notifyListeners();
   }
 
   void cambiarNotificaciones(bool value) {

@@ -7,7 +7,6 @@ import 'package:farmabook_flutter/router/app_router.dart';
 import 'package:farmabook_flutter/services/api_service.dart';
 import 'package:farmabook_flutter/utils/global_error_handler.dart';
 import 'package:farmabook_flutter/utils/app_logger.dart';
-import 'providers/theme_provider.dart';
 import 'controllers/almacen_controller.dart';
 import 'controllers/lotes_controller.dart';
 import 'controllers/dashboard_controller.dart';
@@ -46,7 +45,6 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AlmacenController()),
         ChangeNotifierProvider(create: (_) => LotesController()),
         ChangeNotifierProvider(create: (_) => DashboardController()),
@@ -62,14 +60,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
     return MaterialApp.router(
       title: 'FarmaBook',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeProvider.themeMode,
       routerConfig: appRouter,
       scaffoldMessengerKey: globalScaffoldMessengerKey,
     );

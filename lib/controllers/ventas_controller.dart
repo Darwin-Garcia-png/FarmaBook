@@ -95,6 +95,55 @@ class VentasController extends ChangeNotifier {
   void touch() {
     _autoClearTimer?.cancel();
     _autoClearTimer = null;
+    cargarProductosMasVendidos();
+  }
+
+  Future<void> cargarProductosMasVendidos() async {
+    isLoading = true;
+    mensaje = null;
+    error = null;
+    productosEncontrados = [];
+    notifyListeners();
+
+    try {
+      List<dynamic> rawList = [];
+
+      try {
+        final topResponse = await ApiService.getTopProducts();
+        if (topResponse['data'] is List) {
+          rawList = topResponse['data'] as List<dynamic>;
+        } else if (topResponse['data'] is Map) {
+          final map = topResponse['data'] as Map<String, dynamic>;
+          if (map['products'] is List) {
+            rawList = map['products'] as List<dynamic>;
+          }
+        } else if (topResponse['products'] is List) {
+          rawList = topResponse['products'] as List<dynamic>;
+        }
+      } catch (_) {}
+
+      if (rawList.isEmpty) {
+        rawList = await ApiService.getProductos(limit: 50);
+      }
+
+      final List<Producto> hydrated = [];
+      for (var json in rawList) {
+        var producto = Producto.fromJson(json);
+        cacheProductos[producto.productoId] = producto;
+        final enriched = await _enrichWithBatches(producto);
+        if (enriched != null) {
+          producto = _updateProducto(producto, enriched);
+          cacheProductos[producto.productoId] = producto;
+        }
+        hydrated.add(producto);
+      }
+      productosEncontrados = hydrated;
+    } catch (e) {
+      error = 'Error al cargar productos: $e';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   void scheduleAutoClear() {
@@ -331,6 +380,7 @@ class VentasController extends ChangeNotifier {
       _batchCache.clear();
       presentacionMap.clear();
       notifyListeners();
+      cargarProductosMasVendidos();
       return result;
     } catch (e) {
       error = 'Error al registrar venta: $e';

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/config_controller.dart';
-import '../providers/theme_provider.dart';
 import '../controllers/dashboard_controller.dart';
 import '../theme/app_theme.dart';
 import '../utils/user_session.dart';
+import '../services/api_service.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/animations.dart';
@@ -68,15 +68,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
-  void _handleThemeToggle(bool isDark) {
-    Provider.of<ThemeProvider>(context, listen: false).toggleTheme(isDark);
-    _controller.cambiarTema(isDark);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
     final dashController = Provider.of<DashboardController>(context, listen: false);
 
     return Scaffold(
@@ -86,6 +79,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
         subtitle: 'Configuración general de la farmacia',
         icon: Icons.settings_rounded,
         baseColor: AppTheme.ayanamiBlue,
+        hideSettings: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).textTheme.titleLarge?.color),
           tooltip: 'Volver',
@@ -128,8 +122,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
                               )),
                             ],
                           )),
-                          const SizedBox(height: 40),
-                          AnimatedEntry(index: 2, child: _buildSettingsGroup(
+                          if (UserSession.isDueno) const SizedBox(height: 40),
+                          if (UserSession.isDueno) AnimatedEntry(index: 2, child: _buildSettingsGroup(
                             title: 'GESTIÓN DE EQUIPO',
                             children: [
                               HoverScale(scale: 1.01, elevation: 4, child: ListTile(
@@ -148,18 +142,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                               )),
                             ],
                           )),
-                          const SizedBox(height: 40),
-                          AnimatedEntry(index: 3, child: _buildSettingsGroup(
-                            title: 'EXPERIENCIA Y PREFERENCIAS',
-                            children: [
-                              _buildSwitchTile(
-                                  'Modo Oscuro',
-                                  'Adaptación visual premium estilo consola Rei',
-                                  Icons.dark_mode_rounded,
-                                  isDark,
-                                  _handleThemeToggle),
-                            ],
-                          )),
                         ],
                       ),
                     ),
@@ -170,36 +152,123 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 
   void _showMyAccountDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final emailCtrl = TextEditingController(text: UserSession.email ?? '');
+    final nameCtrl = TextEditingController();
+    bool saving = false;
+
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.person_rounded, size: 24, color: AppTheme.ayanamiBlue),
+      builder: (ctx) => StatefulBuilder(
+        builder: (_, setDialogState) => Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.person_rounded, size: 24, color: AppTheme.ayanamiBlue),
+                ),
+                const SizedBox(width: 14),
+                const Text('Mi Información', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () => Navigator.pop(ctx),
+                  style: IconButton.styleFrom(backgroundColor: Colors.grey.withValues(alpha: 0.1)),
+                ),
+              ]),
+              const Divider(height: 24),
+              _detailRow('ID de Usuario', '${UserSession.userId ?? '—'}'),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre de Usuario',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    isDense: true,
+                  ),
+                ),
               ),
-              const SizedBox(width: 14),
-              const Text('Mi Información', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
-                onPressed: () => Navigator.pop(ctx),
-                style: IconButton.styleFrom(backgroundColor: Colors.grey.withValues(alpha: 0.1)),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(
+                  controller: emailCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo Electrónico',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              _detailRow('Rol', UserSession.role ?? '—'),
+              _detailRow('Tipo de Cuenta', UserSession.isDueno ? 'Administrador' : 'Empleado'),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: saving
+                      ? null
+                      : () async {
+                          setDialogState(() => saving = true);
+                          try {
+                            final data = <String, dynamic>{};
+                            if (emailCtrl.text != (UserSession.email ?? '')) {
+                              data['email'] = emailCtrl.text;
+                            }
+                            if (nameCtrl.text.isNotEmpty) {
+                              data['username'] = nameCtrl.text;
+                            }
+                            if (data.isNotEmpty && UserSession.userId != null) {
+                              final result = await ApiService.updateUser(
+                                  UserSession.userId.toString(), data);
+                              UserSession.save(result);
+                              if (ctx.mounted) {
+                                setState(() {});
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Información actualizada correctamente')),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text('Error al actualizar: $e')),
+                              );
+                            }
+                          } finally {
+                            if (ctx.mounted) {
+                              setDialogState(() => saving = false);
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.ayanamiBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Text('Guardar Cambios',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 15)),
+                ),
               ),
             ]),
-            const Divider(height: 24),
-            _detailRow('ID de Usuario', '${UserSession.userId ?? '—'}'),
-            _detailRow('Correo Electrónico', UserSession.email ?? '—'),
-            _detailRow('Rol', UserSession.role ?? '—'),
-            _detailRow('Tipo de Cuenta', UserSession.isDueno ? 'Administrador' : 'Empleado'),
-          ]),
+          ),
         ),
       ),
     );
@@ -272,35 +341,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
           child: Column(children: children),
         ),
       ],
-    );
-  }
-
-  Widget _buildSwitchTile(String title, String subtitle, IconData icon,
-      bool value, ValueChanged<bool> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: SwitchListTile(
-        secondary: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
-                shape: BoxShape.circle),
-            child: Icon(icon, color: AppTheme.ayanamiBlue, size: 24)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(subtitle,
-              style: TextStyle(
-                color: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.color
-                  ?.withValues(alpha: 0.6) ?? Colors.grey)),
-        ),
-        value: value,
-        activeColor: AppTheme.ayanamiBlue,
-        onChanged: onChanged,
-      ),
     );
   }
 }

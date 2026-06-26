@@ -14,6 +14,7 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
   final Color baseColor;
   final Widget? trailing;
   final Widget? leading;
+  final bool hideSettings;
 
   const PremiumHeader({
     super.key,
@@ -23,6 +24,7 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
     required this.baseColor,
     this.trailing,
     this.leading,
+    this.hideSettings = false,
   });
 
   @override
@@ -114,7 +116,7 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
               if (trailing != null) trailing!,
               const SizedBox(width: 8),
               _NotifBell(baseColor: baseColor),
-              IconButton(
+              if (!hideSettings) IconButton(
                 icon:
                     Icon(Icons.settings_outlined, color: baseColor, size: 22),
                 onPressed: () => context.push('/configuracion'),
@@ -268,12 +270,11 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
 
   void _showDialog(BuildContext context, NotificacionesController notifCtrl) {
     final list = List<Map<String, dynamic>>.from(notifCtrl.notificaciones);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: SizedBox(
           width: 500,
@@ -283,7 +284,7 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
               child: Row(children: [
                 const Icon(Icons.notifications_rounded, size: 22, color: AppTheme.ayanamiBlue),
                 const SizedBox(width: 10),
-                Text('Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+                Text('Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black87)),
                 const Spacer(),
                 if (list.isNotEmpty)
                   GestureDetector(
@@ -304,15 +305,15 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
               ]),
             ),
             const SizedBox(height: 16),
-            if (list.isEmpty) _buildEmptyState(isDark) else Flexible(child: _buildList(list, isDark, ctx)),
-            _buildFooter(ctx, isDark),
+            if (list.isEmpty) _buildEmptyState() else Flexible(child: _buildList(list, ctx)),
+            _buildFooter(ctx),
           ]),
         ),
       ),
     ).then((_) => notifCtrl.markAllAsRead());
   }
 
-  Widget _buildEmptyState(bool isDark) {
+  Widget _buildEmptyState() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
       child: Column(children: [
@@ -325,7 +326,7 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
         const Text('Todo al día', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
         const SizedBox(height: 6),
         Text('No hay notificaciones pendientes',
-            style: TextStyle(fontSize: 13, color: isDark ? Colors.grey.shade400 : Colors.grey.shade500, fontWeight: FontWeight.w500)),
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500)),
       ]),
     );
   }
@@ -340,7 +341,7 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
     }
   }
 
-  Widget _buildList(List<Map<String, dynamic>> list, bool isDark, BuildContext dialogCtx) {
+  Widget _buildList(List<Map<String, dynamic>> list, BuildContext dialogCtx) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       shrinkWrap: true,
@@ -354,7 +355,6 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
           index: i,
           isExpiry: isExpiry,
           mensaje: n['mensaje']?.toString() ?? '',
-          isDark: isDark,
           tipo: tipo,
           itemId: id,
           onTap: () => _navigateTo(dialogCtx, tipo, id),
@@ -363,11 +363,11 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
     );
   }
 
-  Widget _buildFooter(BuildContext ctx, bool isDark) {
+  Widget _buildFooter(BuildContext ctx) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06))),
+        border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.06))),
       ),
       child: SizedBox(
         width: double.infinity,
@@ -395,11 +395,10 @@ class _NotifItem extends StatefulWidget {
   final int index;
   final bool isExpiry;
   final String mensaje;
-  final bool isDark;
   final String tipo;
   final String itemId;
   final VoidCallback onTap;
-  const _NotifItem({required this.index, required this.isExpiry, required this.mensaje, required this.isDark, required this.tipo, required this.itemId, required this.onTap});
+  const _NotifItem({required this.index, required this.isExpiry, required this.mensaje, required this.tipo, required this.itemId, required this.onTap});
 
   @override
   State<_NotifItem> createState() => _NotifItemState();
@@ -439,7 +438,7 @@ class _NotifItemState extends State<_NotifItem> with SingleTickerProviderStateMi
           onTap: widget.onTap,
           child: Container(
             decoration: BoxDecoration(
-              color: widget.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: color.withValues(alpha: 0.15)),
               boxShadow: [BoxShadow(color: color.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
@@ -470,7 +469,7 @@ class _NotifItemState extends State<_NotifItem> with SingleTickerProviderStateMi
                       ),
                     ]),
                     const SizedBox(height: 6),
-                    Text(widget.mensaje, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: widget.isDark ? Colors.grey.shade300 : Colors.black87, height: 1.3)),
+                    Text(widget.mensaje, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87, height: 1.3)),
                   ])),
                 ]),
               ),

@@ -23,6 +23,7 @@ class AlmacenController extends ChangeNotifier {
   String? categoriaSeleccionada;
   String? casaSeleccionada;
   String? proveedorSeleccionada;
+  String? presentacionSeleccionada;
   String? error;
 
   final TextEditingController searchCtrl = TextEditingController();
@@ -109,6 +110,9 @@ class AlmacenController extends ChangeNotifier {
         }
         if (proveedorSeleccionada != null) {
           extraParams['proveedorId'] = proveedorSeleccionada;
+        }
+        if (presentacionSeleccionada != null) {
+          extraParams['presentacionId'] = presentacionSeleccionada;
         }
         // Note: Si el backend no soporta "bajo_stock" directo, podríamos tener que filtrarlo localmente.
         // Asumiendo que no lo soporta en query, lo filtramos en Dart.
@@ -201,6 +205,11 @@ class AlmacenController extends ChangeNotifier {
 
   void updateProveedorSeleccionada(String? v) {
     proveedorSeleccionada = v;
+    fetchProducts(isRefresh: true);
+  }
+
+  void updatePresentacionSeleccionada(String? v) {
+    presentacionSeleccionada = v;
     fetchProducts(isRefresh: true);
   }
 }

@@ -346,7 +346,7 @@ class _InicioScreenState extends State<InicioScreen> {
               const SizedBox(width: 10),
               Text('FARMABOOK', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
               const Spacer(),
-              if (UserSession.role == null || UserSession.isDueno) IconButton(icon: Icon(Icons.settings_outlined, color: text.withValues(alpha: 0.5)), onPressed: () => GoRouter.of(context).push('/configuracion')),
+              IconButton(icon: Icon(Icons.settings_outlined, color: text.withValues(alpha: 0.5)), onPressed: () => GoRouter.of(context).push('/configuracion')),
             ]),
           ),
         ),

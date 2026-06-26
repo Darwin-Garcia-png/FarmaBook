@@ -11,12 +11,6 @@ class AppTheme {
   static const softWhite = Color(0xFFEDF2F7);
   static const reiPurple = Color(0xFF805AD5);
 
-  static const blackReiBase = Color(0xFF0F1115);
-  static const darkGrayRei = Color(0xFF1A1A1A);
-  static const reiBlueDark = Color(0xFF5A8BCF);
-  static const reiRedDark = Color(0xFF7E0202);
-  static const reiGreenDark = Color(0xFF3C5A4A);
-
   static const primaryBlue = ayanamiBlue;
   static const lightBlue = Color(0xFFB3D1FF);
   static const powderBlue = softWhite;
@@ -113,78 +107,6 @@ class AppTheme {
         bodyLarge: TextStyle(color: darkSlate),
         bodyMedium: TextStyle(color: darkSlate),
         titleLarge: TextStyle(color: darkSlate, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      primaryColor: reiBlueDark,
-      scaffoldBackgroundColor: blackReiBase,
-      colorScheme: const ColorScheme.dark(
-        primary: reiBlueDark,
-        secondary: reiGreenDark,
-        error: reiRedDark,
-        surface: darkGrayRei,
-        onSurface: softWhite,
-        onSurfaceVariant: softWhite,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: darkGrayRei,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 4,
-        color: darkGrayRei,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: _elevatedStyle.copyWith(
-          elevation: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) return 4;
-            if (states.contains(WidgetState.pressed)) return 1;
-            return 0;
-          }),
-          backgroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) return reiBlueDark.withValues(alpha: 0.9);
-            return reiBlueDark;
-          }),
-          foregroundColor: WidgetStateProperty.all(Colors.white),
-          overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.15)),
-          shadowColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) return reiBlueDark.withValues(alpha: 0.15);
-            return Colors.transparent;
-          }),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: _outlinedStyle.copyWith(
-          side: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) return BorderSide(color: reiBlueDark.withValues(alpha: 0.6));
-            return BorderSide(color: reiBlueDark.withValues(alpha: 0.3));
-          }),
-          foregroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) return reiBlueDark.withValues(alpha: 0.9);
-            return reiBlueDark.withValues(alpha: 0.8);
-          }),
-          overlayColor: WidgetStateProperty.all(reiBlueDark.withValues(alpha: 0.08)),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: _textStyle.copyWith(
-          foregroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) return reiBlueDark.withValues(alpha: 0.9);
-            return reiBlueDark;
-          }),
-          overlayColor: WidgetStateProperty.all(reiBlueDark.withValues(alpha: 0.08)),
-        ),
-      ),
-      textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: softWhite),
-        bodyMedium: TextStyle(color: softWhite),
       ),
     );
   }

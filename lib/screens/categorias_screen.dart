@@ -365,6 +365,11 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08))),
       ),
       child: Row(children: [
+        IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: text),
+          onPressed: () => Navigator.pop(context),
+        ),
+        const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(

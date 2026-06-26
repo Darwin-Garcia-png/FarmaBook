@@ -208,6 +208,22 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
                   onChanged: controller.updateProveedorSeleccionada,
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildDropdown<String>(
+                  context: context,
+                  value: controller.presentacionSeleccionada,
+                  hint: 'Todas las presentaciones',
+                  items: controller.presentaciones.map((p) {
+                    final id = p['presentacionId']?.toString() ?? '';
+                    return DropdownMenuItem(
+                      value: id,
+                      child: Text(p['nombre']?.toString() ?? 'Sin nombre', style: const TextStyle(fontSize: 13)),
+                    );
+                  }).toList(),
+                  onChanged: controller.updatePresentacionSeleccionada,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),

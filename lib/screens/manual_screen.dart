@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../controllers/dashboard_controller.dart';
+import '../utils/user_session.dart';
 
 class ManualScreen extends StatelessWidget {
   const ManualScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black);
-    final cardColor = Theme.of(context).cardTheme.color ?? (isDark ? const Color(0xFF1A1A1A) : Colors.white);
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final cardColor = Theme.of(context).cardTheme.color ?? Colors.white;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -103,14 +103,14 @@ class ManualScreen extends StatelessWidget {
           '▸ Cobrar: Presiona "Realizar Venta" — el stock se descuenta al instante.\n'
           '▸ Recibo: Se genera un ticket en pantalla; puedes imprimirlo.',
           Icons.point_of_sale_rounded, AppTheme.greenMetal, cardColor, textColor),
-        _buildCard(context, 'Gestión de Lotes', 'Control de fechas de vencimiento.',
+        if (UserSession.isDueno) _buildCard(context, 'Gestión de Lotes', 'Control de fechas de vencimiento.',
           'Evita pérdidas por caducidad.\n\n'
           '▸ Semáforo visual: Verde = Vigente, Amarillo = Próximo a vencer (30 días), Rojo = Vencido.\n'
           '▸ Registrar lote: Al agregar producto, indica lote y fecha de vencimiento.\n'
           '▸ Trazabilidad: Sabes exactamente qué lote se vendió primero (FIFO).\n'
           '▸ Alertas: El sistema notifica con 30 días de anticipación.',
           Icons.layers_outlined, AppTheme.reiOrangeRed, cardColor, textColor),
-        _buildCard(context, 'Estadísticas', 'Análisis financiero y reportes.',
+        if (UserSession.isDueno) _buildCard(context, 'Estadísticas', 'Análisis financiero y reportes.',
           'Datos completos del negocio.\n\n'
           '▸ Resumen del día: Ingresos, ventas, ticket promedio, unidades, hora pico.\n'
           '▸ Ventas por hora: Gráfica de barras con las 24 horas del día.\n'
@@ -133,7 +133,7 @@ class ManualScreen extends StatelessWidget {
           '▸ Auditoría: Revisa qué ocurrió minuto a minuto.\n'
           '▸ Exportación: Puedes consultar recibos individuales.',
           Icons.history_rounded, AppTheme.greenMetal, cardColor, textColor),
-        _buildCard(context, 'Catálogos', 'Configuración del sistema.',
+        if (UserSession.isDueno) _buildCard(context, 'Catálogos', 'Configuración del sistema.',
           'Datos maestros del sistema.\n\n'
           '▸ Proveedores: Nombres, teléfonos, direcciones de tus distribuidores.\n'
           '▸ Categorías: Clasificación de productos (genéricos, patente, etc.).\n'

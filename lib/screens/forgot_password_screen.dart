@@ -50,9 +50,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: Theme.of(context).brightness == Brightness.dark
-                    ? const [Color(0xFF0F1115), Color(0xFF1A1A2E), Color(0xFF2A4365)]
-                    : const [Color(0xFF6DABE4), Color(0xFF2A4365), Color(0xFF1A2744)],
+                colors: const [Color(0xFF6DABE4), Color(0xFF2A4365), Color(0xFF1A2744)],
                 stops: const [0.0, 0.5, 1.0],
               ),
             ),
