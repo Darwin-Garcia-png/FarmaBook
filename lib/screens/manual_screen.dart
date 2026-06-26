@@ -86,13 +86,15 @@ class ManualScreen extends StatelessWidget {
           '▸ Alertas activas: Stock bajo y productos próximos a vencer.\n'
           '▸ Módulos rápidos: Acceso directo a las funciones más usadas.',
           Icons.dashboard_rounded, AppTheme.ayanamiBlue, cardColor, textColor),
-        _buildCard(context, 'Almacén Central', 'Gestión completa de inventario y productos.',
-          'Control total del stock.\n\n'
-          '▸ Agregar producto: Botón "+" — ingresa nombre, presentación, precio, categoria.\n'
-          '▸ Editar: Toca un producto para modificar precio o datos.\n'
-          '▸ Buscar: Filtra por nombre o código de barras.\n'
-          '▸ Stock mínimo: Define un límite por producto; el sistema alerta al llegar a ese nivel.\n'
-          '▸ Categorías: Organiza por tipo (analgésico, antibiótico, etc.).',
+        _buildCard(context, 'Almacén Central',
+          UserSession.isDueno ? 'Gestión completa de inventario y productos.' : 'Visualización y consulta de inventario.',
+          UserSession.isDueno ? 'Control total del stock.\n\n'
+              '▸ Agregar producto: Botón "+" — ingresa nombre, presentación, precio, categoria.\n'
+              '▸ Editar: Toca un producto para modificar precio o datos.\n'
+              '▸ Buscar: Filtra por nombre o código de barras.\n'
+              '▸ Stock mínimo: Define un límite por producto; el sistema alerta al llegar a ese nivel.\n'
+              '▸ Categorías: Organiza por tipo (analgésico, antibiótico, etc.).'
+              : 'Consulta de productos.\n\n▸ Buscar: Filtra por nombre o código de barras.\n▸ Ver stock: Revisa cantidades disponibles.',
           Icons.inventory_2_rounded, const Color(0xFF8B5CF6), cardColor, textColor),
         _buildCard(context, 'Punto de Venta', 'Realizar ventas y generar tickets.',
           'Flujo de venta rápida.\n\n'
@@ -213,7 +215,7 @@ class ManualScreen extends StatelessWidget {
 
   Widget _buildFlujos(Color cardColor, Color textColor) {
     return Column(children: [
-      _flujo(cardColor, textColor, 'Registrar un producto nuevo',
+      if (UserSession.isDueno) _flujo(cardColor, textColor, 'Registrar un producto nuevo',
         Icons.add_box_rounded, const Color(0xFF8B5CF6),
         '1. Ve a Almacén Central.\n'
         '2. Presiona el botón "+" (esquina inferior derecha).\n'
@@ -221,7 +223,7 @@ class ManualScreen extends StatelessWidget {
         '4. Selecciona la categoría (si no existe, créala en Catálogos).\n'
         '5. Opcional: agrega lote con fecha de vencimiento.\n'
         '6. Presiona "Guardar". El producto ya está disponible para vender.'),
-      const SizedBox(height: 16),
+      if (UserSession.isDueno) const SizedBox(height: 16),
       _flujo(cardColor, textColor, 'Realizar una venta',
         Icons.shopping_cart_checkout_rounded, AppTheme.greenMetal,
         '1. Ve a Punto de Venta.\n'
@@ -232,7 +234,7 @@ class ManualScreen extends StatelessWidget {
         '6. Presiona "Realizar Venta".\n'
         '7. Se genera el recibo — puedes imprimirlo o cerrar.'),
       const SizedBox(height: 16),
-      _flujo(cardColor, textColor, 'Revisar estadísticas del negocio',
+      if (UserSession.isDueno) _flujo(cardColor, textColor, 'Revisar estadísticas del negocio',
         Icons.insights_rounded, const Color(0xFFF59E0B),
         '1. Ve a Estadísticas.\n'
         '2. Revisa los indicadores del día (ingresos, ventas, ticket promedio).\n'
@@ -241,8 +243,8 @@ class ManualScreen extends StatelessWidget {
         '5. Al final están los rankings de productos y categorías.\n'
         '6. Presiona el botón PDF para descargar un reporte completo.\n'
         '7. Presiona el ojo para ver el resumen ejecutivo (cierre de caja).'),
-      const SizedBox(height: 16),
-      _flujo(cardColor, textColor, 'Gestionar inventario y alertas',
+      if (UserSession.isDueno) const SizedBox(height: 16),
+      if (UserSession.isDueno) _flujo(cardColor, textColor, 'Gestionar inventario y alertas',
         Icons.notifications_active_rounded, AppTheme.reiOrangeRed,
         '1. En el Panel de Inicio revisa las alertas activas.\n'
         '2. Si hay stock bajo, ve a Almacén Central y agrega inventario.\n'
@@ -285,17 +287,17 @@ class ManualScreen extends StatelessWidget {
       _faq(cardColor, textColor, '¿Qué significa el semáforo en Gestión de Lotes?',
         'Verde = producto vigente. Amarillo = vence en menos de 30 días. Rojo = ya venció. '
         'Útil para aplicar rotación FIFO (primero en vencer, primero en salir) y evitar pérdidas.'),
-      _faq(cardColor, textColor, '¿Cómo descargo el reporte de estadísticas?',
+      if (UserSession.isDueno) _faq(cardColor, textColor, '¿Cómo descargo el reporte de estadísticas?',
         'En la pantalla de Estadísticas, presiona el ícono de PDF en la barra superior. '
         'El archivo se guarda automáticamente en tu carpeta de Descargas.'),
-      _faq(cardColor, textColor, '¿Puedo tener varios usuarios en el sistema?',
+      if (UserSession.isDueno) _faq(cardColor, textColor, '¿Puedo tener varios usuarios en el sistema?',
         'Sí. Ve a Catálogos > Usuarios y presiona "Agregar". '
         'Cada usuario tiene su propia contraseña. El administrador puede gestionar permisos.'),
       _faq(cardColor, textColor, '¿Qué hago si el sistema no encuentra un producto?',
         'Primero verifica que esté registrado en Almacén Central. '
         'Si existe pero no aparece en el buscador, puede ser un error de conexión — intenta refrescar. '
         'Si el problema persiste, revisa que tenga stock disponible.'),
-      _faq(cardColor, textColor, '¿Cómo sé cuánto gané hoy?',
+      if (UserSession.isDueno) _faq(cardColor, textColor, '¿Cómo sé cuánto gané hoy?',
         'En el Panel de Inicio, el primer KPI muestra los ingresos del día. '
         'Para un análisis más detallado, ve a Estadísticas donde verás ingresos, egresos, balance, ticket promedio y más.'),
     ]);
@@ -352,7 +354,7 @@ class ManualScreen extends StatelessWidget {
         'Esto puede ocurrir en Windows por problemas de gráficos. '
         'Cierra la aplicación completamente y vuelve a abrirla. '
         'Si el problema continúa, reinicia tu computadora. FarmaBook está optimizado para evitar este error.'),
-      _trouble(cardColor, textColor, 'Los datos de estadísticas no se cargan',
+      if (UserSession.isDueno) _trouble(cardColor, textColor, 'Los datos de estadísticas no se cargan',
         Icons.bar_chart_rounded,
         'Verifica tu conexión a internet. El sistema necesita obtener datos del servidor. '
         'Presiona el botón de refrescar (ícono circular) en la pantalla de Estadísticas. '

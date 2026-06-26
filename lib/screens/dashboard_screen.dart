@@ -85,6 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Consumer<NotificacionesController>(
                 builder: (context, notifCtrl, _) => _buildNotifItem(notifCtrl),
               ),
+              _buildCreditsItem(),
               _buildLogoutItem(),
               const SizedBox(height: 20),
             ],
@@ -329,6 +330,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: () {
           Navigator.pop(context);
           _showNotifDialog(context, notifCtrl);
+        },
+      ),
+    );
+  }
+
+  void _showCreditsDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.local_pharmacy_rounded, size: 48, color: AppTheme.ayanamiBlue),
+            ),
+            const SizedBox(height: 20),
+            const Text('FarmaBook', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 4),
+            const Text('Versión 1.0.0', style: TextStyle(fontSize: 13, color: Colors.grey)),
+            const SizedBox(height: 24),
+            const Text('Sistema de gestión farmacéutica', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 12),
+            const Text('Créditos', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.blueGrey, letterSpacing: 2)),
+            const SizedBox(height: 16),
+            _creditRow('Cristian Rabelo'),
+            const SizedBox(height: 8),
+            _creditRow('Jonathan Alarcon'),
+            const SizedBox(height: 8),
+            _creditRow('Darwin Garcia'),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.ayanamiBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: const Text('CERRAR', style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _creditRow(String name) {
+    return Row(
+      children: [
+        Container(
+          width: 32, height: 32,
+          decoration: BoxDecoration(
+            color: AppTheme.ayanamiBlue.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.person_rounded, size: 18, color: AppTheme.ayanamiBlue),
+        ),
+        const SizedBox(width: 12),
+        Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+      ],
+    );
+  }
+
+  Widget _buildCreditsItem() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        leading: const Icon(Icons.info_outline_rounded, color: Colors.grey, size: 22),
+        title: const Text('Acerca de',
+          style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        onTap: () {
+          Navigator.pop(context);
+          _showCreditsDialog();
         },
       ),
     );

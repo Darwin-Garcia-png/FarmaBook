@@ -37,37 +37,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
     if (mounted) setState(() {});
   }
 
-  void _showEditNameDialog() {
-    final ctrl = TextEditingController(text: _controller.pharmacyName);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Editar Nombre de Farmacia'),
-        content: TextField(
-          controller: ctrl,
-          decoration:
-              const InputDecoration(hintText: 'Ej. FarmaSalud Principal'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.ayanamiBlue,
-                foregroundColor: Colors.white),
-            onPressed: () {
-              _controller.cambiarNombreFarmacia(ctrl.text);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Guardar'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final dashController = Provider.of<DashboardController>(context, listen: false);
@@ -311,15 +280,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(_controller.pharmacyName, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                    const SizedBox(width: 12),
-                    IconButton(icon: const Icon(Icons.edit_rounded, size: 20, color: Colors.grey), onPressed: _showEditNameDialog),
-                  ],
-                ),
-                Text('Administrador de Sistema · ${_controller.userEmail}',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 14, fontWeight: FontWeight.w600)),
+                const Text('Farmabook', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                const Text('Sistema de gestión farmacéutica',
+                    style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w600)),
               ],
             ),
           ),

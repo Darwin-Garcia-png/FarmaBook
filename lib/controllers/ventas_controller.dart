@@ -68,8 +68,19 @@ class VentasController extends ChangeNotifier {
       final batches = await ApiService.getBatchesByProduct(id);
       if (batches.isNotEmpty) {
         int totalStock = 0;
+        DateTime? nearestExpiry;
         for (var b in batches) {
           totalStock += (b['cantidadDisponible'] as num? ?? 0).toInt();
+          final raw = b['fechaDeVencimiento']?.toString() ??
+              b['fechaVencimiento']?.toString();
+          if (raw != null) {
+            final d = DateTime.tryParse(raw);
+            if (d != null) {
+              if (nearestExpiry == null || d.isBefore(nearestExpiry)) {
+                nearestExpiry = d;
+              }
+            }
+          }
         }
 
         double price = producto.precioPorUnidad;
@@ -84,6 +95,7 @@ class VentasController extends ChangeNotifier {
           'batches': batches,
           'totalStock': totalStock,
           'price': price,
+          'nearestExpiryDate': nearestExpiry,
         };
         _batchCache[id] = enriched;
         return enriched;
@@ -252,6 +264,7 @@ class VentasController extends ChangeNotifier {
       precioPorUnidad: enriched['price'] ?? producto.precioPorUnidad,
       imagenUrl: producto.imagenUrl,
       dosisRecomendada: producto.dosisRecomendada,
+      nearestExpiryDate: enriched['nearestExpiryDate'] as DateTime?,
     );
   }
 

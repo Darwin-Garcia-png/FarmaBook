@@ -10,6 +10,7 @@ class Producto {
   final double precioPorUnidad;
   final String? imagenUrl;
   final String? dosisRecomendada;
+  final DateTime? nearestExpiryDate;
 
   Producto({
     required this.productoId,
@@ -23,6 +24,7 @@ class Producto {
     this.precioPorUnidad = 0.0,
     this.imagenUrl,
     this.dosisRecomendada,
+    this.nearestExpiryDate,
   });
 
   factory Producto.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,7 @@ class Producto {
       'precioPorUnidad': precioPorUnidad,
       if (imagenUrl != null) 'imagenUrl': imagenUrl,
       if (dosisRecomendada != null) 'dosisRecomendada': dosisRecomendada,
+      if (nearestExpiryDate != null) 'nearestExpiryDate': nearestExpiryDate!.toIso8601String(),
     };
   }
 }
