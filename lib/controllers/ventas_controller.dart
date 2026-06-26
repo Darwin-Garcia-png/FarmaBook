@@ -86,9 +86,13 @@ class VentasController extends ChangeNotifier {
         double price = producto.precioPorUnidad;
         if (price == 0.0) {
           final firstBatch = batches.first;
-          price = double.tryParse(
-                firstBatch['precioPorUnidad']?.toString() ?? '0') ??
-              0.0;
+          for (final f in ['precioPorUnidad', 'costoDeCompra', 'precioVenta', 'precio', 'precioCompra', 'precio_unitario', 'pvp']) {
+            final v = firstBatch[f];
+            if (v != null) {
+              price = double.tryParse(v.toString()) ?? 0.0;
+              if (price != 0.0) break;
+            }
+          }
         }
 
         final enriched = <String, dynamic>{

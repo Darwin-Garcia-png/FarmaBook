@@ -192,6 +192,16 @@ Sistema proactivo de alertas:
 
 ---
 
+## Anatomía de pantallas
+
+Cada screen tiene una estructura interna documentada en detalle en:
+
+➡️ **[docs/SCREEN_STRUCTURE.md](docs/SCREEN_STRUCTURE.md)**
+
+Incluye: árbol de widgets, nombres de métodos, líneas clave, estados de carga/error/vacío, dialogs y shortcuts de cada pantalla.
+
+---
+
 ## Estructura del proyecto
 
 ```
