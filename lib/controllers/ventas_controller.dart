@@ -60,6 +60,8 @@ class VentasController extends ChangeNotifier {
     }
   }
 
+  static const _priceFields = ['precioPorUnidad', 'precioVenta', 'precio_venta', 'pvp', 'precio_unidad', 'precioUnidad', 'precio', 'costoCompra', 'costoDeCompra', 'precioCompra'];
+
   Future<Map<String, dynamic>?> _enrichWithBatches(Producto producto) async {
     final id = producto.productoId;
     if (_batchCache.containsKey(id)) return _batchCache[id];
@@ -69,6 +71,7 @@ class VentasController extends ChangeNotifier {
       if (batches.isNotEmpty) {
         int totalStock = 0;
         DateTime? nearestExpiry;
+        double price = producto.precioPorUnidad;
         for (var b in batches) {
           totalStock += (b['cantidadDisponible'] as num? ?? 0).toInt();
           final raw = b['fechaDeVencimiento']?.toString() ??
@@ -81,16 +84,13 @@ class VentasController extends ChangeNotifier {
               }
             }
           }
-        }
-
-        double price = producto.precioPorUnidad;
-        if (price == 0.0) {
-          final firstBatch = batches.first;
-          for (final f in ['precioPorUnidad', 'costoDeCompra', 'precioVenta', 'precio', 'precioCompra', 'precio_unitario', 'pvp']) {
-            final v = firstBatch[f];
-            if (v != null) {
-              price = double.tryParse(v.toString()) ?? 0.0;
-              if (price != 0.0) break;
+          if (price == 0.0) {
+            for (final f in _priceFields) {
+              final v = b[f];
+              if (v != null) {
+                price = double.tryParse(v.toString()) ?? 0.0;
+                if (price != 0.0) break;
+              }
             }
           }
         }
@@ -153,6 +153,7 @@ class VentasController extends ChangeNotifier {
         }
         hydrated.add(producto);
       }
+      _sortProductos(hydrated);
       productosEncontrados = hydrated;
     } catch (e) {
       error = 'Error al cargar productos: $e';
@@ -160,6 +161,26 @@ class VentasController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  void _sortProductos(List<Producto> list) {
+    final now = DateTime.now();
+    list.sort((a, b) {
+      int scoreA = 0, scoreB = 0;
+      final aExp = a.nearestExpiryDate;
+      final bExp = b.nearestExpiryDate;
+      if (aExp != null && aExp.isAfter(now)) {
+        final daysA = aExp.difference(now).inDays;
+        if (daysA >= 10 && daysA <= 30) scoreA += 2;
+      }
+      if (bExp != null && bExp.isAfter(now)) {
+        final daysB = bExp.difference(now).inDays;
+        if (daysB >= 10 && daysB <= 30) scoreB += 2;
+      }
+      if (a.cantidadDisponible > 0 && a.cantidadDisponible < 30) scoreA += 1;
+      if (b.cantidadDisponible > 0 && b.cantidadDisponible < 30) scoreB += 1;
+      return scoreB.compareTo(scoreA);
+    });
   }
 
   void scheduleAutoClear() {
@@ -243,6 +264,7 @@ class VentasController extends ChangeNotifier {
         hydrated.add(producto);
       }
 
+      _sortProductos(hydrated);
       productosEncontrados = hydrated;
       if (productosEncontrados.isEmpty) {
         error = 'No se encontraron productos con: $nombre';

@@ -42,11 +42,21 @@ class Producto {
           : null,
       cantidadDisponible:
           int.tryParse(json['cantidadDisponible']?.toString() ?? '0') ?? 0,
-      precioPorUnidad:
-          double.tryParse(json['precioPorUnidad']?.toString() ?? '0') ?? 0.0,
+      precioPorUnidad: _parsePrice(json),
       imagenUrl: json['imagenUrl']?.toString(),
       dosisRecomendada: json['dosisRecomendada']?.toString(),
     );
+  }
+
+  static double _parsePrice(Map<String, dynamic> json) {
+    for (final f in ['precioPorUnidad', 'precioVenta', 'precio_venta', 'pvp', 'precio_unidad', 'precioUnidad', 'precio', 'costoCompra', 'costoDeCompra', 'precioCompra']) {
+      final v = json[f];
+      if (v != null) {
+        final p = double.tryParse(v.toString());
+        if (p != null && p > 0) return p;
+      }
+    }
+    return 0.0;
   }
 
   Map<String, dynamic> toJson() {
