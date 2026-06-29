@@ -146,7 +146,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Proveedor actualizado' : 'Proveedor registrado');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
+          ErrorDisplay.snackBar(context: context, message: 'Error en la operación');
         }
       }
     }
@@ -480,7 +480,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: 'Proveedor eliminado');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar', hint: 'Es posible que el proveedor tenga productos asociados.');
+          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar');
         }
       }
     }

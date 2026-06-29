@@ -75,7 +75,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Categoría actualizada' : 'Categoría registrada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error', hint: 'Revisa los datos e intenta de nuevo.');
+          ErrorDisplay.snackBar(context: context, message: 'Error');
         }
       }
     }
@@ -242,7 +242,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: 'Categoría eliminada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar', hint: 'Es posible que la categoría tenga productos asociados.');
+          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar');
         }
       }
     }

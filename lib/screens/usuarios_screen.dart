@@ -428,7 +428,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         }
       } catch (e) {
         if (context.mounted) {
-          ErrorDisplay.snackBar(context: context, message: '$e');
+          ErrorDisplay.snackBar(context: context, message: ErrorDisplay.cleanMessage(e));
         }
       }
     }

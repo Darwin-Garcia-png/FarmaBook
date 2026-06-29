@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../controllers/dashboard_controller.dart';
@@ -92,25 +91,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      body: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.f1): () => _controller.onItemTapped(11),
-          if (_controller.selectedIndex != 0)
-            const SingleActivator(LogicalKeyboardKey.escape): () => _controller.onItemTapped(0),
-          const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => _controller.onItemTapped(0),
-          const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => _controller.onItemTapped(1),
-          const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => _controller.onItemTapped(2),
-          const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => _controller.onItemTapped(3),
-          const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => _controller.onItemTapped(4),
-        },
-        child: Focus(
-          autofocus: true,
-          child: Stack(children: [
-            const Positioned.fill(child: ParticleBackground(color: AppTheme.ayanamiBlue, particleCount: 15)),
-            RepaintBoundary(child: _buildScreen()),
-          ]),
-        ),
-      ),
+      body: Stack(children: [
+        const Positioned.fill(child: ParticleBackground(color: AppTheme.ayanamiBlue, particleCount: 15)),
+        RepaintBoundary(child: _buildScreen()),
+      ]),
     );
   }
 

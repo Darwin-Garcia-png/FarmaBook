@@ -223,6 +223,13 @@ class CartSection extends StatelessWidget {
                           context: context,
                           builder: (ctx) => ReceiptDialog(sale: controller.ultimaVenta ?? result['data']),
                         );
+                      } else if (result == null && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(controller.error ?? 'Error al registrar venta'),
+                            backgroundColor: AppTheme.reiOrangeRed,
+                          ),
+                        );
                       }
                     },
               style: ElevatedButton.styleFrom(

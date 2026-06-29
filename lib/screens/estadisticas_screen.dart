@@ -48,7 +48,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
                 await _c.downloadPdfReport();
                 if (mounted) ErrorDisplay.successSnackBar(context: context, message: 'PDF guardado en Descargas');
               } catch (_) {
-                if (mounted) ErrorDisplay.snackBar(context: context, message: 'Error al guardar PDF', hint: 'Verifica que la carpeta Descargas exista y tengas permisos de escritura.');
+                if (mounted) ErrorDisplay.snackBar(context: context, message: 'Error al guardar PDF');
               } finally { if (mounted) setState(() => _isPdf = false); }
             }),
           IconButton(icon: const Icon(Icons.summarize_rounded, color: AppTheme.ayanamiBlue, size: 22), onPressed: _showSummary),

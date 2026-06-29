@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../theme/app_theme.dart';
 import '../../utils/price_formatter.dart';
+import '../error_display.dart';
 
 class ReceiptDialog extends StatelessWidget {
   final Map<String, dynamic> sale;
@@ -128,7 +129,7 @@ class ReceiptDialog extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 40),
-              const Text('┬íGracias por su compra!',
+              const Text('Gracias por su compra!',
                   style: TextStyle(
                       fontStyle: FontStyle.italic, color: Colors.grey)),
               const SizedBox(height: 24),
@@ -206,7 +207,7 @@ class ReceiptDialog extends StatelessWidget {
 
   String _clienteId() {
     final id = _getClienteIdentificacion();
-    return id.isNotEmpty ? id : 'ÔÇö';
+    return id.isNotEmpty ? id : '\u2014';
   }
 
   Future<void> _printTicket(BuildContext context) async {
@@ -215,121 +216,125 @@ class ReceiptDialog extends StatelessWidget {
         (sale['items'] as List<dynamic>?) ??
         [];
 
-    final pdf = pw.Document();
-    const margen = 4.0;
+    try {
+      final pdf = pw.Document();
 
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat(
-          PdfPageFormat.roll80.width,
-          PdfPageFormat.roll80.height,
-          marginAll: margen,
-        ),
-        build: (context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Center(
-                child: pw.Text('FarmaBook',
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.roll80.copyWith(marginBottom: 0, marginLeft: 6, marginRight: 6, marginTop: 0),
+          build: (ctx) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                pw.Center(
+                  child: pw.Text('FarmaBook',
+                      style: pw.TextStyle(
+                          fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Center(
+                  child: pw.Text('RECIBO DE VENTA',
+                      style: pw.TextStyle(fontSize: 10, color: PdfColors.black)),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Divider(thickness: 1, color: PdfColors.black),
+                pw.SizedBox(height: 8),
+                _receiptPdfRow('Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
+                _receiptPdfRow('Fecha:', _formatDate(_getSafeDate(sale))),
+                _receiptPdfRow('Hora:', _formatTime(_getSafeDate(sale))),
+                _receiptPdfRow('Cliente:', _clienteName()),
+                _receiptPdfRow('Ident:', _clienteId()),
+                pw.SizedBox(height: 8),
+                pw.Divider(thickness: 1, color: PdfColors.black),
+                pw.SizedBox(height: 6),
+                pw.Text('PRODUCTOS',
                     style: pw.TextStyle(
-                        fontSize: 14, fontWeight: pw.FontWeight.bold)),
-              ),
-              pw.SizedBox(height: 2),
-              pw.Center(
-                child: pw.Text('RECIBO DE VENTA',
-                    style: const pw.TextStyle(fontSize: 8)),
-              ),
-              pw.SizedBox(height: 6),
-              pw.Divider(thickness: 1),
-              pw.SizedBox(height: 6),
-              _row('Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
-              _row('Fecha:', _formatDate(_getSafeDate(sale))),
-              _row('Hora:', _formatTime(_getSafeDate(sale))),
-              _row('Cliente:', _clienteName()),
-              _row('Cédula:', _clienteId()),
-              pw.SizedBox(height: 6),
-              pw.Divider(thickness: 1),
-              pw.SizedBox(height: 4),
-              pw.Text('PRODUCTOS',
-                  style: pw.TextStyle(
-                      fontSize: 8, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 4),
-              ...productos.map((det) {
-                final d = det as Map<String, dynamic>;
-                final nombre = d['nombre'] ??
-                    d['producto']?['nombre'] ??
-                    d['nombreProducto'] ??
-                    'Producto';
-                final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
-                final price = double.tryParse(
-                        d['subTotal']?.toString() ??
-                            d['precioTotal']?.toString() ??
-                            '0') ??
-                    0.0;
-                return pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 2),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                  pw.Expanded(
-                    child: pw.Text('$qty $nombre',
-                        style: const pw.TextStyle(fontSize: 7),
-                        maxLines: 2),
-                  ),
-                      pw.Text(formatCop(price),
-                          style: const pw.TextStyle(fontSize: 7)),
-                    ],
-                  ),
-                );
-              }),
-              pw.SizedBox(height: 6),
-              pw.Divider(thickness: 2),
-              pw.SizedBox(height: 4),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('TOTAL',
-                      style: pw.TextStyle(
-                          fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                  pw.Text(
-                      formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0),
-                      style: pw.TextStyle(
-                          fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                ],
-              ),
-              pw.SizedBox(height: 12),
-              pw.Center(
-                child: pw.Text('┬íGracias por su compra!',
-                    style: pw.TextStyle(fontStyle: pw.FontStyle.italic)),
-              ),
-              pw.Spacer(),
-              pw.Center(
-                child: pw.Text(
-                    'Generado: ${DateTime.now().toString().substring(0, 19)}',
-                    style: const pw.TextStyle(fontSize: 6)),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+                        fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                pw.SizedBox(height: 6),
+                ...productos.map((det) {
+                  final d = det as Map<String, dynamic>;
+                  final nombre = d['nombre'] ??
+                      d['producto']?['nombre'] ??
+                      d['nombreProducto'] ??
+                      'Producto';
+                  final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
+                  final price = double.tryParse(
+                          d['subTotal']?.toString() ??
+                              d['precioTotal']?.toString() ??
+                              '0') ??
+                      0.0;
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 3),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Expanded(
+                          child: pw.Text('$qty $nombre',
+                              style: pw.TextStyle(fontSize: 9, color: PdfColors.black),
+                              maxLines: 2),
+                        ),
+                        pw.Text(formatCop(price),
+                            style: pw.TextStyle(fontSize: 9, color: PdfColors.black)),
+                      ],
+                    ),
+                  );
+                }),
+                pw.SizedBox(height: 8),
+                pw.Divider(thickness: 2, color: PdfColors.black),
+                pw.SizedBox(height: 4),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('TOTAL',
+                        style: pw.TextStyle(
+                            fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                    pw.Text(
+                        formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0),
+                        style: pw.TextStyle(
+                            fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                  ],
+                ),
+                pw.SizedBox(height: 16),
+                pw.Center(
+                  child: pw.Text('Gracias por su compra!',
+                      style: pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic, color: PdfColors.black)),
+                ),
+                pw.SizedBox(height: 24),
+                pw.Center(
+                  child: pw.Text(
+                      'Generado: ${DateTime.now().toString().substring(0, 16)}',
+                      style: pw.TextStyle(fontSize: 7, color: PdfColors.grey)),
+                ),
+              ],
+            );
+          },
+        ),
+      );
 
-    await Printing.layoutPdf(
-      onLayout: (format) async => pdf.save(),
-      name: 'recibo_${sale['ventaId']}.pdf',
-    );
+      await Printing.layoutPdf(
+        onLayout: (format) async => pdf.save(),
+        name: 'recibo_${sale['ventaId']}.pdf',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ErrorDisplay.cleanMessage(e)), backgroundColor: AppTheme.reiOrangeRed),
+        );
+      }
+    }
   }
 
-  pw.Widget _row(String label, String value) {
+  pw.Widget _receiptPdfRow(String label, String value) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 2),
+      padding: const pw.EdgeInsets.only(bottom: 3),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(label,
-              style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
+              style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
           pw.Text(value,
-              style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
         ],
       ),
     );

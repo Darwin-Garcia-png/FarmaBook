@@ -24,8 +24,6 @@ class GlobalErrorHandler {
     _currentEntry?.remove();
     _currentEntry = null;
 
-    final hint = ErrorDisplay.hintFromMessage(message);
-
     final entry = OverlayEntry(
       builder: (context) => Positioned(
         top: 60,
@@ -33,7 +31,7 @@ class GlobalErrorHandler {
         right: 24,
         child: Material(
           color: Colors.transparent,
-          child: _AnimatedErrorCard(title: title, message: message, hint: hint),
+          child: _AnimatedErrorCard(title: title, message: message),
         ),
       ),
     );
@@ -53,8 +51,7 @@ class GlobalErrorHandler {
 class _AnimatedErrorCard extends StatefulWidget {
   final String title;
   final String message;
-  final String? hint;
-  const _AnimatedErrorCard({required this.title, required this.message, this.hint});
+  const _AnimatedErrorCard({required this.title, required this.message});
 
   @override
   State<_AnimatedErrorCard> createState() => _AnimatedErrorCardState();
@@ -116,23 +113,7 @@ class _AnimatedErrorCardState extends State<_AnimatedErrorCard> with SingleTicke
                     Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
                     const SizedBox(height: 4),
                     Text(widget.message, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13), maxLines: 3, overflow: TextOverflow.ellipsis),
-                    if (widget.hint != null) ...[
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                        child: Row(
-                          children: [
-                            Icon(Icons.lightbulb_outline_rounded, size: 12, color: Colors.white.withValues(alpha: 0.7)),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(widget.hint!,
-                                style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.85), fontStyle: FontStyle.italic, height: 1.3)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+
                   ],
                 ),
               ),

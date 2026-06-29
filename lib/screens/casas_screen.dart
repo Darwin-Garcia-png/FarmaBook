@@ -63,7 +63,7 @@ class _CasasScreenState extends State<CasasScreen> {
       suppliers = results[0];
       products = results[1];
     } catch (e) {
-      error = 'Error al cargar detalles: $e';
+      error = 'Error al cargar detalles';
     } finally {
       loading = false;
     }
@@ -176,7 +176,7 @@ class _CasasScreenState extends State<CasasScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Casa actualizada' : 'Casa registrada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error', hint: 'Revisa los datos e intenta de nuevo.');
+          ErrorDisplay.snackBar(context: context, message: 'Error');
         }
       }
     }
@@ -343,7 +343,7 @@ class _CasasScreenState extends State<CasasScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: 'Casa eliminada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar', hint: 'Es posible que la casa tenga productos asociados.');
+          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar');
         }
       }
     }

@@ -123,6 +123,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   void _showMyAccountDialog() {
     final emailCtrl = TextEditingController(text: UserSession.email ?? '');
     final nameCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     bool saving = false;
 
     showDialog(
@@ -133,7 +134,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child: Form(
+              key: formKey,
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Container(
                   padding: const EdgeInsets.all(10),
@@ -153,26 +156,37 @@ class _ConfigScreenState extends State<ConfigScreen> {
               _detailRow('ID de Usuario', '${UserSession.userId ?? '—'}'),
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: TextField(
+                child: TextFormField(
                   controller: nameCtrl,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   decoration: const InputDecoration(
                     labelText: 'Nombre de Usuario',
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     isDense: true,
                   ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Requerido';
+                    return null;
+                  },
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: TextField(
+                child: TextFormField(
                   controller: emailCtrl,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   decoration: const InputDecoration(
-                    labelText: 'Correo Electrónico',
+                    labelText: 'Correo Electrónico *',
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     isDense: true,
                   ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Requerido';
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v.trim())) return 'Email inválido';
+                    return null;
+                  },
                 ),
               ),
               _detailRow('Rol', UserSession.role ?? '—'),
@@ -184,6 +198,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   onPressed: saving
                       ? null
                       : () async {
+                          if (!formKey.currentState!.validate()) { setDialogState(() => saving = false); return; }
                           setDialogState(() => saving = true);
                           try {
                             final data = <String, dynamic>{};
@@ -209,7 +224,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           } catch (e) {
                             if (ctx.mounted) {
                               ScaffoldMessenger.of(ctx).showSnackBar(
-                                SnackBar(content: Text('Error al actualizar: $e')),
+                                SnackBar(content: const Text('Error al actualizar')),
                               );
                             }
                           } finally {
@@ -239,6 +254,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
             ]),
           ),
         ),
+      ),
       ),
     );
   }

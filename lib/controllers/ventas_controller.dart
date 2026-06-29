@@ -42,7 +42,7 @@ class VentasController extends ChangeNotifier {
       ventasHistorial = await ApiService.getSales(limit: 999999);
       await cargarPresentaciones();
     } catch (e) {
-      error = 'Error al cargar historial: $e';
+      error = 'Error al cargar historial';
     } finally {
       isLoadingHistorial = false;
       notifyListeners();
@@ -156,7 +156,7 @@ class VentasController extends ChangeNotifier {
       _sortProductos(hydrated);
       productosEncontrados = hydrated;
     } catch (e) {
-      error = 'Error al cargar productos: $e';
+      error = 'Error al cargar productos';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -231,7 +231,7 @@ class VentasController extends ChangeNotifier {
         error = 'Producto no encontrado por código: $codigo';
       }
     } catch (e) {
-      error = 'Error al buscar producto: $e';
+      error = 'Error al buscar producto';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -264,13 +264,28 @@ class VentasController extends ChangeNotifier {
         hydrated.add(producto);
       }
 
+      // If text search returned nothing, try barcode lookup
+      if (hydrated.isEmpty) {
+        final prodData = await ApiService.getProductByIdentifier(nombre);
+        if (prodData != null) {
+          var producto = Producto.fromJson(prodData);
+          cacheProductos[producto.productoId] = producto;
+          final enriched = await _enrichWithBatches(producto);
+          if (enriched != null) {
+            producto = _updateProducto(producto, enriched);
+            cacheProductos[producto.productoId] = producto;
+          }
+          hydrated.add(producto);
+        }
+      }
+
       _sortProductos(hydrated);
       productosEncontrados = hydrated;
       if (productosEncontrados.isEmpty) {
         error = 'No se encontraron productos con: $nombre';
       }
     } catch (e) {
-      error = 'Error al buscar por nombre: $e';
+      error = 'Error al buscar';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -422,7 +437,7 @@ class VentasController extends ChangeNotifier {
       cargarProductosMasVendidos();
       return result;
     } catch (e) {
-      error = 'Error al registrar venta: $e';
+      error = 'Error al registrar venta';
       notifyListeners();
       return null;
     } finally {
@@ -439,7 +454,7 @@ class VentasController extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      error = 'Error al anular venta: $e';
+      error = 'Error al anular venta';
       notifyListeners();
       return false;
     }

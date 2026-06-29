@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen>
         if (mounted) context.go('/dashboard');
       } catch (e) {
         if (mounted) {
-          ErrorDisplay.dialog(context: context, message: '$e', title: 'Error al cargar datos');
+          ErrorDisplay.dialog(context: context, message: ErrorDisplay.cleanMessage(e), title: 'Error al cargar datos');
         }
       }
     }

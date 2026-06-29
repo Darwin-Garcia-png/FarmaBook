@@ -75,7 +75,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Presentación actualizada' : 'Presentación registrada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error en la operación', hint: 'Revisa los datos e intenta de nuevo.');
+          ErrorDisplay.snackBar(context: context, message: 'Error en la operación');
         }
       }
     }
@@ -161,7 +161,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: 'Presentación eliminada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar', hint: 'Es posible que la presentación tenga productos asociados.');
+          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar');
         }
       }
     }

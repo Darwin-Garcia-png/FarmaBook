@@ -95,10 +95,12 @@ class AlmacenController extends ChangeNotifier {
       
       final query = searchCtrl.text.trim();
       if (query.isNotEmpty) {
-        // La API de búsqueda podría no estar paginada estrictamente, pero la usaremos.
-        // Si hay búsqueda ignoramos low stock filter del lado del server y lo hacemos local
         rawData = await ApiService.searchProducts(query);
-        // Deshabilitar paginación extra en búsqueda simple
+        // If text search returned nothing, try barcode lookup
+        if (rawData.isEmpty) {
+          final prodData = await ApiService.getProductByIdentifier(query);
+          if (prodData != null) rawData = [prodData];
+        }
         hasMore = false; 
       } else {
         Map<String, dynamic> extraParams = {};

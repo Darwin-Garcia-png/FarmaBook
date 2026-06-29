@@ -25,8 +25,7 @@ class LoginController extends ChangeNotifier {
   void _showError(String message, {int? statusCode}) {
     final ctx = navigatorKey.currentContext;
     if (ctx == null) return;
-    final hint = ErrorDisplay.hintFromMessage(message);
-    ErrorDisplay.dialog(context: ctx, message: message, hint: hint, title: statusCode != null ? 'Error ($statusCode)' : 'Error');
+    ErrorDisplay.dialog(context: ctx, message: message, title: statusCode != null ? 'Error ($statusCode)' : 'Error');
   }
 
   Future<bool> login() async {
@@ -45,8 +44,7 @@ class LoginController extends ChangeNotifier {
         final storedToken = await _authService.getToken();
         if (storedToken == null || storedToken.isEmpty) {
           _showError(
-            'Login exitoso pero no se encontró token.\n'
-            'Respuesta del servidor:\n$result',
+            'No se pudo obtener el token de autenticación. Intenta iniciar sesión de nuevo.',
             statusCode: 200,
           );
           return false;
@@ -73,7 +71,7 @@ class LoginController extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _showError('Error: $e');
+      _showError(ErrorDisplay.cleanMessage(e));
       return false;
     } finally {
       isLoading = false;

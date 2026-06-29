@@ -82,10 +82,9 @@ class InventoryDialogs {
               ErrorDisplay.successSnackBar(context: context, message: 'Producto actualizado correctamente');
               controller.fetchProducts(isRefresh: true);
             } catch (e) {
-              final errMsg = e is ApiException ? e.message : e.toString();
-              final hint = ErrorDisplay.hintFromMessage(errMsg);
+              final errMsg = ErrorDisplay.cleanMessage(e);
               if (context.mounted) {
-                ErrorDisplay.dialog(context: context, message: errMsg, hint: hint, title: 'Error al guardar');
+                ErrorDisplay.dialog(context: context, message: errMsg, title: 'Error al guardar');
               }
             }
           }
@@ -885,6 +884,13 @@ class InventoryDialogs {
         ),
         validator: (v) {
           if (req && (v == null || v.trim().isEmpty)) return 'Requerido';
+          if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true)) {
+            if (v != null && v.isNotEmpty) {
+              final val = double.tryParse(v.replaceAll(',', '.'));
+              if (val == null) return 'Ingrese un número válido';
+              if (val < 0) return 'No se permiten valores negativos';
+            }
+          }
           return null;
         },
       ),
@@ -1117,7 +1123,7 @@ class InventoryDialogs {
               if (telCtrl.text.trim().isNotEmpty) data['telefono'] = telCtrl.text.trim();
               if (emailCtrl.text.trim().isNotEmpty) data['email'] = emailCtrl.text.trim();
             } else if (tipo == 'casa') {
-              if (descCtrl.text.trim().isNotEmpty) data['paisDeOrigen'] = descCtrl.text.trim();
+              data['paisDeOrigen'] = descCtrl.text.trim();
             } else {
               if (descCtrl.text.trim().isNotEmpty) data['descripcion'] = descCtrl.text.trim();
             }
@@ -1147,12 +1153,7 @@ class InventoryDialogs {
             }
             setDialogState?.call(() {});
           } catch (e) {
-            String errMsg = e.toString();
-            try {
-              final serverMsg = (e as dynamic)?.response?.data?['message'] ??
-                  (e as dynamic)?.response?.data?['error'];
-              if (serverMsg != null) errMsg = serverMsg.toString();
-            } catch (_) {}
+            final errMsg = ErrorDisplay.cleanMessage(e);
             if (Navigator.of(dialogCtx).canPop()) {
               ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
                   content: Text('Error: $errMsg'),
@@ -1228,9 +1229,10 @@ class InventoryDialogs {
                         onFieldSubmitted: tipo == 'proveedor'
                             ? (_) => fnTel.requestFocus()
                             : (_) => doQuickSave(setSt, ctx2),
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
-                          labelText: tipo == 'proveedor' ? 'Dirección (opcional)' : tipo == 'casa' ? 'País de Origen (opcional)' : 'Descripción (opcional)',
+                          labelText: tipo == 'proveedor' ? 'Dirección (opcional)' : tipo == 'casa' ? 'País de Origen *' : 'Descripción (opcional)',
                           prefixIcon: Icon(
                               tipo == 'proveedor' ? Icons.location_on_rounded : Icons.description_rounded,
                               color: AppTheme.ayanamiBlue,
@@ -1241,6 +1243,12 @@ class InventoryDialogs {
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none),
                         ),
+                        validator: (v) {
+                          if (tipo == 'casa') {
+                            if (v == null || v.trim().isEmpty) return 'Requerido';
+                          }
+                          return null;
+                        },
                       ),
                       if (tipo == 'proveedor') ...[
                         const SizedBox(height: 16),
@@ -1434,26 +1442,26 @@ class InventoryDialogs {
           onPressed: () async {
             if (!formKey.currentState!.validate()) return;
             if (expiryDate == null || expiryDate.year >= 9999) {
-              ErrorDisplay.snackBar(context: context, message: 'Selecciona una fecha de vencimiento', hint: 'Toca el campo de fecha para abrir el calendario.');
+              ErrorDisplay.snackBar(context: context, message: 'Selecciona una fecha de vencimiento');
               return;
             }
 
             // Validate dropdowns that are local vars (not caught by formKey)
             if (!isEdit && !isNewBatch && !isBatchEdit) {
               if (catId == null) {
-                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una categoría', hint: 'Elige una categoría de la lista desplegable.');
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una categoría');
                 return;
               }
               if (presId == null) {
-                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una presentación', hint: 'Elige una presentación de la lista desplegable.');
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una presentación');
                 return;
               }
               if (provId == null) {
-                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar un proveedor', hint: 'Elige un proveedor de la lista desplegable.');
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar un proveedor');
                 return;
               }
               if (casaId == null) {
-                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una casa farmacéutica', hint: 'Elige una casa de la lista desplegable.');
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una casa farmacéutica');
                 return;
               }
             }
@@ -1526,10 +1534,9 @@ class InventoryDialogs {
                   backgroundColor: AppTheme.greenMetal));
               controller.fetchProducts(isRefresh: true);
             } catch (e) {
-              final errMsg = e is ApiException ? e.message : e.toString();
-              final hint = ErrorDisplay.hintFromMessage(errMsg);
+              final errMsg = ErrorDisplay.cleanMessage(e);
               if (context.mounted) {
-                ErrorDisplay.dialog(context: context, message: errMsg, hint: hint, title: 'Error al guardar');
+                ErrorDisplay.dialog(context: context, message: errMsg, title: 'Error al guardar');
               }
             }
           },

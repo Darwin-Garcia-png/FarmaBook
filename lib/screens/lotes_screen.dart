@@ -203,7 +203,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
         controller: _searchCtrl,
         onChanged: (v) => setState(() => _searchQuery = v),
         decoration: InputDecoration(
-          hintText: 'Buscar por producto o nombre de lote...',
+          hintText: 'Buscar por producto, lote, SKU o código de barras...',
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.ayanamiBlue),
           suffixIcon: IconButton(
@@ -380,7 +380,9 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     final filtered = batches.where((b) {
       final name = b['nombreLote']?.toString().toLowerCase() ?? '';
       final prod = b['productoNombre']?.toString().toLowerCase() ?? '';
-      return name.contains(query) || prod.contains(query);
+      final sku = b['productoCodigo']?.toString().toLowerCase() ?? '';
+      final bc = _batchBarcode(b)?.toLowerCase() ?? '';
+      return name.contains(query) || prod.contains(query) || sku.contains(query) || bc.contains(query);
     }).toList();
 
     if (filtered.isEmpty) {
@@ -411,7 +413,9 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     final filtered = batches.where((b) {
       final name = b['nombreLote']?.toString().toLowerCase() ?? '';
       final prod = b['productoNombre']?.toString().toLowerCase() ?? '';
-      return name.contains(query) || prod.contains(query);
+      final sku = b['productoCodigo']?.toString().toLowerCase() ?? '';
+      final bc = _batchBarcode(b)?.toLowerCase() ?? '';
+      return name.contains(query) || prod.contains(query) || sku.contains(query) || bc.contains(query);
     }).toList();
 
     if (filtered.isEmpty) {

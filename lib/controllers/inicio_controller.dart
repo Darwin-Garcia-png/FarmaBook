@@ -131,7 +131,7 @@ class InicioController extends ChangeNotifier {
       }
 
     } catch (e) {
-      error = 'Error inesperado: $e';
+      error = 'Error al cargar datos del inicio';
     } finally {
       isLoading = false;
       notifyListeners();
