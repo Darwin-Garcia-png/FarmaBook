@@ -331,8 +331,7 @@ class _InicioScreenState extends State<InicioScreen> {
         // ── HEADER ──
         Positioned(top: 0, left: 0, right: 0,
           child: Container(height: 80, padding: const EdgeInsets.symmetric(horizontal: 40),
-            decoration: BoxDecoration(color: bg,
-              border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08)))),
+            decoration: BoxDecoration(color: bg),
             child: Row(children: [
               IconButton(icon: Icon(Icons.menu_rounded, color: text, size: 26),
                 onPressed: () {

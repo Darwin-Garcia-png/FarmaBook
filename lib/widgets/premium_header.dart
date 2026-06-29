@@ -334,11 +334,7 @@ class _NotifBellState extends State<_NotifBell> with SingleTickerProviderStateMi
   void _navigateTo(BuildContext ctx, String tipo, String id) {
     Navigator.pop(ctx);
     final dash = context.read<DashboardController>();
-    if (tipo == 'vencimiento' && UserSession.isDueno) {
-      dash.onItemTapped(3); // Lotes — only for admin/dueño
-    } else {
-      dash.onItemTapped(1); // Almacén
-    }
+    dash.onItemTapped(1); // Inventario (productos + lotes)
   }
 
   Widget _buildList(List<Map<String, dynamic>> list, BuildContext dialogCtx) {

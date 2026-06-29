@@ -73,7 +73,7 @@ class BatchDetailsModal extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
+          const SizedBox(height: 8),
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.all(24),
@@ -107,7 +107,6 @@ class BatchDetailsModal extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardTheme.color,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),

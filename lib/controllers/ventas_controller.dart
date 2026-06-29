@@ -153,8 +153,26 @@ class VentasController extends ChangeNotifier {
         }
         hydrated.add(producto);
       }
-      _sortProductos(hydrated);
-      productosEncontrados = hydrated;
+      final now = DateTime.now();
+      final valid = hydrated.where((p) => p.cantidadDisponible > 0 && (p.nearestExpiryDate == null || !p.nearestExpiryDate!.isBefore(now))).toList();
+      if (valid.length < 5 && rawList.length < 100) {
+        final extras = await ApiService.getProductos(limit: 50, page: 2);
+        for (var json in extras) {
+          if (valid.any((p) => p.productoId == json['productoId']?.toString())) continue;
+          var producto = Producto.fromJson(json);
+          cacheProductos[producto.productoId] = producto;
+          final enriched = await _enrichWithBatches(producto);
+          if (enriched != null) {
+            producto = _updateProducto(producto, enriched);
+            cacheProductos[producto.productoId] = producto;
+          }
+          if (producto.cantidadDisponible > 0 && (producto.nearestExpiryDate == null || !producto.nearestExpiryDate!.isBefore(now))) {
+            valid.add(producto);
+          }
+        }
+      }
+      _sortProductos(valid);
+      productosEncontrados = valid;
     } catch (e) {
       error = 'Error al cargar productos';
     } finally {
@@ -337,6 +355,48 @@ class VentasController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> anularVenta() async {
+    for (final id in carrito.keys.toList()) {
+      try {
+        final batches = await ApiService.getBatchesByProduct(id);
+        if (batches.isEmpty) {
+          cacheProductos.remove(id);
+          _batchCache.remove(id);
+          continue;
+        }
+        int totalStock = 0;
+        for (var b in batches) {
+          totalStock += (b['cantidadDisponible'] as num? ?? 0).toInt();
+        }
+        final prod = cacheProductos[id];
+        if (prod != null) {
+          cacheProductos[id] = Producto(
+            productoId: prod.productoId,
+            codigoBarras: prod.codigoBarras,
+            nombre: prod.nombre,
+            descripcion: prod.descripcion,
+            categoriaId: prod.categoriaId,
+            presentacionId: prod.presentacionId,
+            proveedoresId: prod.proveedoresId,
+            cantidadDisponible: totalStock,
+            precioPorUnidad: prod.precioPorUnidad,
+            imagenUrl: prod.imagenUrl,
+            dosisRecomendada: prod.dosisRecomendada,
+          );
+        }
+        _batchCache[id] = {
+          'batches': batches,
+          'totalStock': totalStock,
+        };
+      } catch (_) {
+        cacheProductos.remove(id);
+        _batchCache.remove(id);
+      }
+    }
+    carrito.clear();
+    cargarProductosMasVendidos();
+  }
+
   void vaciarCarrito() {
     carrito.clear();
     notifyListeners();
@@ -450,6 +510,7 @@ class VentasController extends ChangeNotifier {
     try {
       await ApiService.deleteSale(saleId);
       ventasHistorial.removeWhere((s) => s['ventaId']?.toString() == saleId || s['id']?.toString() == saleId);
+      await cargarHistorialVentas();
       mensaje = 'Venta anulada correctamente';
       notifyListeners();
       return true;

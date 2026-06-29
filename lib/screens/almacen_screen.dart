@@ -325,22 +325,23 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
     return Expanded(
       child: Stack(
         children: [
-          GridView.builder(
+          SingleChildScrollView(
             controller: _scrollController,
             padding: const EdgeInsets.only(left: 32, right: 32, top: 32, bottom: 80),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 300,
-                childAspectRatio: 0.58,
-                crossAxisSpacing: 24,
-                mainAxisSpacing: 24),
-            itemCount: controller.productos.length,
-            itemBuilder: (context, index) => AnimatedEntry(
-              index: index,
-              child: ProductCard(
-              p: controller.productos[index],
-              controller: controller,
-              lotesCtrl: lotesCtrl,
-            )),
+            child: Wrap(
+              spacing: 24,
+              runSpacing: 24,
+              children: controller.productos.map((p) => SizedBox(
+                width: 300,
+                child: AnimatedEntry(
+                  child: ProductCard(
+                    p: p,
+                    controller: controller,
+                    lotesCtrl: lotesCtrl,
+                  ),
+                ),
+              )).toList(),
+            ),
           ),
           if (controller.isFetchingMore)
             Positioned(

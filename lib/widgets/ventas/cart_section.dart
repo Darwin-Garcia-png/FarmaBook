@@ -61,14 +61,73 @@ class CartSection extends StatelessWidget {
             child: const Icon(Icons.shopping_bag_rounded, color: AppTheme.ayanamiBlue, size: 18),
           ),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Carrito',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
-              Text('${controller.carrito.length} items',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 10, fontWeight: FontWeight.w600)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Carrito',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
+                Text('${controller.carrito.length} items',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 10, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+          if (controller.carrito.isNotEmpty)
+            InkWell(
+              onTap: () => _confirmAnularVenta(context, controller),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.reiOrangeRed.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.reiOrangeRed.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.close_rounded, size: 14, color: AppTheme.reiOrangeRed),
+                    const SizedBox(width: 4),
+                    Text('Anular', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.reiOrangeRed)),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmAnularVenta(BuildContext context, VentasController controller) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppTheme.reiOrangeRed, size: 22),
+            const SizedBox(width: 8),
+            const Text('Anular Venta', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+          ],
+        ),
+        content: const Text('Se vaciará el carrito y se refrescará el stock desde el inventario. ¿Continuar?',
+            style: TextStyle(fontSize: 14, height: 1.4)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              controller.anularVenta();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.reiOrangeRed,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Anular', style: TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),

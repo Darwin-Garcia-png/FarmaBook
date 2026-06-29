@@ -13,6 +13,7 @@ import 'controllers/almacen_controller.dart';
 import 'controllers/lotes_controller.dart';
 import 'controllers/dashboard_controller.dart';
 import 'controllers/notificaciones_controller.dart';
+import 'widgets/notification_overlay.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -47,6 +48,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => LotesController()),
           ChangeNotifierProvider(create: (_) => DashboardController()),
           ChangeNotifierProvider(create: (_) => NotificacionesController()..init()),
+          ChangeNotifierProvider(create: (_) => NotificationService()),
         ],
         child: const MyApp(),
       ),
@@ -96,7 +98,7 @@ class MyApp extends StatelessWidget {
             ),
           );
         };
-        return child!;
+        return NotificationOverlay(child: child!);
       },
     );
   }

@@ -578,35 +578,24 @@ class InventoryDialogs {
     else if (isEdit) title = 'Editar Medicamento';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.fromLTRB(24, 16, 8, 16),
       decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [
-        AppTheme.ayanamiBlue,
-        AppTheme.ayanamiBlue.withValues(alpha: 0.8)
-      ])),
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-            child: Icon(
-                isEdit || isBatchEdit
-                    ? Icons.edit_rounded
-                    : Icons.add_box_rounded,
-                color: Colors.white,
-                size: 28),
-          ),
-          const SizedBox(width: 18),
+          Icon(isEdit || isBatchEdit ? Icons.edit_rounded : Icons.add_box_rounded,
+              color: AppTheme.ayanamiBlue, size: 22),
+          const SizedBox(width: 12),
           Text(title,
               style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 0.5)),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87)),
           const Spacer(),
           IconButton(
-              icon: const Icon(Icons.close_rounded, color: Colors.white),
+              icon: Icon(Icons.close_rounded, color: Colors.grey.shade500),
               onPressed: () => Navigator.pop(dialogCtx)),
         ],
       ),

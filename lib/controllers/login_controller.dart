@@ -25,7 +25,7 @@ class LoginController extends ChangeNotifier {
   void _showError(String message, {int? statusCode}) {
     final ctx = navigatorKey.currentContext;
     if (ctx == null) return;
-    ErrorDisplay.dialog(context: ctx, message: message, title: statusCode != null ? 'Error ($statusCode)' : 'Error');
+    ErrorDisplay.dialog(context: ctx, message: message, title: 'Error de inicio de sesión');
   }
 
   Future<bool> login() async {

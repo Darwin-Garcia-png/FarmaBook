@@ -411,7 +411,6 @@ class ManualScreen extends StatelessWidget {
         height: 100, padding: const EdgeInsets.symmetric(horizontal: 40),
         decoration: BoxDecoration(
           color: bgColor.withValues(alpha: 0.95),
-          border: Border(bottom: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
         ),
         child: Row(children: [
           IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.ayanamiBlue, size: 20),

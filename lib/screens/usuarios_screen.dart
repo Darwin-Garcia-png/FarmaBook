@@ -80,7 +80,6 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 40),
       decoration: BoxDecoration(
         color: bg,
-        border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08))),
       ),
       child: Row(children: [
         IconButton(

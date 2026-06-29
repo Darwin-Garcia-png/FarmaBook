@@ -30,9 +30,7 @@ class _ProductCardState extends State<ProductCard> {
   String? _categoriaNombre;
   String? _presentacionNombre;
   bool _loadingDetail = false;
-  int _stockFromBatches = -1; // -1 = not computed yet
-
-  // Cache removed — always fetch fresh data to avoid stale display after edits
+  int _stockFromBatches = -1;
 
   Map<String, dynamic> get p => widget.p;
   AlmacenController get controller => widget.controller;
@@ -48,7 +46,6 @@ class _ProductCardState extends State<ProductCard> {
     if (pid == null || _loadingDetail) return;
     _loadingDetail = true;
     try {
-      // Fetch batches to compute real stock
       List<dynamic> batches;
       try {
         batches = await ApiService.getBatchesByProduct(pid);
@@ -60,10 +57,8 @@ class _ProductCardState extends State<ProductCard> {
         batchSum += int.tryParse(b['cantidadDisponible']?.toString() ?? '0') ?? 0;
       }
       _stockFromBatches = batchSum;
-      // Also update p['lotes'] so batchCount/expiry use real data
       if (batches.isNotEmpty) p['lotes'] = batches;
 
-      // Fetch product detail for casa/categoria/presentacion
       try {
         final detail = await ApiService.getProductByIdentifier(pid);
         if (detail != null && mounted) {
@@ -133,7 +128,6 @@ class _ProductCardState extends State<ProductCard> {
     final isExpired = nearestExpiry != null && nearestExpiry.isBefore(DateTime.now());
     final isNear = nearestExpiry != null && !isExpired && nearestExpiry.isBefore(DateTime.now().add(const Duration(days: 60)));
     final lotes = p['lotes'] is List ? p['lotes'] as List : <dynamic>[];
-    final batchCount = lotes.length;
 
     Color statusColor = AppTheme.greenMetal;
     String statusText = 'DISPONIBLE';
@@ -150,8 +144,9 @@ class _ProductCardState extends State<ProductCard> {
         : null;
 
     return HoverScale(
-      scale: 1.01,
-      elevation: 10,
+      scale: 1.03,
+      elevation: 18,
+      glowColor: AppTheme.ayanamiBlue.withValues(alpha: 0.15),
       child: Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
@@ -172,46 +167,12 @@ class _ProductCardState extends State<ProductCard> {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {
-            if (UserSession.isDueno) {
-              if (batchCount > 1) {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (ctx) => BatchDetailsModal(
-                    p: Map<String, dynamic>.from(p),
-                    lotes: lotes.cast<Map<String, dynamic>>(),
-                    controller: controller,
-                    lotesCtrl: widget.lotesCtrl,
-                  ),
-                );
-              } else {
-                InventoryDialogs.showEditProduct(
-                    context, controller,
-                    prod: Map<String, dynamic>.from(p));
-              }
-            } else {
-              if (batchCount > 1) {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (ctx) => BatchDetailsModal(
-                    p: Map<String, dynamic>.from(p),
-                    lotes: lotes.cast<Map<String, dynamic>>(),
-                    controller: controller,
-                    lotesCtrl: widget.lotesCtrl,
-                  ),
-                );
-              }
-            }
-          },
+          onTap: () => _showBatchPanel(context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image at top - full width with overlay buttons
-                Stack(
+              // Image at top
+              Stack(
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -223,26 +184,26 @@ class _ProductCardState extends State<ProductCard> {
                           : _iconPlaceholder(),
                     ),
                   ),
-                    if (UserSession.isDueno)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () {
-                              InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
-                            }),
-                            const SizedBox(width: 6),
-                            _actionIcon(Icons.delete_rounded, AppTheme.reiOrangeRed, () {
-                              _confirmDelete(context);
-                            }),
-                          ],
-                        ),
+                  if (UserSession.isDueno)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () {
+                            InventoryDialogs.showEditProduct(context, controller, prod: Map<String, dynamic>.from(p));
+                          }),
+                          const SizedBox(width: 6),
+                          _actionIcon(Icons.delete_rounded, AppTheme.reiOrangeRed, () {
+                            _confirmDelete(context);
+                          }),
+                        ],
                       ),
+                    ),
                 ],
               ),
-              // Content below image
+              // Content
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                 child: Column(
@@ -280,8 +241,8 @@ class _ProductCardState extends State<ProductCard> {
                             : 'Vence ${nearestExpiry.day}/${nearestExpiry.month}/${nearestExpiry.year}',
                         color: isExpired ? AppTheme.reiOrangeRed : (isNear ? Colors.orange : Colors.grey.shade500),
                       ),
-                    if (batchCount > 0)
-                      _infoRow(Icons.layers_outlined, '$batchCount lote${batchCount > 1 ? 's' : ''}'),
+                    if (lotes.isNotEmpty)
+                      _infoRow(Icons.layers_outlined, '${lotes.length} lote${lotes.length > 1 ? 's' : ''}'),
                     if (_loadingDetail)
                       Padding(
                         padding: const EdgeInsets.only(top: 6),
@@ -293,7 +254,6 @@ class _ProductCardState extends State<ProductCard> {
                   ],
                 ),
               ),
-              const Divider(height: 1),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
                 child: Row(
@@ -314,6 +274,8 @@ class _ProductCardState extends State<ProductCard> {
                         ),
                       ],
                     ),
+                    const Spacer(),
+                    Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: 22),
                   ],
                 ),
               ),
@@ -323,6 +285,220 @@ class _ProductCardState extends State<ProductCard> {
       ),
     ),
     );
+  }
+
+  void _showBatchPanel(BuildContext context) {
+    final lotes = p['lotes'] is List ? p['lotes'] as List : <dynamic>[];
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black26,
+      pageBuilder: (ctx, anim1, anim2) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              width: 420,
+              margin: const EdgeInsets.symmetric(vertical: 40),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  bottomLeft: Radius.circular(24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 40,
+                    offset: const Offset(-10, 0),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildBatchPanelHeader(context),
+                  _buildBatchPanelContent(context, lotes),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 250),
+      transitionBuilder: (ctx, anim, secondaryAnim, child) => child,
+    );
+  }
+
+  Widget _buildBatchPanelHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 20, 16, 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(p['nombre'] ?? 'Sin nombre',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 2),
+                Text('Lotes registrados',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close_rounded, color: Colors.grey.shade500),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBatchPanelContent(BuildContext context, List<dynamic> lotes) {
+    return Expanded(
+      child: lotes.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade300),
+                  const SizedBox(height: 8),
+                  Text('Sin lotes registrados', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+                ],
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: lotes.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) => _buildBatchDetailCard(lotes[i]),
+            ),
+    );
+  }
+
+  Widget _buildBatchDetailCard(dynamic l) {
+    final batchName = l['nombreLote']?.toString() ?? l['batchName']?.toString() ?? 'Sin nombre';
+    final qty = int.tryParse(l['cantidadDisponible']?.toString() ?? '0') ?? 0;
+    final expiryStr = l['fechaDeVencimiento']?.toString() ?? l['fechaVencimiento']?.toString() ?? '';
+    final expiry = DateTime.tryParse(expiryStr);
+    final isBatchExpired = expiry != null && expiry.isBefore(DateTime.now());
+    final batchPrice = _parsePrice(l);
+    final batchCost = _parseCost(l);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isBatchExpired ? AppTheme.reiOrangeRed.withValues(alpha: 0.1) : AppTheme.ayanamiBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  isBatchExpired ? Icons.warning_amber_rounded : Icons.inventory_rounded,
+                  size: 16, color: isBatchExpired ? AppTheme.reiOrangeRed : AppTheme.ayanamiBlue,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(batchName,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+              ),
+              if (UserSession.isDueno)
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    InventoryDialogs.showAddEditProduct(
+                      context, controller, widget.lotesCtrl,
+                      prod: Map<String, dynamic>.from(p), prefillBatch: Map<String, dynamic>.from(l),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.edit_rounded, size: 16, color: AppTheme.ayanamiBlue),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _batchStat('Stock', '$qty', qty < 10 ? AppTheme.reiOrangeRed : Colors.black87),
+              if (batchPrice > 0) _batchStat('Precio', formatCop(batchPrice), Colors.black87),
+              if (batchCost > 0) _batchStat('Costo', formatCop(batchCost), Colors.grey.shade600),
+            ],
+          ),
+          if (expiry != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(isBatchExpired ? Icons.error_outline_rounded : Icons.event_rounded,
+                    size: 14, color: isBatchExpired ? AppTheme.reiOrangeRed : Colors.grey.shade500),
+                const SizedBox(width: 4),
+                Text(
+                  isBatchExpired
+                      ? 'Vencido el ${expiry.day}/${expiry.month}/${expiry.year}'
+                      : 'Vence el ${expiry.day}/${expiry.month}/${expiry.year}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isBatchExpired ? AppTheme.reiOrangeRed : Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _batchStat(String label, String value, Color color) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 2),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
+        ],
+      ),
+    );
+  }
+
+  double _parsePrice(dynamic l) {
+    for (final f in ['precio', 'precioVenta', 'precio_venta', 'pvp']) {
+      final v = double.tryParse(l[f]?.toString() ?? '');
+      if (v != null && v > 0) return v;
+    }
+    return 0;
+  }
+
+  double _parseCost(dynamic l) {
+    for (final f in ['costoDeCompra', 'costoCompra', 'costo', 'precioCompra']) {
+      final v = double.tryParse(l[f]?.toString() ?? '');
+      if (v != null && v > 0) return v;
+    }
+    return 0;
   }
 
   Widget _stockBar(int stock, Color color, String statusText) {
@@ -409,7 +585,7 @@ class _ProductCardState extends State<ProductCard> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Producto'),
-        content: Text('�Eliminar "${p['nombre']}"?'),
+        content: Text('¿Eliminar "${p['nombre']}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
           ElevatedButton(

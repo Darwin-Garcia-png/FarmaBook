@@ -272,7 +272,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 40),
-      decoration: BoxDecoration(color: bg, border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08)))),
+      decoration: BoxDecoration(color: bg),
       child: Row(children: [
         Container(
           padding: const EdgeInsets.all(10),
