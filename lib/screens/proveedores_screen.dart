@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../controllers/proveedores_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
@@ -6,6 +7,7 @@ import '../widgets/shimmer_loading.dart';
 import '../services/api_service.dart';
 import '../widgets/animations.dart';
 import 'package:flutter/services.dart';
+import '../controllers/dashboard_controller.dart';
 
 class ProveedoresScreen extends StatefulWidget {
   const ProveedoresScreen({super.key});
@@ -388,23 +390,18 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
   }
 
   Widget _buildCard(Map<String, dynamic> p, Color accent, Color text, Color card) {
-    return HoverScale(
-      scale: 1.01,
-      elevation: 6,
-      child: Container(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: accent.withValues(alpha: 0.4), width: 3)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
             child: Icon(Icons.business_rounded, color: accent, size: 22),
           ),
           const SizedBox(width: 14),
@@ -429,7 +426,6 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
           ]),
         ]),
       ),
-    ),
     );
   }
 

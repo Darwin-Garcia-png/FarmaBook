@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../controllers/categorias_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import 'package:flutter/services.dart';
 import '../widgets/animations.dart';
+import '../controllers/dashboard_controller.dart';
 
 class CategoriasScreen extends StatefulWidget {
   const CategoriasScreen({super.key});
@@ -367,7 +369,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       child: Row(children: [
         IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: text),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Provider.of<DashboardController>(context, listen: false).onItemTapped(0),
         ),
         const SizedBox(width: 8),
         Container(
@@ -497,11 +499,6 @@ class _AnimatedCatCardState extends State<_AnimatedCatCard>
     final accent = widget.accent;
     final text = widget.text;
     final card = widget.card;
-    final gradient = LinearGradient(
-      colors: [accent.withValues(alpha: 0.12), accent.withValues(alpha: 0.04)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
 
     return FadeTransition(
       opacity: _fadeAnim,
@@ -512,15 +509,13 @@ class _AnimatedCatCardState extends State<_AnimatedCatCard>
           decoration: BoxDecoration(
             color: card,
             borderRadius: BorderRadius.circular(16),
-            border: Border(left: BorderSide(color: accent.withValues(alpha: 0.5), width: 3)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                 child: Icon(Icons.category_rounded, color: accent, size: 22),
               ),
               const SizedBox(width: 14),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../controllers/usuarios_controller.dart';
 import '../theme/app_theme.dart';
-import '../widgets/premium_header.dart';
+import '../controllers/dashboard_controller.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/animations.dart';
@@ -56,27 +57,51 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
   Widget build(BuildContext context) {
     final loading = _ctrl.isLoading || _ctrl.isLoadingDeleted;
     final hasError = _ctrl.error != null && _ctrl.usuarios.isEmpty && _ctrl.deletedUsuarios.isEmpty;
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+    final text = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PremiumHeader(
-        title: 'Personal',
-        subtitle: 'Administra usuarios y permisos',
-        icon: Icons.engineering_rounded,
-        baseColor: _accent,
-        trailing: loading ? null : Row(mainAxisSize: MainAxisSize.min, children: [
-          IconButton(
-            icon: Icon(Icons.refresh_rounded, size: 20, color: _accent.withValues(alpha: 0.7)),
-            onPressed: () { _ctrl.fetchAll(); if (_ctrl.showDeleted) _ctrl.fetchDeleted(); },
-            padding: EdgeInsets.zero, constraints: const BoxConstraints(),
-          ),
-        ]),
+      backgroundColor: bg,
+      body: Stack(children: [
+        if (loading)
+          const ShimmerList(itemCount: 5, itemHeight: 80)
+        else if (hasError)
+          _buildError()
+        else
+          _buildContent(),
+        Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text)),
+      ]),
+    );
+  }
+
+  Widget _buildHeader(Color bg, Color text) {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.08))),
       ),
-      body: loading
-          ? const ShimmerList(itemCount: 5, itemHeight: 80)
-          : hasError
-              ? _buildError()
-              : _buildContent(),
+      child: Row(children: [
+        IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: text),
+          onPressed: () => Provider.of<DashboardController>(context, listen: false).onItemTapped(0),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _accent.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(Icons.engineering_rounded, color: AppTheme.ayanamiBlue, size: 24),
+        ),
+        const SizedBox(width: 14),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text('USUARIOS', style: TextStyle(color: text, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+          Text('Administra usuarios y permisos', style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600)),
+        ]),
+      ]),
     );
   }
 
@@ -136,7 +161,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 16, 32, 0),
+      padding: const EdgeInsets.fromLTRB(32, 96, 32, 0),
       child: TextField(
         controller: _searchCtrl,
         onChanged: (v) => setState(() => _searchQuery = v),
@@ -260,52 +285,24 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.06)),
-        boxShadow: [
-          BoxShadow(
-            color: isDeleted ? AppTheme.reiOrangeRed.withValues(alpha: 0.04) : _accent.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: null,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 4, 20, 4),
-            child: Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: isDeleted ? AppTheme.reiOrangeRed : rolCol,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Container(
-                  width: 52, height: 52,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [rolCol, rolCol.withValues(alpha: 0.6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: rolCol.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))],
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22),
-                  ),
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
+                color: isDeleted ? AppTheme.reiOrangeRed.withValues(alpha: 0.15) : rolCol.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: TextStyle(color: rolCol, fontWeight: FontWeight.w900, fontSize: 18),
+              ),
+            ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -371,10 +368,8 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      }
 
   Widget _actionIcon(IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
