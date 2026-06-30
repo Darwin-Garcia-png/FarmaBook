@@ -223,7 +223,7 @@ class ReceiptDialog extends StatelessWidget {
 
       pdf.addPage(
         pw.Page(
-          pageFormat: PdfPageFormat.roll80.copyWith(marginBottom: 0, marginLeft: 6, marginRight: 6, marginTop: 0),
+          pageFormat: PdfPageFormat.roll57.copyWith(marginBottom: 0, marginLeft: 3, marginRight: 3, marginTop: 0),
           build: (ctx) {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -232,12 +232,12 @@ class ReceiptDialog extends StatelessWidget {
                 pw.Center(
                   child: pw.Text('FarmaBook',
                       style: pw.TextStyle(
-                          fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                          fontSize: 15, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                 ),
                 pw.SizedBox(height: 4),
                 pw.Center(
                   child: pw.Text('RECIBO DE VENTA',
-                      style: pw.TextStyle(fontSize: 10, color: PdfColors.black)),
+                      style: pw.TextStyle(fontSize: 9, color: PdfColors.black)),
                 ),
                 pw.SizedBox(height: 8),
                 pw.Divider(thickness: 1, color: PdfColors.black),
@@ -251,7 +251,7 @@ class ReceiptDialog extends StatelessWidget {
                 pw.SizedBox(height: 6),
                 pw.Text('PRODUCTOS',
                     style: pw.TextStyle(
-                        fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                        fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                 pw.SizedBox(height: 6),
                 ...productos.map((det) {
                   final d = det as Map<String, dynamic>;
@@ -272,11 +272,12 @@ class ReceiptDialog extends StatelessWidget {
                       children: [
                         pw.Expanded(
                           child: pw.Text('$qty $nombre',
-                              style: pw.TextStyle(fontSize: 9, color: PdfColors.black),
+                              style: pw.TextStyle(fontSize: 8, color: PdfColors.black),
                               maxLines: 2),
                         ),
+                        pw.SizedBox(width: 4),
                         pw.Text(formatCop(price),
-                            style: pw.TextStyle(fontSize: 9, color: PdfColors.black)),
+                            style: pw.TextStyle(fontSize: 8, color: PdfColors.black)),
                       ],
                     ),
                   );
@@ -289,23 +290,23 @@ class ReceiptDialog extends StatelessWidget {
                   children: [
                     pw.Text('TOTAL',
                         style: pw.TextStyle(
-                            fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                            fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                     pw.Text(
                         formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0),
                         style: pw.TextStyle(
-                            fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                            fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                   ],
                 ),
                 pw.SizedBox(height: 16),
                 pw.Center(
                   child: pw.Text('Gracias por su compra!',
-                      style: pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic, color: PdfColors.black)),
+                      style: pw.TextStyle(fontSize: 8, fontStyle: pw.FontStyle.italic, color: PdfColors.black)),
                 ),
                 pw.SizedBox(height: 24),
                 pw.Center(
                   child: pw.Text(
                       'Generado: ${DateTime.now().toString().substring(0, 16)}',
-                      style: pw.TextStyle(fontSize: 7, color: PdfColors.grey)),
+                      style: pw.TextStyle(fontSize: 6, color: PdfColors.black)),
                 ),
               ],
             );
@@ -331,9 +332,9 @@ class ReceiptDialog extends StatelessWidget {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(label,
-              style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+              style: pw.TextStyle(fontSize: 8, color: PdfColors.black)),
           pw.Text(value,
-              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+              style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
         ],
       ),
     );

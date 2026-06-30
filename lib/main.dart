@@ -85,12 +85,12 @@ class MyApp extends StatelessWidget {
                       const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
                       const SizedBox(height: 16),
                       Text(
-                        'Error de interfaz',
+                        'Error de visualización',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[800]),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        details.exception.toString(),
+                        'Falla interna de diseño. Por favor, intente recargar la pantalla.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),

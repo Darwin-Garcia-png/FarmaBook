@@ -216,6 +216,24 @@ class ErrorDisplay {
       if (code != null) return _statusMessage(code);
     }
 
+    final isTechnical = s.contains('TypeError') ||
+        s.contains('FormatException') ||
+        s.contains('NoSuchMethodError') ||
+        s.contains('Null check operator') ||
+        s.contains('RangeError') ||
+        s.contains('subtype of') ||
+        s.contains('is not a') ||
+        s.contains('null') ||
+        s.contains('undefined') ||
+        s.contains('dynamic') ||
+        s.contains('Unexpected character') ||
+        s.contains('JSON') ||
+        s.contains('json');
+
+    if (isTechnical) {
+      return 'Falla de datos: Formato incompatible. Intente recargar.';
+    }
+
     s = s
         .replaceAll(RegExp(r'^Exception:\s*'), '')
         .replaceAll(RegExp(r'^HttpException:\s*', caseSensitive: false), '')
@@ -225,22 +243,27 @@ class ErrorDisplay {
         .replaceAll(_errorCodeReg, '')
         .trim();
 
-    if (s.isEmpty) return 'Error inesperado';
+    if (s.isEmpty) return 'Falla de procesamiento. Intente nuevamente.';
 
     final trans = _translateSingleError(s);
     if (trans != s) return trans;
+
+    final containsCode = RegExp(r'[{}[\]()<>:;=_]|instance of', caseSensitive: false).hasMatch(s);
+    if (containsCode) {
+      return 'Error de procesamiento: Falló la petición interna.';
+    }
 
     return s;
   }
 
   static String _statusMessage(int code) {
-    if (code >= 500) return 'Error interno del servidor. Intenta más tarde.';
-    if (code == 404) return 'Recurso no encontrado en el servidor.';
-    if (code == 403) return 'No tienes permiso para realizar esta acción.';
-    if (code == 401) return 'Sesión expirada o credenciales inválidas.';
-    if (code == 409) return 'Conflicto: el recurso ya existe o está en uso.';
-    if (code == 422) return 'Datos inválidos enviados al servidor.';
-    if (code == 400) return 'Solicitud inválida. Revisa los datos.';
-    return 'Error del servidor (código $code).';
+    if (code >= 500) return 'Error de servidor: Fallo interno. Intente más tarde.';
+    if (code == 404) return 'Recurso no encontrado: La dirección no existe.';
+    if (code == 403) return 'Acceso denegado: No tiene permisos suficientes.';
+    if (code == 401) return 'Acceso denegado: Sesión expirada o credenciales incorrectas.';
+    if (code == 409) return 'Conflicto de datos: El registro ya está en uso.';
+    if (code == 422) return 'Datos incorrectos: Información inválida enviada.';
+    if (code == 400) return 'Petición inválida: Verifique la información ingresada.';
+    return 'Error de red: Respuesta inesperada del servidor.';
   }
 }
