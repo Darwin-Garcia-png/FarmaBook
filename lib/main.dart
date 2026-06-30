@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
@@ -70,34 +71,36 @@ class MyApp extends StatelessWidget {
       routerConfig: appRouter,
       scaffoldMessengerKey: globalScaffoldMessengerKey,
       builder: (context, child) {
-        ErrorWidget.builder = (details) {
-          AppLogger.e('Build error', details.exception, details.stack);
-          return Material(
-            color: Colors.white,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error de interfaz',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[800]),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      details.exception.toString(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                  ],
+        if (kReleaseMode) {
+          ErrorWidget.builder = (details) {
+            AppLogger.e('Build error', details.exception, details.stack);
+            return Material(
+              color: Colors.white,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error de interfaz',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        details.exception.toString(),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        };
+            );
+          };
+        }
         return NotificationOverlay(child: child!);
       },
     );

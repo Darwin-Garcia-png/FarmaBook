@@ -157,26 +157,8 @@ class VentasController extends ChangeNotifier {
         }
         hydrated.add(producto);
       }
-      final now = DateTime.now();
-      final valid = hydrated.where((p) => p.cantidadDisponible > 0 && (p.nearestExpiryDate == null || !p.nearestExpiryDate!.isBefore(now))).toList();
-      if (valid.length < 5 && rawList.length < 100) {
-        final extras = await ApiService.getProductos(limit: 50, page: 2);
-        for (var json in extras) {
-          if (valid.any((p) => p.productoId == json['productoId']?.toString())) continue;
-          var producto = Producto.fromJson(json);
-          cacheProductos[producto.productoId] = producto;
-          final enriched = await _enrichWithBatches(producto);
-          if (enriched != null) {
-            producto = _updateProducto(producto, enriched);
-            cacheProductos[producto.productoId] = producto;
-          }
-          if (producto.cantidadDisponible > 0 && (producto.nearestExpiryDate == null || !producto.nearestExpiryDate!.isBefore(now))) {
-            valid.add(producto);
-          }
-        }
-      }
-      _sortProductos(valid);
-      productosEncontrados = valid;
+      _sortProductos(hydrated);
+      productosEncontrados = hydrated;
     } catch (e) {
       error = 'Error al cargar productos';
     } finally {

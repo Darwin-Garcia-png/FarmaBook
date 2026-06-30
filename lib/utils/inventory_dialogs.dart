@@ -1273,7 +1273,7 @@ class InventoryDialogs {
                           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
-                            labelText: 'Teléfono (opcional)',
+                            labelText: 'Teléfono *',
                             prefixIcon: const Icon(Icons.phone_rounded, color: AppTheme.ayanamiBlue, size: 20),
                             filled: true,
                             fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
@@ -1281,6 +1281,13 @@ class InventoryDialogs {
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none),
                           ),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Requerido';
+                            final digits = v.replaceAll(RegExp(r'\D'), '');
+                            if (digits.length < 6) return 'Mínimo 6 dígitos';
+                            if (digits.length > 10) return 'Máximo 10 dígitos';
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -1292,7 +1299,7 @@ class InventoryDialogs {
                           autovalidateMode: AutovalidateMode.onUserInteraction,
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
-                            labelText: 'Email (opcional)',
+                            labelText: 'Email *',
                             prefixIcon: const Icon(Icons.email_rounded, color: AppTheme.ayanamiBlue, size: 20),
                             filled: true,
                             fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
@@ -1301,9 +1308,8 @@ class InventoryDialogs {
                                 borderSide: BorderSide.none),
                           ),
                           validator: (v) {
-                            if (v != null && v.isNotEmpty && !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) {
-                              return 'Email inválido';
-                            }
+                            if (v == null || v.trim().isEmpty) return 'Requerido';
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) return 'Email inválido';
                             return null;
                           },
                         ),

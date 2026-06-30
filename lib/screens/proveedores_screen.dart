@@ -185,13 +185,13 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                     _buildField('Nombre de la Empresa *', nombre, Icons.business, req: true,
                         focusNode: nombreFn, textInputAction: TextInputAction.next,
                         onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(direccionFn)),
-                    _buildField('Dirección', direccion, Icons.location_on,
+                    _buildField('Dirección *', direccion, Icons.location_on, req: true,
                         focusNode: direccionFn, textInputAction: TextInputAction.next,
                         onFieldSubmitted: (_) => FocusScope.of(diaCtx).requestFocus(telefonoFn)),
-                    _buildField('Teléfono', telefono, Icons.phone, keyboard: TextInputType.phone,
+                    _buildField('Teléfono *', telefono, Icons.phone, req: true, keyboard: TextInputType.phone,
                         focusNode: telefonoFn, textInputAction: TextInputAction.next,
                         onFieldSubmitted: (_) => FocusScope.of(diaCtx).requestFocus(emailFn)),
-                    _buildField('Email', email, Icons.email, keyboard: TextInputType.emailAddress,
+                    _buildField('Email *', email, Icons.email, req: true, keyboard: TextInputType.emailAddress,
                         focusNode: emailFn, textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => submit(diaCtx)),
                     const SizedBox(height: 32),
@@ -257,8 +257,9 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
           if (label.toLowerCase().contains('nombre') && v != null && RegExp(r'[0-9]').hasMatch(v)) {
             return 'No se permiten números en el nombre';
           }
-          if (keyboard == TextInputType.phone && v != null && v.isNotEmpty && v.length < 7) {
-            return 'Teléfono demasiado corto';
+          if (keyboard == TextInputType.phone && v != null && v.isNotEmpty) {
+            if (v.length < 6) return 'Mínimo 6 dígitos';
+            if (v.length > 10) return 'Máximo 10 dígitos';
           }
           if (keyboard == TextInputType.emailAddress && v != null && v.isNotEmpty) {
             if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) return 'Email inválido';
