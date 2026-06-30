@@ -39,7 +39,11 @@ class VentasController extends ChangeNotifier {
     isLoadingHistorial = true;
     notifyListeners();
     try {
-      ventasHistorial = await ApiService.getSales(limit: 999999);
+      final all = await ApiService.getSales(limit: 999999);
+      ventasHistorial = all.where((s) {
+        final activo = s['activo'];
+        return activo == null || activo == true || activo.toString() == 'true';
+      }).toList();
       await cargarPresentaciones();
     } catch (e) {
       error = 'Error al cargar historial';
@@ -511,6 +515,10 @@ class VentasController extends ChangeNotifier {
       await ApiService.deleteSale(saleId);
       ventasHistorial.removeWhere((s) => s['ventaId']?.toString() == saleId || s['id']?.toString() == saleId);
       await cargarHistorialVentas();
+      ventasHistorial = ventasHistorial.where((s) {
+        final activo = s['activo'];
+        return activo == null || activo == true || activo.toString() == 'true';
+      }).toList();
       mensaje = 'Venta anulada correctamente';
       notifyListeners();
       return true;

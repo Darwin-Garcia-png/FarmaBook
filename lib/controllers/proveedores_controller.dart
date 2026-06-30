@@ -56,7 +56,7 @@ class ProveedoresController extends ChangeNotifier {
       proveedores = await ApiService.getSuppliers();
       _applyLocalFilter();
     } catch (e) {
-      error = e.toString();
+      error = 'No se pudieron cargar los proveedores';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -79,7 +79,8 @@ class ProveedoresController extends ChangeNotifier {
       await cargarProveedores();
       return true;
     } catch (e) {
-      debugPrint("Error adding supplier: $e");
+      error = 'Error al guardar. Verifica los datos.';
+      notifyListeners();
       return false;
     }
   }
@@ -90,7 +91,8 @@ class ProveedoresController extends ChangeNotifier {
       await cargarProveedores();
       return true;
     } catch (e) {
-      debugPrint("Error updating supplier: $e");
+      error = 'Error al actualizar. Verifica los datos.';
+      notifyListeners();
       return false;
     }
   }
@@ -101,7 +103,8 @@ class ProveedoresController extends ChangeNotifier {
       await cargarProveedores();
       return true;
     } catch (e) {
-      debugPrint("Error deleting supplier: $e");
+      error = 'Error al eliminar. Puede tener dependencias asociadas.';
+      notifyListeners();
       return false;
     }
   }

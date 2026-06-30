@@ -116,7 +116,7 @@ class PremiumHeader extends StatelessWidget implements PreferredSizeWidget {
               if (trailing != null) trailing!,
               const SizedBox(width: 8),
               _NotifBell(baseColor: baseColor),
-              if (!hideSettings) IconButton(
+              if (!hideSettings && UserSession.isDueno) IconButton(
                 icon:
                     Icon(Icons.settings_outlined, color: baseColor, size: 22),
                 onPressed: () => context.push('/configuracion'),

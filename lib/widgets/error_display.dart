@@ -8,6 +8,7 @@ class ErrorDisplay {
   ErrorDisplay._();
 
   static Widget fullScreen({
+    String? title,
     required String message,
     VoidCallback? onRetry,
   }) {
@@ -17,14 +18,33 @@ class ErrorDisplay {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.reiOrangeRed.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.error_outline_rounded, size: 48, color: AppTheme.reiOrangeRed),
+            ),
+            const SizedBox(height: 24),
+            Text(title ?? 'Error',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.reiOrangeRed)),
+            const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.reiOrangeRed)),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey)),
             if (onRetry != null) ...[
-              const SizedBox(height: 24),
-              ElevatedButton(
+              const SizedBox(height: 28),
+              ElevatedButton.icon(
                 onPressed: onRetry,
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed, foregroundColor: Colors.white),
-                child: const Text('REINTENTAR'),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.reiOrangeRed,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                label: const Text('REINTENTAR', style: TextStyle(fontWeight: FontWeight.w900)),
               ),
             ],
           ],
@@ -34,6 +54,7 @@ class ErrorDisplay {
   }
 
   static Widget inline({
+    String? title,
     required String message,
     VoidCallback? onDismiss,
   }) {
@@ -42,12 +63,26 @@ class ErrorDisplay {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.reiOrangeRed.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Text(message,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.reiOrangeRed))),
+          const Icon(Icons.error_outline_rounded, size: 20, color: AppTheme.reiOrangeRed),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title ?? 'Error',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppTheme.reiOrangeRed)),
+                const SizedBox(height: 4),
+                Text(message,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey)),
+              ],
+            ),
+          ),
           if (onDismiss != null)
             GestureDetector(
               onTap: onDismiss,

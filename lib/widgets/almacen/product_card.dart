@@ -5,8 +5,8 @@ import '../../controllers/lotes_controller.dart';
 import '../../services/api_service.dart';
 import '../../utils/inventory_dialogs.dart';
 import '../../utils/price_formatter.dart';
-import '../../utils/user_session.dart';
 import '../animations.dart';
+import '../../utils/user_session.dart';
 import 'batch_details_modal.dart';
 
 class ProductCard extends StatefulWidget {
@@ -319,12 +319,15 @@ class _ProductCardState extends State<ProductCard> {
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildBatchPanelHeader(context),
-                  _buildBatchPanelContent(context, lotes),
-                ],
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildBatchPanelHeader(context),
+                    _buildBatchPanelContent(context, lotes),
+                  ],
+                ),
               ),
             ),
           ),
@@ -351,6 +354,16 @@ class _ProductCardState extends State<ProductCard> {
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: AppTheme.ayanamiBlue),
+            tooltip: 'Añadir Lote',
+            onPressed: () {
+              Navigator.pop(context);
+              InventoryDialogs.showAddEditProduct(
+                  context, controller, widget.lotesCtrl,
+                  prod: Map<String, dynamic>.from(p), isNewBatchOnly: true);
+            },
           ),
           IconButton(
             icon: Icon(Icons.close_rounded, color: Colors.grey.shade500),
@@ -420,23 +433,49 @@ class _ProductCardState extends State<ProductCard> {
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
               ),
               if (UserSession.isDueno)
-                InkWell(
-                  onTap: () {
-                    Navigator.pop(context);
-                    InventoryDialogs.showAddEditProduct(
-                      context, controller, widget.lotesCtrl,
-                      prod: Map<String, dynamic>.from(p), prefillBatch: Map<String, dynamic>.from(l),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      InventoryDialogs.showAddEditProduct(
+                        context, controller, widget.lotesCtrl,
+                        prod: Map<String, dynamic>.from(p), prefillBatch: Map<String, dynamic>.from(l),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.edit_rounded, size: 16, color: AppTheme.ayanamiBlue),
                     ),
-                    child: Icon(Icons.edit_rounded, size: 16, color: AppTheme.ayanamiBlue),
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () => _confirmarDesactivarLote(context, l, widget.lotesCtrl, controller),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.toggle_off_outlined, size: 16, color: Colors.orange),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () => _confirmarBorradoLote(context, l, widget.lotesCtrl, controller),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.reiOrangeRed.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.delete_sweep_outlined, size: 16, color: AppTheme.reiOrangeRed),
+                    ),
+                  ),
+                ]),
             ],
           ),
           const SizedBox(height: 10),
@@ -614,5 +653,52 @@ class _ProductCardState extends State<ProductCard> {
       }
     }
     return 0.0;
+  }
+
+  Future<void> _confirmarDesactivarLote(BuildContext context, dynamic batch,
+      LotesController lotesCtrl, AlmacenController controller) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Desactivar Lote'),
+        content: const Text('Se pondrá el stock a 0. El lote pasará al historial. ¿Continuar?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Desactivar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      final id = (batch['loteId'] ?? batch['batchId'] ?? batch['id']).toString();
+      await lotesCtrl.updateBatch(id, {'cantidadDisponible': 0});
+      controller.fetchProducts(isRefresh: true);
+    }
+  }
+
+  Future<void> _confirmarBorradoLote(BuildContext context, dynamic batch,
+      LotesController lotesCtrl, AlmacenController controller) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar Lote'),
+        content: Text('¿Deseas eliminar el lote "${batch['nombreLote']}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await lotesCtrl.deleteBatch((batch['loteId'] ?? batch['batchId'] ?? batch['id']).toString());
+      controller.fetchProducts(isRefresh: true);
+    }
   }
 }

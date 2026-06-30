@@ -83,7 +83,7 @@ class AuthService {
       return {
         'statusCode': 0,
         'body': <String, dynamic>{},
-        'message': 'Error: $e',
+        'message': 'Error de conexión. Verifica tu red.',
         'error': true,
       };
     }

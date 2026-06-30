@@ -73,11 +73,15 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         success = await _controller.agregarCategoria();
       }
       if (mounted) {
-        Navigator.pop(ctx);
         if (success) {
+          Navigator.pop(ctx);
           ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Categoría actualizada' : 'Categoría registrada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error');
+          ErrorDisplay.snackBar(
+            context: context,
+            message: _controller.error ?? 'Error al guardar. Verifica los datos e inténtalo de nuevo.',
+            title: 'Error al guardar',
+          );
         }
       }
     }
@@ -114,12 +118,14 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(32),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
+                child: Material(
+                  color: Colors.transparent,
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
                         padding: const EdgeInsets.fromLTRB(28, 24, 20, 20),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -164,7 +170,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildField('Nombre de la Categoría', _controller.nombreCtrl, Icons.category_rounded, req: true, focusNode: _nombreFocus, textInputAction: TextInputAction.next, onFieldSubmitted: (_) => FocusScope.of(ctx).requestFocus(_descFocus)),
-                            _buildField('Descripción (Opcional)', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3, focusNode: _descFocus, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _saveAndPop(ctx)),
+                            _buildField('Descripción *', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3, req: true, focusNode: _descFocus, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _saveAndPop(ctx)),
                           ],
                         ),
                       ),
@@ -209,6 +215,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
                     ],
                   ),
                 ),
+                ),
               ),
             ),
           );
@@ -244,7 +251,11 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: 'Categoría eliminada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar');
+          ErrorDisplay.snackBar(
+            context: context,
+            message: _controller.error ?? 'Error al eliminar. Puede tener dependencias asociadas.',
+            title: 'Error',
+          );
         }
       }
     }
@@ -263,7 +274,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         autovalidateMode: AutovalidateMode.onUserInteraction,
         inputFormatters: [
            if (keyboard == TextInputType.number) FilteringTextInputFormatter.digitsOnly,
-           if (label.toLowerCase().contains('nombre')) FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+           if (label.toLowerCase().contains('nombre')) FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
         ],
         decoration: InputDecoration(
           labelText: label,
@@ -308,6 +319,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         body: Stack(children: [
           Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
           ErrorDisplay.fullScreen(
+            title: 'Error al cargar',
             message: _controller.error!,
             onRetry: _controller.cargarCategorias,
           ),

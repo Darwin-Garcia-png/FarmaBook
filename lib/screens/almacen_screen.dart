@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../controllers/almacen_controller.dart';
 import '../controllers/lotes_controller.dart';
 import '../utils/inventory_dialogs.dart';
+import '../utils/price_formatter.dart';
 import '../widgets/almacen/product_card.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/error_display.dart';
@@ -18,12 +19,14 @@ class AlmacenScreen extends StatefulWidget {
   State<AlmacenScreen> createState() => _AlmacenScreenState();
 }
 
-class _AlmacenScreenState extends State<AlmacenScreen> {
+class _AlmacenScreenState extends State<AlmacenScreen> with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: UserSession.isDueno ? 2 : 1, vsync: this);
     context.read<AlmacenController>().touch();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
@@ -34,6 +37,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -56,14 +60,51 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
               constraints: const BoxConstraints(),
             ),
           ),
-          body: Column(
-            children: [
-              _buildHeader(context, controller),
-              _buildMainContent(context, controller, lotesCtrl),
-            ],
-          ),
+          body: UserSession.isDueno
+              ? Column(
+                  children: [
+                    _buildHeader(context, controller),
+                    _buildTabBar(lotesCtrl),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildMainContent(context, controller, lotesCtrl),
+                          _buildArchivedContent(lotesCtrl, controller),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    _buildHeader(context, controller),
+                    Expanded(
+                      child: _buildMainContent(context, controller, lotesCtrl),
+                    ),
+                  ],
+                ),
         );
       },
+    );
+  }
+
+  Widget _buildTabBar(LotesController lotesCtrl) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      decoration: BoxDecoration(color: Theme.of(context).cardTheme.color),
+      child: TabBar(
+        controller: _tabController,
+        labelColor: AppTheme.ayanamiBlue,
+        unselectedLabelColor: Colors.grey,
+        indicatorColor: AppTheme.ayanamiBlue,
+        indicatorWeight: 3,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+        tabs: [
+          const Tab(text: 'PRODUCTOS'),
+          Tab(text: 'DESACTIVADOS (${lotesCtrl.archivedBatches.length})'),
+        ],
+      ),
     );
   }
 
@@ -144,7 +185,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
                       exists ? controller.categoriaSeleccionada : null;
 
                   return DropdownButtonFormField<String>(
-                    initialValue: safeValue,
+                    value: safeValue,
                     dropdownColor: Theme.of(context).cardTheme.color,
                     style: TextStyle(
                         color: Theme.of(context).textTheme.bodyLarge?.color),
@@ -308,22 +349,20 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
   Widget _buildMainContent(BuildContext context, AlmacenController controller,
       LotesController lotesCtrl) {
     if (controller.isLoadingInitial) {
-      return Expanded(child: ShimmerList(itemCount: 6, itemHeight: 220, padding: const EdgeInsets.fromLTRB(32, 32, 32, 0)));
+      return ShimmerList(itemCount: 6, itemHeight: 220, padding: const EdgeInsets.fromLTRB(32, 32, 32, 0));
     }
 
     if (controller.error != null && controller.productos.isEmpty) {
-      return Expanded(child: ErrorDisplay.inline(message: controller.error!, onDismiss: () => controller.error = null));
+      return ErrorDisplay.inline(title: 'Carga fallida', message: controller.error!, onDismiss: () => controller.error = null);
     }
 
     if (controller.productos.isEmpty) {
-      return const Expanded(
-          child: Center(
-              child: Text('No hay productos encontrados',
-                  style: TextStyle(fontSize: 18, color: Colors.grey))));
+      return const Center(
+          child: Text('No hay productos encontrados',
+              style: TextStyle(fontSize: 18, color: Colors.grey)));
     }
 
-    return Expanded(
-      child: Stack(
+    return Stack(
         children: [
           SingleChildScrollView(
             controller: _scrollController,
@@ -332,6 +371,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
               spacing: 24,
               runSpacing: 24,
               children: controller.productos.map((p) => SizedBox(
+                key: ValueKey(p['productoId']),
                 width: 300,
                 child: AnimatedEntry(
                   child: ProductCard(
@@ -361,7 +401,138 @@ class _AlmacenScreenState extends State<AlmacenScreen> {
               ),
             ),
         ],
+    );
+  }
+
+  Widget _buildArchivedContent(LotesController lotesCtrl, AlmacenController almacenCtrl) {
+    final batches = lotesCtrl.archivedBatches;
+    if (batches.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.archive_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
+            const SizedBox(height: 16),
+            const Text('No hay lotes desactivados', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
+  }
+
+
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(32),
+      itemCount: batches.length,
+      itemBuilder: (ctx, i) {
+        final b = batches[i];
+        final expDate = DateTime.tryParse(b['fechaDeVencimiento']?.toString() ?? b['fechaVencimiento']?.toString() ?? '');
+        final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
+        final precio = _batchPrice(b);
+
+        String reason = 'ARCHIVADO';
+        Color reasonColor = Colors.grey;
+        if (stock <= 0) {
+          reason = 'SIN STOCK';
+          reasonColor = AppTheme.reiPurple;
+        } else if (expDate != null && expDate.isBefore(DateTime.now())) {
+          reason = 'VENCIDO';
+          reasonColor = AppTheme.reiOrangeRed;
+        }
+
+        return AnimatedEntry(
+          index: i,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: reasonColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      stock <= 0 ? Icons.inventory_2_rounded : Icons.error_outline_rounded,
+                      color: reasonColor, size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(b['nombreLote'] ?? 'Lote',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 4),
+                        Text(b['productoNombre'] ?? b['productName'] ?? '',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8, runSpacing: 4,
+                          children: [
+                            _archivedBadge(reason, reasonColor),
+                            _archivedBadge(
+                              expDate == null ? 'Sin fecha' : 'Vence: ${expDate.day}/${expDate.month}/${expDate.year}',
+                              Colors.grey,
+                            ),
+                            _archivedBadge('Stock: $stock', stock <= 0 ? Colors.grey : AppTheme.reiOrangeRed),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.greenMetal.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.greenMetal.withValues(alpha: 0.15)),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('PRECIO', style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                        const SizedBox(height: 2),
+                        Text(
+                          formatCop(precio),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.greenMetal),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _archivedBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(text, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w800)),
+    );
+  }
+
+  num _batchPrice(Map<String, dynamic> b) {
+    for (final f in ['precioPorUnidad', 'costoDeCompra', 'precioVenta', 'precio', 'precioCompra', 'precio_unitario', 'pvp']) {
+      final v = double.tryParse((b[f] ?? '').toString());
+      if (v != null && v > 0) return v;
+    }
+    return 0;
   }
 }

@@ -659,7 +659,11 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             ),
             validator: (v) {
               if (!isEdit && (v == null || v.isEmpty)) return 'Contraseña requerida';
-              if (v != null && v.isNotEmpty && v.length < 8) return 'Mínimo 8 caracteres';
+              if (v != null && v.isNotEmpty) {
+                if (v.length < 8) return 'Mínimo 8 caracteres';
+                if (!RegExp(r'[A-Z]').hasMatch(v)) return 'Debe tener al menos una mayúscula';
+                if (!RegExp(r'[0-9]').hasMatch(v)) return 'Debe tener al menos un número';
+              }
               return null;
             },
           ),

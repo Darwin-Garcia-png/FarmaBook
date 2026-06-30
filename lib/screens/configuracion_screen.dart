@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/animations.dart';
+import '../widgets/error_display.dart';
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -214,18 +215,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
                               UserSession.save(result);
                               if (ctx.mounted) {
                                 setState(() {});
-                                ScaffoldMessenger.of(ctx).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Información actualizada correctamente')),
-                                );
+                                ErrorDisplay.successSnackBar(context: ctx, message: 'Información actualizada correctamente');
                               }
                             }
                           } catch (e) {
                             if (ctx.mounted) {
-                              ScaffoldMessenger.of(ctx).showSnackBar(
-                                SnackBar(content: const Text('Error al actualizar')),
-                              );
+                              ErrorDisplay.snackBar(context: ctx, message: 'Error al actualizar');
                             }
                           } finally {
                             if (ctx.mounted) {

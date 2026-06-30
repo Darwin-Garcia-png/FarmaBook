@@ -6,6 +6,7 @@ import '../../controllers/ventas_controller.dart';
 import '../../utils/price_formatter.dart';
 import 'receipt_dialog.dart';
 import '../../widgets/animations.dart';
+import '../error_display.dart';
 
 class CartSection extends StatelessWidget {
   final FocusNode? nombreFocusNode;
@@ -280,15 +281,12 @@ class CartSection extends StatelessWidget {
                       if (result != null && context.mounted) {
                         showDialog(
                           context: context,
-                          builder: (ctx) => ReceiptDialog(sale: controller.ultimaVenta ?? result['data']),
-                        );
-                      } else if (result == null && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(controller.error ?? 'Error al registrar venta'),
-                            backgroundColor: AppTheme.reiOrangeRed,
+                          builder: (ctx) => ReceiptDialog(
+                            sale: controller.ultimaVenta ?? result['data'],
                           ),
                         );
+                      } else if (result == null && context.mounted) {
+                        ErrorDisplay.snackBar(context: context, message: controller.error ?? 'Error al registrar venta');
                       }
                     },
               style: ElevatedButton.styleFrom(
@@ -365,10 +363,15 @@ class CartSection extends StatelessWidget {
                   textInputAction: TextInputAction.done,
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(15),
+                  ],
                   decoration: const InputDecoration(
                     hintText: 'Cédula / ID del Cliente',
                     hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
+                    helperText: 'Solo números, máx. 15 dígitos',
+                    helperStyle: TextStyle(fontSize: 9, color: Colors.grey),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 6),

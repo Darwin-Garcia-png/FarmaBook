@@ -75,6 +75,7 @@ class InventoryDialogs {
               if (descCtrl.text.trim().isNotEmpty) prodData['descripcion'] = descCtrl.text.trim();
               if (catId != null) prodData['categoriaId'] = catId;
               if (presId != null) prodData['presentacionId'] = presId;
+              if (casaId != null) prodData['casas'] = [casaId];
               if (precioCtrl.text.trim().isNotEmpty) prodData['precioPorUnidad'] = double.tryParse(precioCtrl.text.replaceAll(',', '.')) ?? 0.0;
               await controller.saveProduct(
                   isEdit: true, productId: pId, data: prodData, image: selectedImage);
@@ -156,27 +157,27 @@ class InventoryDialogs {
                                     _premiumField(context, 'Concentración *', concentracionCtrl, Icons.science_rounded,
                                         req: true, focusNode: fnConcentracion, textInputAction: TextInputAction.next,
                                         onFieldSubmitted: (_) => fnDesc.requestFocus()),
-                                    _premiumField(context, 'Descripción / Notas', descCtrl, Icons.notes_rounded,
-                                        maxLines: 2, focusNode: fnDesc, textInputAction: TextInputAction.next,
+                                    _premiumField(context, 'Descripción / Notas *', descCtrl, Icons.notes_rounded,
+                                        req: true, maxLines: 2, focusNode: fnDesc, textInputAction: TextInputAction.next,
                                         onFieldSubmitted: (_) => fnPrecio.requestFocus()),
                                     Row(
                                       children: [
                                         Expanded(
-                                          child: _premiumDropdown(context, 'Categoría', catId,
+                                          child: _premiumDropdown(context, 'Categoría *', catId,
                                               controller.categorias, 'categoriaId', 'nombre',
                                               (v) => setDialogState(() => catId = v),
                                               controller: controller, setDialogState: setDialogState),
                                         ),
                                         const SizedBox(width: 16),
                                         Expanded(
-                                          child: _premiumDropdown(context, 'Presentación', presId,
+                                          child: _premiumDropdown(context, 'Presentación *', presId,
                                               controller.presentaciones, 'presentacionId', 'nombre',
                                               (v) => setDialogState(() => presId = v),
                                               controller: controller, setDialogState: setDialogState),
                                         ),
                                       ],
                                     ),
-                                    _premiumDropdown(context, 'Casa Farmacéutica', casaId,
+                                    _premiumDropdown(context, 'Casa Farmacéutica *', casaId,
                                         controller.casas, 'casaId', 'nombre',
                                         (v) => setDialogState(() => casaId = v),
                                         controller: controller, setDialogState: setDialogState),
@@ -241,7 +242,7 @@ class InventoryDialogs {
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
     // ---------- Compute initial values synchronously ----------
-    String stockVal = '0';
+    String stockVal = '';
     String precioCompraVal = '';
     String batchNameVal = '';
     String? batchId;
@@ -301,7 +302,7 @@ class InventoryDialogs {
       expiryDate ??= DateTime.now().add(const Duration(days: 365));
     } else if (prod == null) {
       // New product: sensible defaults
-      expiryDate = DateTime.now().add(const Duration(days: 365));
+      expiryDate = null;
     }
     // For existing products: expiryDate stays null until loaded async below
 
@@ -442,7 +443,7 @@ class InventoryDialogs {
                           key: formKey,
                           child: Column(
                             children: [
-                              if (isBatchOnlyEdit) ...[
+                              if (isBatchOnlyEdit || isNewBatchOnly) ...[
                                 _buildProductInfoHeader(nombre.text, codigo.text),
                                 const SizedBox(height: 16),
                                 _buildBatchCardSection(
@@ -659,8 +660,8 @@ class InventoryDialogs {
                     focusNode: fnConcentracion, textInputAction: TextInputAction.next,
                     onFieldSubmitted: (_) => fnDesc?.requestFocus()),
               ]),
-              _formField(context, 'Descripción / Notas', desc, Icons.notes_rounded,
-                  maxLines: 2, readOnly: readOnly,
+              _formField(context, 'Descripción / Notas *', desc, Icons.notes_rounded,
+                  maxLines: 2, req: true, readOnly: readOnly,
                   focusNode: fnDesc, textInputAction: TextInputAction.done),
               const SizedBox(height: 8),
               _sectionDivider(context),
@@ -854,6 +855,12 @@ class InventoryDialogs {
         textInputAction: textInputAction,
         onFieldSubmitted: onFieldSubmitted,
         autovalidateMode: AutovalidateMode.onUserInteraction,
+        inputFormatters: [
+          if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true))
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+          if (label.toLowerCase().contains('nombre'))
+            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+        ],
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           labelText: label, isDense: true,
@@ -873,11 +880,23 @@ class InventoryDialogs {
         ),
         validator: (v) {
           if (req && (v == null || v.trim().isEmpty)) return 'Requerido';
+          if (label.toLowerCase().contains('código') || label.toLowerCase().contains('codigo')) {
+            if (v != null && v.isNotEmpty) {
+              if (RegExp(r'[^0-9]').hasMatch(v)) return 'Solo dígitos';
+              if (v.length < 8 || v.length > 14) return 'Debe tener 8-14 dígitos';
+            }
+          }
           if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true)) {
             if (v != null && v.isNotEmpty) {
               final val = double.tryParse(v.replaceAll(',', '.'));
               if (val == null) return 'Ingrese un número válido';
               if (val < 0) return 'No se permiten valores negativos';
+              if (label.toLowerCase().contains('precio') || label.toLowerCase().contains('costo')) {
+                if (val == 0) return 'Debe ser mayor a 0';
+              }
+              if (label.toLowerCase().contains('stock') || label.toLowerCase().contains('cantidad')) {
+                if (!val.isFinite || val != val.roundToDouble()) return 'Debe ser un número entero';
+              }
             }
           }
           return null;
@@ -899,12 +918,10 @@ class InventoryDialogs {
     // Configurar restricciones de entrada automáticas
     List<TextInputFormatter> formatters = [];
     if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true)) {
-      // Solo números y un punto decimal
       formatters.add(FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')));
-    } else if (label.toLowerCase().contains('nombre') || label.toLowerCase().contains('categoría') || label.toLowerCase().contains('presentación')) {
-      // Evitar números en campos de nombre puro (opcional, depende de la lógica de negocio)
-      // Pero el usuario pidió: "no se puedan colocar numeros donde solo deben de ir letras"
-      // formatters.add(FilteringTextInputFormatter.deny(RegExp(r'[0-9]'))); 
+    }
+    if (label.toLowerCase().contains('nombre') || label.toLowerCase().contains('categoría') || label.toLowerCase().contains('presentación')) {
+      formatters.add(FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')));
     }
 
     return Padding(
@@ -946,18 +963,25 @@ class InventoryDialogs {
         ),
         validator: (v) {
           if (req && (v == null || v.trim().isEmpty)) return 'Este campo es requerido';
-          
+          if (label.toLowerCase().contains('código') || label.toLowerCase().contains('codigo')) {
+            if (v != null && v.isNotEmpty) {
+              if (RegExp(r'[^0-9]').hasMatch(v)) return 'Solo dígitos';
+              if (v.length < 8 || v.length > 14) return 'Debe tener 8-14 dígitos';
+            }
+          }
           if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true)) {
             if (v != null && v.isNotEmpty) {
               final val = double.tryParse(v.replaceAll(',', '.'));
               if (val == null) return 'Ingrese un número válido';
               if (val < 0) return 'No se permiten valores negativos';
+              if (label.toLowerCase().contains('precio') || label.toLowerCase().contains('costo')) {
+                if (val == 0) return 'Debe ser mayor a 0';
+              }
+              if (label.toLowerCase().contains('stock') || label.toLowerCase().contains('cantidad')) {
+                if (!val.isFinite || val != val.roundToDouble()) return 'Debe ser un número entero';
+              }
             }
           }
-
-          // Solo bloquear números en campo "Nombre Comercial" del producto (no en genérico, ya que puede tener B12, Omega 3, etc.)
-          // No aplicar ninguna restricción de números por ahora para evitar falsos positivos.
-
           return null;
         },
       ),
@@ -1136,17 +1160,13 @@ class InventoryDialogs {
             }
             if (Navigator.of(dialogCtx).canPop()) {
               Navigator.pop(dialogCtx);
-              ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
-                  content: Text('$tipoLabel registrada correctamente'),
-                  backgroundColor: AppTheme.greenMetal));
+              ErrorDisplay.successSnackBar(context: parentContext, message: '$tipoLabel registrada correctamente');
             }
             setDialogState?.call(() {});
           } catch (e) {
             final errMsg = ErrorDisplay.cleanMessage(e);
             if (Navigator.of(dialogCtx).canPop()) {
-              ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
-                  content: Text('Error: $errMsg'),
-                  backgroundColor: AppTheme.reiOrangeRed));
+              ErrorDisplay.snackBar(context: parentContext, message: errMsg, title: 'Error');
             }
           } finally {
             setSt(() => isCreating = false);
@@ -1193,6 +1213,9 @@ class InventoryDialogs {
                         textInputAction: TextInputAction.next,
                         onFieldSubmitted: (_) => fnDesc.requestFocus(),
                         autovalidateMode: AutovalidateMode.onUserInteraction,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
+                        ],
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
                           labelText: 'Nombre *',
@@ -1205,7 +1228,6 @@ class InventoryDialogs {
                         ),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) return 'Requerido';
-                          if (RegExp(r'[0-9]').hasMatch(v)) return 'No se permiten números';
                           return null;
                         },
                       ),
@@ -1220,8 +1242,9 @@ class InventoryDialogs {
                             : (_) => doQuickSave(setSt, ctx2),
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        inputFormatters: tipo == 'casa' ? [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]'))] : [],
                         decoration: InputDecoration(
-                          labelText: tipo == 'proveedor' ? 'Dirección (opcional)' : tipo == 'casa' ? 'País de Origen *' : 'Descripción (opcional)',
+                          labelText: tipo == 'proveedor' ? 'Dirección *' : tipo == 'casa' ? 'País de Origen *' : 'Descripción *',
                           prefixIcon: Icon(
                               tipo == 'proveedor' ? Icons.location_on_rounded : Icons.description_rounded,
                               color: AppTheme.ayanamiBlue,
@@ -1233,9 +1256,8 @@ class InventoryDialogs {
                               borderSide: BorderSide.none),
                         ),
                         validator: (v) {
-                          if (tipo == 'casa') {
-                            if (v == null || v.trim().isEmpty) return 'Requerido';
-                          }
+                          if (v == null || v.trim().isEmpty) return 'Requerido';
+                          if (tipo == 'casa' && RegExp(r'[0-9]').hasMatch(v)) return 'Solo se permiten letras';
                           return null;
                         },
                       ),
@@ -1247,6 +1269,8 @@ class InventoryDialogs {
                           focusNode: fnTel,
                           textInputAction: TextInputAction.next,
                           onFieldSubmitted: (_) => fnEmail.requestFocus(),
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
                             labelText: 'Teléfono (opcional)',
@@ -1265,6 +1289,7 @@ class InventoryDialogs {
                           focusNode: fnEmail,
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => doQuickSave(setSt, ctx2),
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
                             labelText: 'Email (opcional)',
@@ -1275,6 +1300,12 @@ class InventoryDialogs {
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none),
                           ),
+                          validator: (v) {
+                            if (v != null && v.isNotEmpty && !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) {
+                              return 'Email inválido';
+                            }
+                            return null;
+                          },
                         ),
                       ],
                       const SizedBox(height: 28),
@@ -1436,6 +1467,12 @@ class InventoryDialogs {
             }
 
             // Validate dropdowns that are local vars (not caught by formKey)
+            if (!isEdit && !isBatchEdit) {
+              if (provId == null) {
+                ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar un proveedor para el lote');
+                return;
+              }
+            }
             if (!isEdit && !isNewBatch && !isBatchEdit) {
               if (catId == null) {
                 ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una categoría');
@@ -1445,7 +1482,7 @@ class InventoryDialogs {
                 ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar una presentación');
                 return;
               }
-              if (provId == null) {
+              if (false) {
                 ErrorDisplay.snackBar(context: context, message: 'Debes seleccionar un proveedor');
                 return;
               }
@@ -1518,9 +1555,7 @@ class InventoryDialogs {
               }
               // Close dialog AFTER successful save
               Navigator.pop(dialogCtx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('¡Guardado con éxito!'),
-                  backgroundColor: AppTheme.greenMetal));
+              ErrorDisplay.successSnackBar(context: context, message: '¡Guardado con éxito!');
               controller.fetchProducts(isRefresh: true);
             } catch (e) {
               final errMsg = ErrorDisplay.cleanMessage(e);

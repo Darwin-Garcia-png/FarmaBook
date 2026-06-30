@@ -13,10 +13,12 @@ import '../screens/estadisticas_screen.dart';
 import '../screens/configuracion_screen.dart';
 import '../screens/usuarios_screen.dart';
 import '../screens/manual_screen.dart';
+import '../screens/historial_almacen_screen.dart';
 import '../screens/forgot_password_screen.dart';
 import '../screens/verify_pin_screen.dart';
 import '../screens/reset_password_screen.dart';
 import '../utils/app_logger.dart';
+import '../utils/user_session.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -46,6 +48,13 @@ Page<dynamic> _slidePage(Widget child, {String? name}) {
 final GoRouter appRouter = GoRouter(
   navigatorKey: navigatorKey,
   initialLocation: '/login',
+  redirect: (context, state) {
+    if (!UserSession.isDueno) {
+      final restricted = ['/configuracion', '/usuarios', '/estadisticas', '/historial-almacen'];
+      if (restricted.contains(state.uri.path)) return '/inicio';
+    }
+    return null;
+  },
   routes: <RouteBase>[
     GoRoute(
       path: '/login',
@@ -110,6 +119,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/usuarios',
       pageBuilder: (context, state) => _slidePage(const UsuariosScreen()),
+    ),
+    GoRoute(
+      path: '/historial-almacen',
+      pageBuilder: (context, state) => _slidePage(const HistorialAlmacenScreen()),
     ),
     GoRoute(
       path: '/manual',

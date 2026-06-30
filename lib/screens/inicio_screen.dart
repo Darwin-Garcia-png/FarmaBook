@@ -118,12 +118,12 @@ class _InicioScreenState extends State<InicioScreen> {
 
             // ── KPIs ──
             Row(children: [
-              _kpi('Ingresos', formatCop(_ctrl.ingresos), Icons.trending_up_rounded, AppTheme.greenMetal, _ctrl.ingresos, () => _go(4), index: 1),
+              _kpi('Ingresos', formatCop(_ctrl.ingresos), Icons.trending_up_rounded, AppTheme.greenMetal, _ctrl.ingresos, () => _go(3), index: 1),
               const SizedBox(width: 16),
-              _kpi('Egresos', formatCop(_ctrl.egresos), Icons.trending_down_rounded, AppTheme.reiOrangeRed, _ctrl.egresos, () => _go(4), index: 2),
+              _kpi('Egresos', formatCop(_ctrl.egresos), Icons.trending_down_rounded, AppTheme.reiOrangeRed, _ctrl.egresos, () => _go(3), index: 2),
               const SizedBox(width: 16),
               _kpi('Balance', formatCop(_ctrl.ingresos - _ctrl.egresos), Icons.account_balance_rounded, const Color(0xFF8B5CF6),
-                _ctrl.ingresos - _ctrl.egresos, () => _go(4), index: 3),
+                _ctrl.ingresos - _ctrl.egresos, () => _go(3), index: 3),
               const SizedBox(width: 16),
               _kpi('Stock', '${(_ctrl.stockHealthPercent * 100).toInt()}%', Icons.inventory_rounded, AppTheme.ayanamiBlue,
                 _ctrl.stockHealthPercent, () => _go(1), isPct: true, index: 4),
@@ -317,11 +317,9 @@ class _InicioScreenState extends State<InicioScreen> {
                   _moduleBtn('Almacén', Icons.inventory_2_rounded, AppTheme.ayanamiBlue, () => _go(1)),
                 ]),
                 const SizedBox(height: 10),
-                if (UserSession.isDueno) Row(children: [
-                  _moduleBtn('Lotes', Icons.layers_rounded, AppTheme.reiOrangeRed, () => _go(3)),
-                  const SizedBox(width: 10),
-                  _moduleBtn('Stats', Icons.insights_rounded, const Color(0xFF8B5CF6), () => _go(4)),
-                ]),
+                Row(children: [
+                  _moduleBtn('Stats', Icons.insights_rounded, const Color(0xFF8B5CF6), () => _go(3)),
+                  const SizedBox(width: 10),                ]),
               ])),
             ),
           ]),
@@ -345,7 +343,7 @@ class _InicioScreenState extends State<InicioScreen> {
               const SizedBox(width: 10),
               Text('FARMABOOK', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
               const Spacer(),
-              IconButton(icon: Icon(Icons.settings_outlined, color: text.withValues(alpha: 0.5)), onPressed: () => GoRouter.of(context).push('/configuracion')),
+              if (UserSession.isDueno) IconButton(icon: Icon(Icons.settings_outlined, color: text.withValues(alpha: 0.5)), onPressed: () => GoRouter.of(context).push('/configuracion')),
             ]),
           ),
         ),
@@ -444,6 +442,7 @@ class _InicioScreenState extends State<InicioScreen> {
   }
 
   Widget _errorView() => Scaffold(body: ErrorDisplay.fullScreen(
+    title: 'Error al cargar',
     message: _ctrl.error!,
     onRetry: _ctrl.cargarDatos,
   ));

@@ -46,7 +46,6 @@ class ReceiptDialog extends StatelessWidget {
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
               _receiptRow(context, 'Cliente:', _clienteName()),
-              _receiptRow(context, 'Cédula:', _clienteId()),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text('PRODUCTOS',
@@ -202,12 +201,15 @@ class ReceiptDialog extends StatelessWidget {
 
   String _clienteName() {
     final n = _getClienteNombre();
-    return n.isNotEmpty ? n : 'Consumidor Final';
+    final id = _getClienteIdentificacion();
+    if (n.isNotEmpty && id.isNotEmpty) return '$n ($id)';
+    if (n.isNotEmpty) return n;
+    if (id.isNotEmpty) return id;
+    return '\u2014';
   }
 
   String _clienteId() {
-    final id = _getClienteIdentificacion();
-    return id.isNotEmpty ? id : '\u2014';
+    return '';
   }
 
   Future<void> _printTicket(BuildContext context) async {
@@ -244,7 +246,6 @@ class ReceiptDialog extends StatelessWidget {
                 _receiptPdfRow('Fecha:', _formatDate(_getSafeDate(sale))),
                 _receiptPdfRow('Hora:', _formatTime(_getSafeDate(sale))),
                 _receiptPdfRow('Cliente:', _clienteName()),
-                _receiptPdfRow('Ident:', _clienteId()),
                 pw.SizedBox(height: 8),
                 pw.Divider(thickness: 1, color: PdfColors.black),
                 pw.SizedBox(height: 6),
@@ -318,9 +319,7 @@ class ReceiptDialog extends StatelessWidget {
       );
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ErrorDisplay.cleanMessage(e)), backgroundColor: AppTheme.reiOrangeRed),
-        );
+        ErrorDisplay.snackBar(context: context, message: ErrorDisplay.cleanMessage(e));
       }
     }
   }

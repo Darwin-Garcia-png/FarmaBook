@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../controllers/recovery_controller.dart';
 import '../widgets/gradient_button.dart';
 import '../theme/app_theme.dart';
+import '../widgets/error_display.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final RecoveryController controller;
@@ -43,14 +44,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final ok = await _c.setNewPassword();
     if (ok && mounted) {
       _c.reset();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Contraseña actualizada correctamente'),
-          backgroundColor: AppTheme.greenMetal,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      ErrorDisplay.successSnackBar(context: context, message: 'Contraseña actualizada correctamente');
       context.go('/login');
     }
   }

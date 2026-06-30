@@ -31,7 +31,7 @@ class CasasController extends ChangeNotifier {
     try {
       casas = await ApiService.getHouses();
     } catch (e) {
-      error = e.toString();
+      error = 'No se pudieron cargar las casas';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -56,7 +56,8 @@ class CasasController extends ChangeNotifier {
       await cargarCasas();
       return true;
     } catch (e) {
-      debugPrint("Error adding house: $e");
+      error = e is Exception ? e.toString().replaceAll('Exception: ', '') : 'Error al guardar la casa. Verifica los datos.';
+      notifyListeners();
       return false;
     }
   }
@@ -74,6 +75,8 @@ class CasasController extends ChangeNotifier {
       await cargarCasas();
       return true;
     } catch (e) {
+      error = 'Error al actualizar la casa. Verifica los datos.';
+      notifyListeners();
       return false;
     }
   }
@@ -84,6 +87,8 @@ class CasasController extends ChangeNotifier {
       await cargarCasas();
       return true;
     } catch (e) {
+      error = 'Error al eliminar la casa. Puede tener productos asociados.';
+      notifyListeners();
       return false;
     }
   }

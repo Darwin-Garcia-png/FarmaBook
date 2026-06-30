@@ -646,6 +646,8 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                       children: [
                         _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl, prefillBatch: b)),
                         const SizedBox(height: 6),
+                        _actionIcon(Icons.toggle_off_outlined, Colors.orange, () => _confirmDeactivate(b, lotesCtrl, almacenCtrl)),
+                        const SizedBox(height: 6),
                         _actionIcon(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(b, lotesCtrl, almacenCtrl)),
                       ],
                     ),
@@ -698,6 +700,25 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       borderRadius: BorderRadius.circular(8),
       child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color, size: 18)),
     );
+  }
+
+  Future<void> _confirmDeactivate(Map<String, dynamic> b, LotesController lotesCtrl, AlmacenController almacenCtrl) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Desactivar Lote'),
+        content: const Text('Se pondrá el stock a 0. El lote pasará al historial. ¿Continuar?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white), onPressed: () => Navigator.pop(ctx, true), child: const Text('Desactivar')),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await lotesCtrl.updateBatch(b['loteId'] ?? b['batchId'] ?? b['id'], {'cantidadDisponible': 0});
+      almacenCtrl.init();
+    }
   }
 
   Future<void> _confirmDelete(Map<String, dynamic> b, LotesController lotesCtrl, AlmacenController almacenCtrl) async {

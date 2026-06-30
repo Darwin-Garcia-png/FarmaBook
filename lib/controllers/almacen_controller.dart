@@ -143,7 +143,7 @@ class AlmacenController extends ChangeNotifier {
       }
       
     } catch (e) {
-      error = "Error al cargar productos: $e";
+      error = "Error al cargar productos. Verifica la conexión.";
     } finally {
       isLoadingInitial = false;
       isFetchingMore = false;

@@ -144,11 +144,15 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
       }
 
       if (mounted) {
-        Navigator.pop(diaCtx);
         if (success) {
+          Navigator.pop(diaCtx);
           ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Proveedor actualizado' : 'Proveedor registrado');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error en la operación');
+          ErrorDisplay.snackBar(
+            context: context,
+            message: _controller.error ?? 'Error al guardar. Verifica los datos e inténtalo de nuevo.',
+            title: 'Error al guardar',
+          );
         }
       }
     }
@@ -183,10 +187,10 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                         onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(direccionFn)),
                     _buildField('Dirección', direccion, Icons.location_on,
                         focusNode: direccionFn, textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(telefonoFn)),
+                        onFieldSubmitted: (_) => FocusScope.of(diaCtx).requestFocus(telefonoFn)),
                     _buildField('Teléfono', telefono, Icons.phone, keyboard: TextInputType.phone,
                         focusNode: telefonoFn, textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(emailFn)),
+                        onFieldSubmitted: (_) => FocusScope.of(diaCtx).requestFocus(emailFn)),
                     _buildField('Email', email, Icons.email, keyboard: TextInputType.emailAddress,
                         focusNode: emailFn, textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => submit(diaCtx)),
@@ -238,6 +242,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         autovalidateMode: AutovalidateMode.onUserInteraction,
         inputFormatters: [
           if (keyboard == TextInputType.phone || keyboard == TextInputType.number) FilteringTextInputFormatter.digitsOnly,
+          if (label.toLowerCase().contains('nombre')) FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
         ],
         decoration: InputDecoration(
           labelText: label,
@@ -249,6 +254,9 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         ),
         validator: (v) {
           if (req && (v == null || v.trim().isEmpty)) return 'Requerido';
+          if (label.toLowerCase().contains('nombre') && v != null && RegExp(r'[0-9]').hasMatch(v)) {
+            return 'No se permiten números en el nombre';
+          }
           if (keyboard == TextInputType.phone && v != null && v.isNotEmpty && v.length < 7) {
             return 'Teléfono demasiado corto';
           }
@@ -284,6 +292,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         body: Stack(children: [
           Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
           ErrorDisplay.fullScreen(
+            title: 'Error al cargar',
             message: _controller.error!,
             onRetry: _controller.cargarProveedores,
           ),
@@ -334,6 +343,17 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 40),
       decoration: BoxDecoration(color: bg),
       child: Row(children: [
+        IconButton(
+          icon: Icon(Icons.menu_rounded, color: text, size: 24),
+          onPressed: () {
+            ScaffoldState? scaffold = Scaffold.maybeOf(context);
+            while (scaffold != null && !scaffold.hasDrawer) {
+              scaffold = scaffold.context.findAncestorStateOfType<ScaffoldState>();
+            }
+            scaffold?.openDrawer();
+          },
+        ),
+        const SizedBox(width: 12),
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
@@ -476,7 +496,11 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: 'Proveedor eliminado');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar');
+          ErrorDisplay.snackBar(
+            context: context,
+            message: _controller.error ?? 'Error al eliminar. Puede tener dependencias asociadas.',
+            title: 'Error',
+          );
         }
       }
     }

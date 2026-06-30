@@ -73,7 +73,9 @@ class _VentasScreenState extends State<VentasScreen> {
                   if (result != null && context.mounted) {
                     showDialog(
                       context: context,
-                      builder: (ctx) => ReceiptDialog(sale: _controller.ultimaVenta ?? result['data']),
+                      builder: (ctx) => ReceiptDialog(
+                        sale: _controller.ultimaVenta ?? result['data'],
+                      ),
                     );
                   }
                 });
@@ -290,7 +292,10 @@ class _VentasScreenState extends State<VentasScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.greenMetal)),
             const SizedBox(width: 8),
             InkWell(
-              onTap: () => _confirmCancelSale(context, controller, sale),
+              onTap: () {
+                final saleId = sale['ventaId']?.toString() ?? sale['id']?.toString();
+                if (saleId != null) _confirmCancelSale(context, saleId);
+              },
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(6),
@@ -303,39 +308,6 @@ class _VentasScreenState extends State<VentasScreen> {
         );
       },
     );
-  }
-
-  Future<void> _confirmCancelSale(BuildContext context, VentasController controller, Map<String, dynamic> sale) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Anular Venta', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: Text('¿Deseas anular la venta #${sale['numeroFactura'] ?? sale['ventaId']}?\nEl stock se restaurará automáticamente.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Anular', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      final saleId = sale['ventaId']?.toString() ?? sale['id']?.toString();
-      if (saleId != null) {
-        final ok = await controller.cancelSale(saleId);
-        if (mounted) {
-          if (ok) {
-            ErrorDisplay.successSnackBar(context: context, message: 'Venta anulada correctamente');
-          } else {
-            ErrorDisplay.snackBar(context: context, message: controller.error ?? 'Error al anular');
-          }
-        }
-      }
-    }
   }
 
   Widget _buildReceiptsCardsList(BuildContext context, VentasController controller) {
@@ -471,8 +443,31 @@ class _VentasScreenState extends State<VentasScreen> {
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.08))),
               ),
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              child: Row(children: [
                 Text('TOTAL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade500, letterSpacing: 0.5)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    final saleId = sale['ventaId']?.toString() ?? sale['id']?.toString();
+                    if (saleId != null) _confirmCancelSale(context, saleId);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.reiOrangeRed.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.cancel_outlined, size: 12, color: AppTheme.reiOrangeRed),
+                        SizedBox(width: 4),
+                        Text('Anular', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.reiOrangeRed)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -493,8 +488,41 @@ class _VentasScreenState extends State<VentasScreen> {
     );
   }
 
+  Future<void> _confirmCancelSale(BuildContext context, String saleId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppTheme.reiOrangeRed, size: 22),
+            const SizedBox(width: 8),
+            const Text('Anular Venta', style: TextStyle(fontWeight: FontWeight.w900)),
+          ],
+        ),
+        content: const Text('Se anulará la venta y se restaurará el stock.\n¿Desea continuar?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Anular Venta'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true && context.mounted) {
+      await _controller.cancelSale(saleId);
+    }
+  }
+
   void _showReceipt(BuildContext context, Map<String, dynamic> sale) {
-    showDialog(context: context, builder: (ctx) => ReceiptDialog(sale: sale));
+    showDialog(
+      context: context,
+      builder: (ctx) => ReceiptDialog(
+        sale: sale,
+      ),
+    );
   }
 
   String _formatDate(dynamic dateStr) {
@@ -546,9 +574,9 @@ class _VentasScreenState extends State<VentasScreen> {
     String get(String k) => sale[k]?.toString()?.trim() ?? '';
     final n = get('clienteNombre') ?? get('nombreCliente') ?? sale['cliente']?['nombre']?.toString()?.trim() ?? '';
     final id = get('clienteIdentificacion') ?? get('identificacionCliente') ?? sale['cliente']?['identificacion']?.toString()?.trim() ?? get('clienteId') ?? '';
-    if (n.isNotEmpty && id.isNotEmpty) return 'Cliente: $n ($id)';
-    if (n.isNotEmpty) return 'Cliente: $n';
-    if (id.isNotEmpty) return 'Cliente: $id';
-    return 'Cliente: Consumidor Final';
+    if (n.isNotEmpty && id.isNotEmpty) return '$n ($id)';
+    if (n.isNotEmpty) return n;
+    if (id.isNotEmpty) return id;
+    return '\u2014';
   }
 }

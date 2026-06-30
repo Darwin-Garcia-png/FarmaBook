@@ -20,7 +20,7 @@ class UsuariosController extends ChangeNotifier {
       final res = await ApiService.getUsers();
       usuarios = res.cast<Map<String, dynamic>>();
     } catch (e) {
-      error = e.toString();
+      error = 'No se pudieron cargar los usuarios';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -34,7 +34,7 @@ class UsuariosController extends ChangeNotifier {
       final res = await ApiService.getDeletedUsers();
       deletedUsuarios = res.cast<Map<String, dynamic>>();
     } catch (e) {
-      error = e.toString();
+      error = 'No se pudieron cargar los usuarios eliminados';
     } finally {
       isLoadingDeleted = false;
       notifyListeners();

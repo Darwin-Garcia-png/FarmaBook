@@ -31,7 +31,7 @@ class PresentacionesController extends ChangeNotifier {
     try {
       presentaciones = await ApiService.getPresentations();
     } catch (e) {
-      error = e.toString();
+      error = 'No se pudieron cargar las presentaciones';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -55,7 +55,8 @@ class PresentacionesController extends ChangeNotifier {
       await cargarPresentaciones();
       return true;
     } catch (e) {
-      debugPrint("Error adding presentation: $e");
+      error = 'Error al guardar. Verifica los datos.';
+      notifyListeners();
       return false;
     }
   }
@@ -69,6 +70,8 @@ class PresentacionesController extends ChangeNotifier {
       await cargarPresentaciones();
       return true;
     } catch (e) {
+      error = 'Error al actualizar. Verifica los datos.';
+      notifyListeners();
       return false;
     }
   }
@@ -79,6 +82,8 @@ class PresentacionesController extends ChangeNotifier {
       await cargarPresentaciones();
       return true;
     } catch (e) {
+      error = 'Error al eliminar. Puede tener dependencias asociadas.';
+      notifyListeners();
       return false;
     }
   }

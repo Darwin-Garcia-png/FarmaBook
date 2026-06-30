@@ -19,6 +19,7 @@ import 'categorias_screen.dart';
 import 'presentaciones_screen.dart';
 import 'usuarios_screen.dart';
 import 'manual_screen.dart';
+import 'historial_almacen_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -69,12 +70,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     AnimatedEntry(index: 1, child: _buildDrawerItem(Icons.inventory_2_rounded, 'Inventario', 1)),
                     AnimatedEntry(index: 2, child: _buildDrawerItem(Icons.point_of_sale_rounded, 'Punto de Venta', 2)),
                     if (UserSession.isDueno) AnimatedEntry(index: 3, child: _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 3)),
+                    if (UserSession.isDueno) AnimatedEntry(index: 12, child: _buildDrawerItem(Icons.history_rounded, 'Historial Almacén', 12)),
                     AnimatedEntry(index: 4, child: _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11)),
                     
-                    if (UserSession.isDueno) ...[
-                      const SizedBox(height: 12),
-                      AnimatedEntry(index: 6, child: _buildExpansionCatalogos()),
-                    ],
+                    if (UserSession.isDueno) const SizedBox(height: 12),
+                    if (UserSession.isDueno) AnimatedEntry(index: 6, child: _buildExpansionCatalogos()),
                   ],
                 ),
               ),
@@ -105,19 +105,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 2:
         return const VentasScreen();
       case 3:
-        return const EstadisticasScreen();
+        return UserSession.isDueno ? const EstadisticasScreen() : const InicioScreen();
       case 4:
-        return const CasasScreen();
+        return UserSession.isDueno ? const CasasScreen() : const InicioScreen();
+      case 5:
+        return UserSession.isDueno ? const CasasScreen() : const InicioScreen();
       case 7:
-        return const CategoriasScreen();
+        return UserSession.isDueno ? const CategoriasScreen() : const InicioScreen();
       case 8:
-        return const PresentacionesScreen();
+        return UserSession.isDueno ? const PresentacionesScreen() : const InicioScreen();
       case 9:
-        return const ProveedoresScreen();
+        return UserSession.isDueno ? const ProveedoresScreen() : const InicioScreen();
       case 10:
-        return const UsuariosScreen();
+        return UserSession.isDueno ? const UsuariosScreen() : const InicioScreen();
       case 11:
         return const ManualScreen();
+      case 12:
+        return UserSession.isDueno ? const HistorialAlmacenScreen() : const InicioScreen();
       default:
         return const SizedBox.shrink();
     }

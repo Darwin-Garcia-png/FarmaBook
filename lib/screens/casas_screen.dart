@@ -174,11 +174,15 @@ class _CasasScreenState extends State<CasasScreen> {
         success = await _controller.agregarCasa();
       }
       if (mounted) {
-        Navigator.pop(ctx);
         if (success) {
+          Navigator.pop(ctx);
           ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Casa actualizada' : 'Casa registrada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error');
+          ErrorDisplay.snackBar(
+            context: context,
+            message: _controller.error ?? 'Error al guardar. Verifica los datos e inténtalo de nuevo.',
+            title: 'Error al guardar',
+          );
         }
       }
     }
@@ -215,12 +219,14 @@ class _CasasScreenState extends State<CasasScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(32),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
+                child: Material(
+                  color: Colors.transparent,
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
                         padding: const EdgeInsets.fromLTRB(28, 24, 20, 20),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -310,6 +316,7 @@ class _CasasScreenState extends State<CasasScreen> {
                     ],
                   ),
                 ),
+                ),
               ),
             ),
           );
@@ -345,7 +352,11 @@ class _CasasScreenState extends State<CasasScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: 'Casa eliminada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar');
+          ErrorDisplay.snackBar(
+            context: context,
+            message: _controller.error ?? 'Error al eliminar. Puede tener productos asociados.',
+            title: 'Error',
+          );
         }
       }
     }
@@ -365,6 +376,7 @@ class _CasasScreenState extends State<CasasScreen> {
         inputFormatters: [
            if (keyboard == TextInputType.number) FilteringTextInputFormatter.digitsOnly,
            if (label.toLowerCase().contains('nombre')) FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+           if (label.toLowerCase().contains('país')) FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
         ],
         decoration: InputDecoration(
           labelText: label,
@@ -379,6 +391,9 @@ class _CasasScreenState extends State<CasasScreen> {
           if (req && (v == null || v.trim().isEmpty)) return 'Este campo es obligatorio';
           if (label.toLowerCase().contains('nombre') && v != null && RegExp(r'[0-9]').hasMatch(v)) {
             return 'No se permiten números en el nombre';
+          }
+          if (label.toLowerCase().contains('país') && v != null && v.trim().isNotEmpty && RegExp(r'[0-9]').hasMatch(v)) {
+            return 'Solo se permiten letras';
           }
           return null;
         },
@@ -409,6 +424,7 @@ class _CasasScreenState extends State<CasasScreen> {
         body: Stack(children: [
           Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
           ErrorDisplay.fullScreen(
+            title: 'Error al cargar',
             message: _controller.error!,
             onRetry: _controller.cargarCasas,
           ),
@@ -456,6 +472,18 @@ class _CasasScreenState extends State<CasasScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 40),
       decoration: BoxDecoration(color: bg),
       child: Row(children: [
+        IconButton(
+          icon: Icon(Icons.menu_rounded, color: text, size: 24),
+          onPressed: () {
+            ScaffoldState? scaffold = Scaffold.maybeOf(context);
+            while (scaffold != null && !scaffold.hasDrawer) {
+              scaffold = scaffold.context
+                  .findAncestorStateOfType<ScaffoldState>();
+            }
+            scaffold?.openDrawer();
+          },
+        ),
+        const SizedBox(width: 12),
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),

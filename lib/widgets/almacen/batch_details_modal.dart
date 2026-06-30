@@ -193,6 +193,10 @@ class BatchDetailsModal extends StatelessWidget {
                                     },
                                   ),
                                   IconButton(
+                                    icon: const Icon(Icons.toggle_off_outlined, color: Colors.orange, size: 20),
+                                    onPressed: () => _confirmarDesactivarLote(context, l, lotesCtrl, controller),
+                                  ),
+                                  IconButton(
                                     icon: const Icon(Icons.delete_sweep_outlined, color: AppTheme.reiOrangeRed, size: 20),
                                     onPressed: () => _confirmarBorradoLote(context, l, lotesCtrl, controller),
                                   ),
@@ -236,6 +240,31 @@ class BatchDetailsModal extends StatelessWidget {
 
     if (confirm == true) {
       await lotesCtrl.deleteBatch((batch['loteId'] ?? batch['batchId'] ?? batch['id']).toString());
+      controller.fetchProducts(isRefresh: true);
+      if (context.mounted) Navigator.pop(context);
+    }
+  }
+
+  Future<void> _confirmarDesactivarLote(BuildContext context, dynamic batch,
+      LotesController lotesCtrl, AlmacenController controller) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Desactivar Lote'),
+        content: const Text('Se pondrá el stock a 0. El lote pasará al historial. ¿Continuar?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Desactivar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      final id = (batch['loteId'] ?? batch['batchId'] ?? batch['id']).toString();
+      await lotesCtrl.updateBatch(id, {'cantidadDisponible': 0});
       controller.fetchProducts(isRefresh: true);
       if (context.mounted) Navigator.pop(context);
     }

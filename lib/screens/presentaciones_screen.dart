@@ -73,11 +73,15 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
         success = await _controller.agregarPresentacion();
       }
       if (mounted) {
-        Navigator.pop(diaCtx);
         if (success) {
+          Navigator.pop(diaCtx);
           ErrorDisplay.successSnackBar(context: context, message: isEdit ? 'Presentación actualizada' : 'Presentación registrada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error en la operación');
+          ErrorDisplay.snackBar(
+            context: context,
+            message: _controller.error ?? 'Error al guardar. Verifica los datos e inténtalo de nuevo.',
+            title: 'Error al guardar',
+          );
         }
       }
     }
@@ -107,7 +111,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildField('Nombre del Formato', _controller.nombreCtrl, Icons.local_pharmacy_rounded, req: true, focusNode: _nombreFocus, textInputAction: TextInputAction.next, onFieldSubmitted: (_) => FocusScope.of(diaCtx).requestFocus(_descFocus)),
-                  _buildField('Descripción (Opcional)', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3, focusNode: _descFocus, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _saveAndPop(diaCtx)),
+                  _buildField('Descripción *', _controller.descripcionCtrl, Icons.description_rounded, maxLines: 3, req: true, focusNode: _descFocus, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _saveAndPop(diaCtx)),
                   const SizedBox(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -163,7 +167,11 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
         if (success) {
           ErrorDisplay.successSnackBar(context: context, message: 'Presentación eliminada');
         } else {
-          ErrorDisplay.snackBar(context: context, message: 'Error al eliminar');
+          ErrorDisplay.snackBar(
+            context: context,
+            message: _controller.error ?? 'Error al eliminar. Puede tener dependencias asociadas.',
+            title: 'Error',
+          );
         }
       }
     }
@@ -182,7 +190,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
         autovalidateMode: AutovalidateMode.onUserInteraction,
         inputFormatters: [
            if (keyboard == TextInputType.number) FilteringTextInputFormatter.digitsOnly,
-           if (label.toLowerCase().contains('nombre')) FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+           if (label.toLowerCase().contains('nombre')) FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
         ],
         decoration: InputDecoration(
           labelText: label,
@@ -227,6 +235,7 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
         body: Stack(children: [
           Positioned(top: 0, left: 0, right: 0, child: _buildHeader(bg, text, accent)),
           ErrorDisplay.fullScreen(
+            title: 'Error al cargar',
             message: _controller.error!,
             onRetry: _controller.cargarPresentaciones,
           ),
@@ -274,6 +283,17 @@ class _PresentacionesScreenState extends State<PresentacionesScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 40),
       decoration: BoxDecoration(color: bg),
       child: Row(children: [
+        IconButton(
+          icon: Icon(Icons.menu_rounded, color: text, size: 24),
+          onPressed: () {
+            ScaffoldState? scaffold = Scaffold.maybeOf(context);
+            while (scaffold != null && !scaffold.hasDrawer) {
+              scaffold = scaffold.context.findAncestorStateOfType<ScaffoldState>();
+            }
+            scaffold?.openDrawer();
+          },
+        ),
+        const SizedBox(width: 12),
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),

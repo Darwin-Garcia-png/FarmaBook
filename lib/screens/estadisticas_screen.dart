@@ -340,6 +340,7 @@ class _EstadisticasScreenState extends State<EstadisticasScreen> {
   }
 
   Widget _errorBanner() => ErrorDisplay.inline(
+    title: 'Error de conexión',
     message: _c.error!,
     onDismiss: () => _c.error = null,
   );
