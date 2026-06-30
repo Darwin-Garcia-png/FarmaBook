@@ -157,8 +157,13 @@ class VentasController extends ChangeNotifier {
         }
         hydrated.add(producto);
       }
-      _sortProductos(hydrated);
-      productosEncontrados = hydrated;
+      final now = DateTime.now();
+      final valid = hydrated.where((p) =>
+          p.cantidadDisponible > 0 &&
+          (p.nearestExpiryDate == null || !p.nearestExpiryDate!.isBefore(now))
+      ).toList();
+      _sortProductos(valid.isNotEmpty ? valid : hydrated);
+      productosEncontrados = valid.isNotEmpty ? valid : hydrated;
     } catch (e) {
       error = 'Error al cargar productos';
     } finally {
