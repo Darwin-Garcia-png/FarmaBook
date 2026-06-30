@@ -279,17 +279,17 @@ class _VentasScreenState extends State<VentasScreen> {
             children: [
               Text(
                 '${_formatDate(_getSafeDate(sale))} ${_formatTime(_getSafeDate(sale))}',
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: Colors.black),
               ),
               Text(
                 _clienteDisplay(sale),
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                style: const TextStyle(color: Colors.black, fontSize: 11),
               ),
             ],
           ),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
             Text('\$${sale['total']}',
-                style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.greenMetal)),
+                style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
             const SizedBox(width: 8),
             InkWell(
               onTap: () {
@@ -396,11 +396,11 @@ class _VentasScreenState extends State<VentasScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(children: [
-                      Icon(Icons.person_outline_rounded, size: 11, color: Colors.grey.shade400),
+                      Icon(Icons.person_outline_rounded, size: 11, color: Colors.black),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(_clienteDisplay(sale),
-                          style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                          style: const TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.w600),
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -422,7 +422,7 @@ class _VentasScreenState extends State<VentasScreen> {
                               child: Text('$qty', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.ayanamiBlue)),
                             ),
                             const SizedBox(width: 8),
-                            Expanded(child: Text(nom, style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            Expanded(child: Text(nom, style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
                             const SizedBox(width: 8),
                             Text(formatCop(sub), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.ayanamiBlue)),
                           ]),
@@ -444,7 +444,7 @@ class _VentasScreenState extends State<VentasScreen> {
                 border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.08))),
               ),
               child: Row(children: [
-                Text('TOTAL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade500, letterSpacing: 0.5)),
+                Text('TOTAL', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.black, letterSpacing: 0.5)),
                 const Spacer(),
                 GestureDetector(
                   onTap: () {

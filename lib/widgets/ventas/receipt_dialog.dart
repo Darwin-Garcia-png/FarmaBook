@@ -28,32 +28,31 @@ class ReceiptDialog extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.check_circle_outline,
-                  color: AppTheme.greenMetal, size: 60),
+                  color: Colors.black, size: 60),
               const SizedBox(height: 16),
-              Text('FarmaBook',
+              const Text('FarmaBook',
                   style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
-                      color: Theme.of(context).textTheme.titleLarge?.color)),
+                      color: Colors.black)),
               const Text('RECIBO DE VENTA',
                   style: TextStyle(
-                      letterSpacing: 2, fontSize: 12, color: Colors.grey)),
-              Divider(
+                      letterSpacing: 2, fontSize: 12, color: Colors.black)),
+              const Divider(
                   height: 40,
                   thickness: 1,
-                  color: Theme.of(context).dividerColor),
+                  color: Colors.black),
               _receiptRow(context, 'Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
               _receiptRow(context, 'Cliente:', _clienteName()),
-              Align(
+              const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('PRODUCTOS',
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color:
-                            Theme.of(context).textTheme.titleLarge?.color)),
+                        color: Colors.black)),
               ),
               const SizedBox(height: 12),
               ...((sale['productosVendidos'] as List<dynamic>?) ??
@@ -85,52 +84,45 @@ class ReceiptDialog extends StatelessWidget {
                       Expanded(
                         child: Text(
                           '${qty}x $nombre ${pres.isNotEmpty ? "($pres)" : ""}',
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 13,
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.color),
+                              color: Colors.black),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(formatCop(price),
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 13,
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.color)),
+                              color: Colors.black)),
                     ],
                   ),
                 );
               }),
-              Divider(
+              const Divider(
                   height: 40,
                   thickness: 2,
-                  color: Theme.of(context).dividerColor),
+                  color: Colors.black),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('TOTAL',
+                  const Text('TOTAL',
                       style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
-                          color:
-                              Theme.of(context).textTheme.titleLarge?.color)),
+                          color: Colors.black)),
                   Text(
                       formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0),
                       style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
-                          color: AppTheme.greenMetal)),
+                          color: Colors.black)),
                 ],
               ),
               const SizedBox(height: 40),
               const Text('Gracias por su compra!',
                   style: TextStyle(
-                      fontStyle: FontStyle.italic, color: Colors.grey)),
+                      fontStyle: FontStyle.italic, color: Colors.black)),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -375,12 +367,12 @@ class ReceiptDialog extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Text(label, style: const TextStyle(color: Colors.black, fontSize: 13)),
           Text(value,
-              style: TextStyle(
+              style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
-                  color: Theme.of(context).textTheme.bodyLarge?.color)),
+                  color: Colors.black)),
         ],
       ),
     );
