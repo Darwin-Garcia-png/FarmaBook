@@ -447,9 +447,8 @@ class VentasController extends ChangeNotifier {
 
         final presName =
             (prod != null) ? (presentacionMap[prod.presentacionId] ?? '') : '';
-        final unitPrice = prod?.precioPorUnidad ?? 0.0;
-        final rawQty = item['cantidad'];
-        final qty = (rawQty is num) ? rawQty.toInt() : int.tryParse(rawQty?.toString() ?? '') ?? 1;
+        final unitPrice = prod?.precioPorUnidad ?? 0;
+        final qty = item['cantidad'] as int;
         return {
           'productoId': prod?.productoId ?? 'N/A',
           'nombre': prod?.nombre ?? 'Producto',
