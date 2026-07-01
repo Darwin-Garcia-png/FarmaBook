@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../controllers/config_controller.dart';
 import '../controllers/dashboard_controller.dart';
@@ -267,6 +268,121 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
+  Widget _infoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: Colors.grey.shade500),
+        const SizedBox(width: 6),
+        Text(text, style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  void _showPharmacyInfoDialog() {
+    final addrCtrl = TextEditingController(text: _controller.pharmacyAddress);
+    final phoneCtrl = TextEditingController(text: _controller.pharmacyPhone);
+    final formKey = GlobalKey<FormState>();
+    bool saving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (_, setD) => Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: AppTheme.ayanamiBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.storefront_rounded, size: 24, color: AppTheme.ayanamiBlue),
+                    ),
+                    const SizedBox(width: 14),
+                    const Text('Información de la Farmacia', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                      style: IconButton.styleFrom(backgroundColor: Colors.grey.withValues(alpha: 0.1)),
+                    ),
+                  ]),
+                  const Divider(height: 24),
+                  TextFormField(
+                    controller: addrCtrl,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    decoration: const InputDecoration(
+                      labelText: 'Dirección *',
+                      prefixIcon: Icon(Icons.location_on_rounded, size: 18),
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      isDense: true,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().length < 5) return 'Mínimo 5 caracteres';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: phoneCtrl,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Teléfono *',
+                      prefixIcon: Icon(Icons.phone_rounded, size: 18),
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      isDense: true,
+                    ),
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))],
+                    validator: (v) {
+                      final cleaned = v?.replaceAll(RegExp(r'[^0-9]'), '') ?? '';
+                      if (cleaned.length < 7) return 'Mínimo 7 dígitos';
+                      if (cleaned.length > 15) return 'Máximo 15 dígitos';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: saving ? null : () async {
+                        if (!formKey.currentState!.validate()) return;
+                        setD(() => saving = true);
+                        await _controller.cambiarDireccion(addrCtrl.text.trim());
+                        await _controller.cambiarTelefono(phoneCtrl.text.trim());
+                        setD(() => saving = false);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.ayanamiBlue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: saving
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('Guardar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    addrCtrl.dispose();
+    phoneCtrl.dispose();
+  }
+
   Widget _buildProfileCard() {
     return AnimatedEntry(index: 0, style: EntryStyle.bounce, child: GlowEffect(
       color: AppTheme.ayanamiBlue,
@@ -294,9 +410,19 @@ class _ConfigScreenState extends State<ConfigScreen> {
                 const Text('Farmabook', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                 const Text('Sistema de gestión farmacéutica',
                     style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                _infoRow(Icons.location_on_rounded, _controller.pharmacyAddress),
+                const SizedBox(height: 4),
+                _infoRow(Icons.phone_rounded, _controller.pharmacyPhone),
               ],
             ),
           ),
+          if (UserSession.isDueno)
+            IconButton(
+              icon: const Icon(Icons.edit_rounded, size: 20, color: AppTheme.ayanamiBlue),
+              tooltip: 'Editar información',
+              onPressed: () => _showPharmacyInfoDialog(),
+            ),
         ],
       ),
     )));

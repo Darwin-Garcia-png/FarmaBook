@@ -9,6 +9,8 @@ class ConfigController extends ChangeNotifier {
   String idiomaSeleccionado = 'Español (Colombia)';
   // New Local Fields
   String pharmacyName = 'Mi Farmacia';
+  String pharmacyAddress = 'SENA';
+  String pharmacyPhone = '3101234567';
   String userEmail = '';
   String? lastBackup;
 
@@ -18,6 +20,8 @@ class ConfigController extends ChangeNotifier {
     final notif = await _storage.read(key: 'notificaciones') ?? 'true';
     final idioma = await _storage.read(key: 'idioma') ?? 'Español (Colombia)';
     final pName = await _storage.read(key: 'pharmacy_name') ?? 'Mi Farmacia';
+    final address = await _storage.read(key: 'pharmacy_address') ?? 'SENA';
+    final phone = await _storage.read(key: 'pharmacy_phone') ?? '3101234567';
     final email =
         await _storage.read(key: 'user_email') ?? 'usuario@farmabook.com';
     final backup = await _storage.read(key: 'last_backup');
@@ -25,6 +29,8 @@ class ConfigController extends ChangeNotifier {
     notificaciones = notif == 'true';
     idiomaSeleccionado = idioma;
     pharmacyName = pName;
+    pharmacyAddress = address;
+    pharmacyPhone = phone;
     userEmail = email;
     lastBackup = backup;
     notifyListeners();
@@ -44,6 +50,21 @@ class ConfigController extends ChangeNotifier {
     if (nuevoNombre.trim().isEmpty) return;
     pharmacyName = nuevoNombre.trim();
     await guardarPreferencia('pharmacy_name', pharmacyName);
+    notifyListeners();
+  }
+
+  Future<void> cambiarDireccion(String value) async {
+    if (value.trim().length < 5) return;
+    pharmacyAddress = value.trim();
+    await guardarPreferencia('pharmacy_address', pharmacyAddress);
+    notifyListeners();
+  }
+
+  Future<void> cambiarTelefono(String value) async {
+    final cleaned = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleaned.length < 7) return;
+    pharmacyPhone = cleaned;
+    await guardarPreferencia('pharmacy_phone', cleaned);
     notifyListeners();
   }
 

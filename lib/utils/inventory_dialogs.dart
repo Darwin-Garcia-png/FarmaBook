@@ -858,7 +858,7 @@ class InventoryDialogs {
         inputFormatters: [
           if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true))
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-          if (label.toLowerCase().contains('nombre'))
+          if (label.toLowerCase().contains('nombre') && !label.toLowerCase().contains('lote'))
             FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
         ],
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
