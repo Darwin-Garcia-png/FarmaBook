@@ -733,38 +733,67 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
 
   Future<void> _confirmReactivate(Map<String, dynamic> b, LotesController lotesCtrl, AlmacenController almacenCtrl) async {
     final id = b['loteId'] ?? b['batchId'] ?? b['id'] ?? '';
-    final originalStock = lotesCtrl.getOriginalStock(id) ?? 0;
-    if (originalStock <= 0) {
-      ErrorDisplay.snackBar(context: context, message: 'Stock original desconocido. Use editar lote para asignar stock manualmente.');
+    final savedStock = lotesCtrl.getOriginalStock(id);
+
+    if (savedStock != null && savedStock > 0) {
+      await _doReactivate(context, id, savedStock, lotesCtrl, almacenCtrl);
       return;
     }
-    final confirm = await showDialog<bool>(
+
+    // If original stock not saved (app restart), prompt user
+    final stockCtrl = TextEditingController();
+    final stock = await showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Reactivar Lote'),
-        content: Text('¿Reactivar este lote con $originalStock unidades?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Stock original desconocido. Ingrese la cantidad a reactivar:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: stockCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Stock a reactivar',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.greenMetal, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () {
+              final v = int.tryParse(stockCtrl.text.trim());
+              if (v == null || v <= 0) return;
+              Navigator.pop(ctx, v);
+            },
             child: const Text('Reactivar'),
           ),
         ],
       ),
     );
-    if (confirm == true) {
-      try {
-        await lotesCtrl.reactivateBatch(id);
-        almacenCtrl.init();
-        if (context.mounted) {
-          ErrorDisplay.successSnackBar(context: context, message: 'Lote reactivado exitosamente.');
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ErrorDisplay.snackBar(context: context, message: ErrorDisplay.cleanMessage(e));
-        }
+    stockCtrl.dispose();
+    if (stock != null && stock > 0) {
+      await _doReactivate(context, id, stock, lotesCtrl, almacenCtrl);
+    }
+  }
+
+  Future<void> _doReactivate(BuildContext context, String id, int stock, LotesController lotesCtrl, AlmacenController almacenCtrl) async {
+    try {
+      await lotesCtrl.reactivateBatch(id, customStock: stock);
+      almacenCtrl.init();
+      if (context.mounted) {
+        ErrorDisplay.successSnackBar(context: context, message: 'Lote reactivado exitosamente.');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ErrorDisplay.snackBar(context: context, message: ErrorDisplay.cleanMessage(e));
       }
     }
   }

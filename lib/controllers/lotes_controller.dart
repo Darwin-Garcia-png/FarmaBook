@@ -244,11 +244,11 @@ class LotesController extends ChangeNotifier {
     return _originalStocks[batchId];
   }
 
-  Future<void> reactivateBatch(String batchId) async {
+  Future<void> reactivateBatch(String batchId, {int? customStock}) async {
     final id = batchId;
-    final originalStock = _originalStocks[id];
+    final originalStock = customStock ?? _originalStocks[id];
     if (originalStock == null || originalStock <= 0) {
-      throw Exception('Stock original desconocido (sesión expirada). Use editar lote para asignar stock manualmente.');
+      throw Exception('Debe indicar un stock mayor a 0 para reactivar.');
     }
     final batch = allBatches.where((b) =>
         b['loteId'] == id || b['batchId'] == id || b['id'] == id).firstOrNull;
