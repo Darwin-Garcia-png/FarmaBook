@@ -77,7 +77,10 @@ class ApiService {
     try {
       final resp = await fn();
       final body = await resp.transform(utf8.decoder).join();
-      return http.Response(body, resp.statusCode, headers: resp.headers);
+      // Convierte HttpHeaders → Map<String,String> para http.Response
+      final hdrs = <String, String>{};
+      resp.headers.forEach((name, values) => hdrs[name] = values.join(','));
+      return http.Response(body, resp.statusCode, headers: hdrs);
     } on SocketException catch (_) {
       if (!retried) {
         _disposeClient();
@@ -569,9 +572,9 @@ class ApiService {
   }
 
   static Future<List<int>> getAnalyticsReportPdf() async {
-    final uri = Uri.parse('${AppConstants.baseUrl}/analytics/report');
     final h = await _headers();
-    final resp = await _http.get(uri, headers: h).timeout(AppConstants.connectTimeout!);
+    final uri = Uri.parse('${AppConstants.baseUrl}/analytics/report');
+    final resp = await http.get(uri, headers: h).timeout(AppConstants.connectTimeout!);
     if (resp.statusCode >= 400) {
       throw ApiException('Error ${resp.statusCode}', statusCode: resp.statusCode);
     }
@@ -862,7 +865,7 @@ class ApiService {
       'Accept': 'application/json',
       'Authorization': 'Bearer $resetToken',
     };
-    final resp = await _http.post(uri, headers: headers, body: jsonEncode({'password': password})).timeout(AppConstants.connectTimeout!);
+    final resp = await http.post(uri, headers: headers, body: jsonEncode({'password': password})).timeout(AppConstants.connectTimeout!);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
