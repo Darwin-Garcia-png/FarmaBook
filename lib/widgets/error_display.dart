@@ -143,7 +143,21 @@ class ErrorDisplay {
       if (resp != null && resp.data is String) {
         return _cleanMessage(resp.data.toString());
       }
-    } catch (_) {}
+      if (resp != null && resp.data is Map) {
+        final d = resp.data as Map;
+        final errors = d['errors'];
+        if (errors is List && errors.isNotEmpty) {
+          final first = errors.first;
+          if (first is Map) {
+            final m = first['message'] ?? first['msg'] ?? first.toString();
+            return _cleanMessage(m.toString());
+          }
+          return _cleanMessage(errors.first.toString());
+        }
+      }
+    } catch (_) {
+      return 'Error de conexión. Verifique el servidor.';
+    }
     return _cleanMessage(error.toString());
   }
 
@@ -192,12 +206,6 @@ class ErrorDisplay {
       if (msg.contains('already exists')) return '$field: ya existe';
       if (msg.contains('is invalid')) return '$field: inválido';
       return '$field: error de validación';
-    }
-
-    // Pattern 5: catch-all for English validation errors not handled above
-    if (RegExp(r'\b(must|should|cannot|required|invalid|allowed|exists|failed|not found)\b', caseSensitive: false).hasMatch(msg) &&
-        !RegExp(r'[áéíóúñ]', caseSensitive: false).hasMatch(msg)) {
-      return 'Error de validación de datos. Verifique la información ingresada.';
     }
 
     return msg;
@@ -270,12 +278,6 @@ class ErrorDisplay {
     final containsCode = RegExp(r'[{}[\]()<>:;=_]|instance of', caseSensitive: false).hasMatch(s);
     if (containsCode) {
       return 'Error de procesamiento: Falló la petición interna.';
-    }
-
-    // Catch-all: if still English validation-like (not a user-friendly Spanish message), sanitize it
-    final stillTechnical = RegExp(r'\b(must|should|cannot|required|invalid|allowed|exists|failed|typeerror|formatexception|nosuchmethod|null|undefined)\b', caseSensitive: false).hasMatch(s);
-    if (stillTechnical && !RegExp(r'[áéíóúñ]', caseSensitive: false).hasMatch(s)) {
-      return 'Error de procesamiento: Respuesta inesperada del servidor.';
     }
 
     return s;
