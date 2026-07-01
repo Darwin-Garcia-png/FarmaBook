@@ -22,18 +22,15 @@ class LotesController extends ChangeNotifier {
   List<Map<String, dynamic>> _vencidos = [];
   List<Map<String, dynamic>> _porVencer = [];
   List<Map<String, dynamic>> _bajoStock = [];
+  List<Map<String, dynamic>> _enRiesgo = [];
   List<Map<String, dynamic>> _saludables = [];
   List<Map<String, dynamic>> _agotados = [];
   List<Map<String, dynamic>> _archivedBatches = [];
-  List<Map<String, dynamic>> _activeBatches = [];
 
   List<Map<String, dynamic>> get vencidos => _vencidos;
-  List<Map<String, dynamic>> get porVencer => _porVencer;
-  List<Map<String, dynamic>> get bajoStock => _bajoStock;
+  List<Map<String, dynamic>> get enRiesgo => _enRiesgo;
   List<Map<String, dynamic>> get saludables => _saludables;
-  List<Map<String, dynamic>> get agotados => _agotados;
   List<Map<String, dynamic>> get archivedBatches => _archivedBatches;
-  List<Map<String, dynamic>> get activeBatches => _activeBatches;
 
   void _recomputeCategories() {
     final now = DateTime.now();
@@ -41,28 +38,32 @@ class LotesController extends ChangeNotifier {
     _vencidos = [];
     _porVencer = [];
     _bajoStock = [];
+    _enRiesgo = [];
     _saludables = [];
     _agotados = [];
     _archivedBatches = [];
-    _activeBatches = [];
+    final Set<String> enRiesgoIds = {};
     for (final b in allBatches) {
       final d = DateTime.tryParse(b['fechaDeVencimiento'] ?? b['fechaVencimiento'] ?? '');
       final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
       final isExpired = d != null && d.isBefore(now);
       
-      // Archived = agotado OR expired
       if (stock <= 0 || isExpired) {
         _archivedBatches.add(b);
         if (stock <= 0) _agotados.add(b);
         if (isExpired) _vencidos.add(b);
         continue;
       }
-      _activeBatches.add(b);
-      if (d != null && d.isBefore(sixtyDays)) {
-        _porVencer.add(b);
-      }
-      if (stock < 30) {
-        _bajoStock.add(b);
+      final id = b['loteId'] ?? b['batchId'] ?? b['id'] ?? '';
+      final isNearExpiry = d != null && d.isBefore(sixtyDays);
+      final isLowStock = stock < 30;
+      if (isNearExpiry || isLowStock) {
+        _enRiesgo.add(b);
+        enRiesgoIds.add(id.toString());
+        if (isNearExpiry) _porVencer.add(b);
+        if (isLowStock) _bajoStock.add(b);
+      } else {
+        _saludables.add(b);
       }
     }
   }
@@ -202,20 +203,6 @@ class LotesController extends ChangeNotifier {
     } catch (e) {
       GlobalErrorHandler.showError('No se pudo actualizar el lote.');
       rethrow;
-    }
-  }
-
-  Future<void> deleteBatch(String id) async {
-    try {
-      await ApiService.deleteBatch(id);
-      await fetchAllBatches(isRefresh: true);
-    } catch (_) {
-      try {
-        await ApiService.updateBatch(id, {'cantidadDisponible': 0});
-        await fetchAllBatches(isRefresh: true);
-      } catch (_) {
-        GlobalErrorHandler.showError('No se pudo eliminar el lote. El backend no soporta borrado.');
-      }
     }
   }
 

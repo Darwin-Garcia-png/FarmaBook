@@ -463,18 +463,6 @@ class _ProductCardState extends State<ProductCard> {
                       child: const Icon(Icons.toggle_off_outlined, size: 16, color: Colors.orange),
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  InkWell(
-                    onTap: () => _confirmarBorradoLote(context, l, widget.lotesCtrl, controller),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.reiOrangeRed.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.delete_sweep_outlined, size: 16, color: AppTheme.reiOrangeRed),
-                    ),
-                  ),
                 ]),
             ],
           ),
@@ -679,26 +667,4 @@ class _ProductCardState extends State<ProductCard> {
     }
   }
 
-  Future<void> _confirmarBorradoLote(BuildContext context, dynamic batch,
-      LotesController lotesCtrl, AlmacenController controller) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar Lote'),
-        content: Text('¿Deseas eliminar el lote "${batch['nombreLote']}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      await lotesCtrl.deleteBatch((batch['loteId'] ?? batch['batchId'] ?? batch['id']).toString());
-      controller.fetchProducts(isRefresh: true);
-    }
-  }
 }

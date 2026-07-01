@@ -183,7 +183,8 @@ class BatchDetailsModal extends StatelessWidget {
                             ),
                             if (UserSession.isDueno) ...[
                               const SizedBox(width: 12),
-                              Column(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.edit_note, color: AppTheme.ayanamiBlue, size: 20),
@@ -195,10 +196,6 @@ class BatchDetailsModal extends StatelessWidget {
                                   IconButton(
                                     icon: const Icon(Icons.toggle_off_outlined, color: Colors.orange, size: 20),
                                     onPressed: () => _confirmarDesactivarLote(context, l, lotesCtrl, controller),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_sweep_outlined, color: AppTheme.reiOrangeRed, size: 20),
-                                    onPressed: () => _confirmarBorradoLote(context, l, lotesCtrl, controller),
                                   ),
                                 ],
                               ),
@@ -215,34 +212,6 @@ class BatchDetailsModal extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _confirmarBorradoLote(BuildContext context, dynamic batch,
-      LotesController lotesCtrl, AlmacenController controller) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar Lote'),
-        content: Text('¿Deseas eliminar el lote "${batch['nombreLote']}"?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
-          ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.reiOrangeRed),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Eliminar',
-                  style: TextStyle(color: Colors.white))),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await lotesCtrl.deleteBatch((batch['loteId'] ?? batch['batchId'] ?? batch['id']).toString());
-      controller.fetchProducts(isRefresh: true);
-      if (context.mounted) Navigator.pop(context);
-    }
   }
 
   Future<void> _confirmarDesactivarLote(BuildContext context, dynamic batch,

@@ -31,7 +31,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final lotesCtrl = context.read<LotesController>();
@@ -75,9 +75,9 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
               ),
               const SizedBox(width: 8),
               ElevatedButton.icon(
-                onPressed: () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl),
+                onPressed: () => _showAddBatch(almacenCtrl, lotesCtrl),
                 icon: const Icon(Icons.add_box_rounded),
-                label: const Text('Entrada de Lote', style: TextStyle(fontWeight: FontWeight.w900)),
+                label: const Text('Nuevo Lote', style: TextStyle(fontWeight: FontWeight.w900)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.ayanamiBlue,
                   foregroundColor: Colors.white,
@@ -118,10 +118,8 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                             child: TabBarView(
                               controller: _tabController,
                               children: [
-                                _buildBatchList(lotesCtrl.activeBatches, almacenCtrl, lotesCtrl),
-                                _buildBatchList(lotesCtrl.porVencer, almacenCtrl, lotesCtrl),
-                                _buildBatchList(lotesCtrl.vencidos, almacenCtrl, lotesCtrl),
-                                _buildBatchList(lotesCtrl.bajoStock, almacenCtrl, lotesCtrl),
+                                _buildBatchList(lotesCtrl.saludables, almacenCtrl, lotesCtrl),
+                                _buildEnRiesgoList(lotesCtrl, almacenCtrl),
                                 _buildArchivedList(lotesCtrl.archivedBatches, lotesCtrl, almacenCtrl),
                               ],
                             ),
@@ -158,11 +156,11 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
       child: Row(
         children: [
-          Expanded(child: AnimatedEntry(index: 0, child: _buildMetricCard(title: 'LOTES ACTIVOS', value: lotesCtrl.activeBatches.length.toString(), icon: Icons.inventory_2_rounded, color: AppTheme.ayanamiBlue))),
+          Expanded(child: AnimatedEntry(index: 0, child: _buildMetricCard(title: 'LOTES ACTIVOS', value: lotesCtrl.saludables.length.toString(), icon: Icons.inventory_2_rounded, color: AppTheme.ayanamiBlue))),
           const SizedBox(width: 20),
-          Expanded(child: AnimatedEntry(index: 1, child: _buildMetricCard(title: 'EN RIESGO', value: lotesCtrl.porVencer.length.toString(), icon: Icons.warning_amber_rounded, color: Colors.orange))),
+          Expanded(child: AnimatedEntry(index: 1, child: _buildMetricCard(title: 'EN RIESGO', value: lotesCtrl.enRiesgo.length.toString(), icon: Icons.warning_amber_rounded, color: Colors.orange))),
           const SizedBox(width: 20),
-          Expanded(child: AnimatedEntry(index: 2, child: _buildMetricCard(title: 'VENCIDOS', value: lotesCtrl.vencidos.length.toString(), icon: Icons.error_outline_rounded, color: AppTheme.reiOrangeRed))),
+          Expanded(child: AnimatedEntry(index: 2, child: _buildMetricCard(title: 'HISTORIAL', value: lotesCtrl.archivedBatches.length.toString(), icon: Icons.archive_rounded, color: Colors.grey))),
         ],
       ),
     );
@@ -368,10 +366,8 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       unselectedLabelColor: Colors.grey,
       labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
       tabs: [
-        Tab(text: 'Activos (${lotesCtrl.activeBatches.length})'),
-        Tab(text: 'Por Vencer (${lotesCtrl.porVencer.length})'),
-        Tab(text: 'Vencidos (${lotesCtrl.vencidos.length})'),
-        Tab(text: 'Bajo Stock (${lotesCtrl.bajoStock.length})'),
+        Tab(text: 'Activos (${lotesCtrl.saludables.length})'),
+        Tab(text: 'En Riesgo (${lotesCtrl.enRiesgo.length})'),
         Tab(text: 'Historial (${lotesCtrl.archivedBatches.length})'),
       ],
     );
@@ -395,6 +391,45 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
             Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             const Text('No se encontraron registros', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(32),
+      itemCount: filtered.length,
+      itemBuilder: (ctx, i) => AnimatedEntry(
+        index: i,
+        child: _buildBatchCard(filtered[i], almacenCtrl, lotesCtrl),
+      ),
+    );
+  }
+
+  Widget _buildEnRiesgoList(LotesController lotesCtrl, AlmacenController almacenCtrl) {
+    final query = _searchQuery.toLowerCase();
+    final seen = <String>{};
+    final combined = <Map<String, dynamic>>[];
+    for (final b in [...lotesCtrl.enRiesgo]) {
+      final id = '${b['loteId'] ?? b['batchId'] ?? b['id'] ?? ''}';
+      if (seen.add(id)) combined.add(b);
+    }
+    final filtered = combined.where((b) {
+      final name = b['nombreLote']?.toString().toLowerCase() ?? '';
+      final prod = b['productoNombre']?.toString().toLowerCase() ?? '';
+      final sku = b['productoCodigo']?.toString().toLowerCase() ?? '';
+      final bc = _batchBarcode(b)?.toLowerCase() ?? '';
+      return name.contains(query) || prod.contains(query) || sku.contains(query) || bc.contains(query);
+    }).toList();
+
+    if (filtered.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle_outline, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
+            const SizedBox(height: 16),
+            const Text('Ningún lote en riesgo', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ],
         ),
       );
@@ -524,12 +559,17 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                         ],
                       ),
                     ),
-                    if (UserSession.isDueno && !isExpired) ...[
+                    if (UserSession.isDueno) ...[
                       const SizedBox(width: 8),
-                      _actionIcon(
-                        Icons.replay_rounded, AppTheme.greenMetal,
-                        () => _confirmReactivate(b, lotesCtrl, almacenCtrl),
-                      ),
+                      if (!isExpired) ...[
+                        _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showBatchEdit(b, lotesCtrl)),
+                        const SizedBox(width: 8),
+                      ],
+                      if (!isExpired)
+                        _actionIcon(
+                          Icons.replay_rounded, AppTheme.greenMetal,
+                          () => _confirmReactivate(b, lotesCtrl, almacenCtrl),
+                        ),
                     ],
                   ],
                 ),
@@ -654,11 +694,9 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                     const SizedBox(width: 12),
                     Column(
                       children: [
-                        _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => InventoryDialogs.showAddEditProduct(context, almacenCtrl, lotesCtrl, prefillBatch: b)),
+                        _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showBatchEdit(b, lotesCtrl)),
                         const SizedBox(height: 6),
                         _actionIcon(Icons.toggle_off_outlined, Colors.orange, () => _confirmDeactivate(b, lotesCtrl, almacenCtrl)),
-                        const SizedBox(height: 6),
-                        _actionIcon(Icons.delete_outline_rounded, AppTheme.reiOrangeRed, () => _confirmDelete(b, lotesCtrl, almacenCtrl)),
                       ],
                     ),
                   ],
@@ -798,23 +836,324 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     }
   }
 
-  Future<void> _confirmDelete(Map<String, dynamic> b, LotesController lotesCtrl, AlmacenController almacenCtrl) async {
-    final confirm = await showDialog<bool>(
+  Future<void> _showBatchEdit(Map<String, dynamic> batch, LotesController lotesCtrl) async {
+    final id = batch['loteId'] ?? batch['batchId'] ?? batch['id'];
+    final nameCtrl = TextEditingController(text: batch['nombreLote']?.toString() ?? '');
+    final stockCtrl = TextEditingController(text: batch['cantidadDisponible']?.toString() ?? '0');
+    final priceCtrl = TextEditingController(text: _batchPrice(batch) > 0 ? _batchPrice(batch).toStringAsFixed(2) : '');
+    final costCtrl = TextEditingController(text: (batch['costoCompra'] ?? batch['costoDeCompra'] ?? '').toString());
+    DateTime? expDate = DateTime.tryParse(batch['fechaDeVencimiento']?.toString() ?? batch['fechaVencimiento']?.toString() ?? '');
+    final fnName = FocusNode();
+    final fnPrice = FocusNode();
+    final fnCost = FocusNode();
+    final fnStock = FocusNode();
+
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Eliminar Lote'),
-        content: const Text('¿Estás seguro? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: AppTheme.reiOrangeRed, foregroundColor: Colors.white), onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar')),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Container(
+            width: 480,
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.edit_rounded, color: AppTheme.ayanamiBlue, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    const Text('Editar Lote', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close_rounded, color: Colors.grey.shade400),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text('Producto: ${batch['productoNombre'] ?? 'N/A'}', style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 20),
+                _field('Nombre del Lote', nameCtrl, Icons.tag_rounded, fnName, TextInputAction.next, () => fnPrice.requestFocus()),
+                Row(children: [
+                  Expanded(child: _field('Precio Venta', priceCtrl, Icons.sell_rounded, fnPrice, TextInputAction.next, () => fnCost.requestFocus(), keyboard: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _field('Costo Compra', costCtrl, Icons.shopping_cart_rounded, fnCost, TextInputAction.next, () => fnStock.requestFocus(), keyboard: TextInputType.number)),
+                ]),
+                Row(children: [
+                  Expanded(child: _field('Stock', stockCtrl, Icons.warehouse_rounded, fnStock, TextInputAction.done, null, keyboard: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final dt = await showDatePicker(
+                          context: ctx,
+                          initialDate: expDate ?? DateTime.now().add(const Duration(days: 365)),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                        );
+                        if (dt != null) setD(() => expDate = dt);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.12)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today_rounded, size: 16, color: AppTheme.ayanamiBlue),
+                            const SizedBox(width: 8),
+                            Text(
+                              expDate != null ? '${expDate!.day}/${expDate!.month}/${expDate!.year}' : 'Fecha vencimiento',
+                              style: TextStyle(fontSize: 13, color: expDate != null ? Colors.black87 : Colors.grey.shade500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.ayanamiBlue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        final data = <String, dynamic>{
+                          'nombreLote': nameCtrl.text.trim(),
+                          'precioPorUnidad': double.tryParse(priceCtrl.text.replaceAll(',', '.')) ?? 0.0,
+                          'costoDeCompra': double.tryParse(costCtrl.text.replaceAll(',', '.')) ?? 0.0,
+                          'cantidadDisponible': int.tryParse(stockCtrl.text.trim()) ?? 0,
+                          'fechaDeVencimiento': expDate?.toIso8601String().split('T')[0] ?? DateTime.now().add(const Duration(days: 365)).toIso8601String().split('T')[0],
+                        };
+                        Navigator.pop(ctx, data);
+                      },
+                      child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.w900)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
-    if (confirm == true) {
-      await lotesCtrl.deleteBatch(b['loteId'] ?? b['batchId'] ?? b['id']);
-      almacenCtrl.init(); 
+
+    nameCtrl.dispose();
+    stockCtrl.dispose();
+    priceCtrl.dispose();
+    costCtrl.dispose();
+    fnName.dispose();
+    fnPrice.dispose();
+    fnCost.dispose();
+    fnStock.dispose();
+
+    if (result != null) {
+      await lotesCtrl.updateBatch(id, result);
     }
+  }
+
+  Future<void> _showAddBatch(AlmacenController almacenCtrl, LotesController lotesCtrl) async {
+    String? selectedProductId;
+    final nameCtrl = TextEditingController();
+    final stockCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final costCtrl = TextEditingController();
+    DateTime? expDate;
+    final fnName = FocusNode();
+    final fnPrice = FocusNode();
+    final fnCost = FocusNode();
+    final fnStock = FocusNode();
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Container(
+            width: 520,
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.greenMetal.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.add_box_rounded, color: AppTheme.greenMetal, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    const Text('Nuevo Lote', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close_rounded, color: Colors.grey.shade400),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                DropdownButtonFormField<String>(
+                  value: selectedProductId,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Seleccionar Producto *',
+                    prefixIcon: const Icon(Icons.medication_rounded, color: AppTheme.ayanamiBlue, size: 18),
+                    filled: true,
+                    fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  ),
+                  items: [
+                    ...almacenCtrl.productos.map((p) => DropdownMenuItem(
+                      value: p['productoId'].toString(),
+                      child: Text(p['nombre']?.toString() ?? '', style: const TextStyle(fontSize: 13)),
+                    )),
+                  ],
+                  onChanged: (v) => setD(() => selectedProductId = v),
+                ),
+                const SizedBox(height: 16),
+                _field('Nombre del Lote *', nameCtrl, Icons.tag_rounded, fnName, TextInputAction.next, () => fnPrice.requestFocus()),
+                Row(children: [
+                  Expanded(child: _field('Precio Venta *', priceCtrl, Icons.sell_rounded, fnPrice, TextInputAction.next, () => fnCost.requestFocus(), keyboard: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _field('Costo Compra *', costCtrl, Icons.shopping_cart_rounded, fnCost, TextInputAction.next, () => fnStock.requestFocus(), keyboard: TextInputType.number)),
+                ]),
+                Row(children: [
+                  Expanded(child: _field('Stock *', stockCtrl, Icons.warehouse_rounded, fnStock, TextInputAction.done, null, keyboard: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final dt = await showDatePicker(
+                          context: ctx,
+                          initialDate: expDate ?? DateTime.now().add(const Duration(days: 365)),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                        );
+                        if (dt != null) setD(() => expDate = dt);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.ayanamiBlue.withValues(alpha: 0.12)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today_rounded, size: 16, color: AppTheme.ayanamiBlue),
+                            const SizedBox(width: 8),
+                            Text(
+                              expDate != null ? '${expDate!.day}/${expDate!.month}/${expDate!.year}' : 'Fecha vencimiento *',
+                              style: TextStyle(fontSize: 13, color: expDate != null ? Colors.black87 : Colors.grey.shade500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.greenMetal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        if (selectedProductId == null) return;
+                        if (nameCtrl.text.trim().isEmpty) return;
+                        if (expDate == null) return;
+                        final data = <String, dynamic>{
+                          'productoId': selectedProductId,
+                          'nombreLote': nameCtrl.text.trim(),
+                          'precioPorUnidad': double.tryParse(priceCtrl.text.replaceAll(',', '.')) ?? 0.0,
+                          'costoDeCompra': double.tryParse(costCtrl.text.replaceAll(',', '.')) ?? 0.0,
+                          'cantidadDisponible': int.tryParse(stockCtrl.text.trim()) ?? 0,
+                          'fechaDeVencimiento': expDate!.toIso8601String().split('T')[0],
+                        };
+                        Navigator.pop(ctx, data);
+                      },
+                      child: const Text('CREAR LOTE', style: TextStyle(fontWeight: FontWeight.w900)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    nameCtrl.dispose();
+    stockCtrl.dispose();
+    priceCtrl.dispose();
+    costCtrl.dispose();
+    fnName.dispose();
+    fnPrice.dispose();
+    fnCost.dispose();
+    fnStock.dispose();
+
+    if (result != null) {
+      await lotesCtrl.createBatch(result);
+    }
+  }
+
+  Widget _field(String label, TextEditingController ctrl, IconData icon, FocusNode fn, TextInputAction action, VoidCallback? onNext, {TextInputType keyboard = TextInputType.text}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: ctrl,
+        focusNode: fn,
+        textInputAction: action,
+        keyboardType: keyboard,
+        onFieldSubmitted: (_) => onNext?.call(),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue, size: 18),
+          filled: true,
+          fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        ),
+      ),
+    );
   }
 
   num _batchPrice(Map<String, dynamic> b) {
