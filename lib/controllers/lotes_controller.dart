@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../utils/global_error_handler.dart';
 
 class LotesController extends ChangeNotifier {
   Timer? _autoClearTimer;
@@ -176,7 +175,6 @@ class LotesController extends ChangeNotifier {
 
     } catch (e) {
       error = "Error al cargar lotes";
-      GlobalErrorHandler.showError('No se pudieron cargar los lotes. Verifica tu conexión.');
     } finally {
       isLoading = false;
       isFetchingMore = false;
@@ -190,7 +188,6 @@ class LotesController extends ChangeNotifier {
       await fetchAllBatches(isRefresh: true);
       return res;
     } catch (e) {
-      GlobalErrorHandler.showError(e.toString());
       rethrow;
     }
   }
@@ -201,7 +198,6 @@ class LotesController extends ChangeNotifier {
       await fetchAllBatches(isRefresh: true);
       return res;
     } catch (e) {
-      GlobalErrorHandler.showError(e.toString());
       rethrow;
     }
   }

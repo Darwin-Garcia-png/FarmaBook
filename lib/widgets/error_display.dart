@@ -219,9 +219,9 @@ class ErrorDisplay {
       case 'direccion': case 'dirección': case 'address': return 'Dirección';
       case 'codigobarras': case 'codigodebarras': return 'Código de barras';
       case 'precio': case 'precioporunidad': case 'precioventa': return 'Precio';
-      case 'fechadevencimiento': case 'fechavencimiento': return 'Fecha de vencimiento';
+      case 'fechadevencimiento': case 'fechavencimiento': case 'fecha': return 'Fecha de vencimiento';
       case 'cantidaddisponible': case 'stock': case 'cantidad': return 'Stock';
-      case 'preciocompra': case 'costocompra': case 'costodecompra': return 'Costo de compra';
+      case 'preciocompra': case 'preciocosto': case 'costocompra': case 'costodecompra': return 'Costo de compra';
       case 'categoriaid': case 'categoria': return 'Categoría';
       case 'presentacionid': case 'presentacion': return 'Presentación';
       case 'proveedorid': case 'proveedor': return 'Proveedor';

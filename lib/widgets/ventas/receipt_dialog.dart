@@ -60,7 +60,13 @@ class ReceiptDialog extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                          Text(formatCop(unitPrice), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                        ],
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -228,7 +234,13 @@ class ReceiptDialog extends StatelessWidget {
                   return pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(nombre, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(nombre, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                          pw.Text(formatCop(unitPrice), style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                        ],
+                      ),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
