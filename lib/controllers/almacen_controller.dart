@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 
 class AlmacenController extends ChangeNotifier {
-  Timer? _autoClearTimer;
-
   List<Map<String, dynamic>> productos = [];
   List<dynamic> categorias = [];
   List<dynamic> presentaciones = [];
@@ -27,13 +26,6 @@ class AlmacenController extends ChangeNotifier {
   String? error;
 
   final TextEditingController searchCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _autoClearTimer?.cancel();
-    searchCtrl.dispose();
-    super.dispose();
-  }
 
   void search() {
     fetchProducts(isRefresh: true);
@@ -149,13 +141,29 @@ class AlmacenController extends ChangeNotifier {
       }
       
     } catch (e) {
-      error = "Error al cargar productos. Verifica la conexión.";
+      // Si es error de red y es la carga inicial, reintentamos una vez después de 2 segundos
+      final isNetworkError = e is SocketException || e is HttpException || e is TimeoutException;
+      if (isNetworkError && isRefresh) {
+        isLoadingInitial = false;
+        isFetchingMore = false;
+        notifyListeners();
+        await Future.delayed(const Duration(seconds: 2));
+        // Solo reintentamos si no se ha cancelado (el widget sigue vivo)
+        if (!_disposed) {
+          await fetchProducts(isRefresh: true);
+          return;
+        }
+      } else {
+        error = 'Sin conexión. Verifique su red e intente de nuevo.';
+      }
     } finally {
       isLoadingInitial = false;
       isFetchingMore = false;
       notifyListeners();
     }
   }
+
+  bool _disposed = false;
 
   Future<Map<String, dynamic>> saveProduct({
     required bool isEdit,
@@ -198,16 +206,15 @@ class AlmacenController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void touch() {
-    _autoClearTimer?.cancel();
-    _autoClearTimer = null;
+  @override
+  void dispose() {
+    _disposed = true;
+    searchCtrl.dispose();
+    super.dispose();
   }
 
-  void scheduleAutoClear() {
-    _autoClearTimer?.cancel();
-    _autoClearTimer = Timer(const Duration(minutes: 5), () {
-      clearData();
-    });
+  void touch() {
+    // Sin efecto — se mantiene para compatibilidad con llamadas existentes
   }
 
   void clearData() {

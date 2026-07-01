@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -20,11 +19,25 @@ class ApiException implements Exception {
 class ApiService {
   static String? _cachedToken;
   static const _storage = FlutterSecureStorage();
+  static HttpClient? _httpClient;
+
   @visibleForTesting
   static set testCachedToken(String? t) => _cachedToken = t;
 
-  /// Creates a fresh HTTP client per request to avoid stale connection pools.
-  static http.Client _freshClient() => http.Client();
+  static HttpClient get _http {
+    if (_httpClient == null) {
+      _httpClient = HttpClient()
+        ..connectionTimeout = const Duration(seconds: 30)
+        ..idleTimeout = const Duration(minutes: 10);
+    }
+    return _httpClient!;
+  }
+
+  /// Cierra y elimina el cliente HTTP actual para que se recree fresco.
+  static void _disposeClient() {
+    try { _httpClient?.close(force: true); } catch (_) {}
+    _httpClient = null;
+  }
 
   static Future<void> init() async {
     _cachedToken = await _storage.read(key: AppConstants.tokenKey);
@@ -58,16 +71,25 @@ class ApiService {
     catch (_) { return r.body; }
   }
 
-  /// Executes [fn] and retries once if a socket/connection error occurs.
-  static Future<T> _withRetry<T>(Future<T> fn()) async {
+  /// Executes [fn] with a fresh HttpClient connection and returns http.Response.
+  /// Si la conexión subyacente está muerta, recrea el cliente y reintenta una vez.
+  static Future<http.Response> _request(Future<HttpClientResponse> Function() fn, {bool retried = false}) async {
     try {
-      return await fn();
+      final resp = await fn();
+      final body = await resp.transform(utf8.decoder).join();
+      return http.Response(body, resp.statusCode, headers: resp.headers);
     } on SocketException catch (_) {
-      return await fn();
+      if (!retried) {
+        _disposeClient();
+        return _request(fn, retried: true);
+      }
+      rethrow;
     } on HttpException catch (_) {
-      return await fn();
-    } on TimeoutException catch (_) {
-      return await fn();
+      if (!retried) {
+        _disposeClient();
+        return _request(fn, retried: true);
+      }
+      rethrow;
     }
   }
 
@@ -101,6 +123,7 @@ class ApiService {
   static Future<void> releaseMemory() async {
     _cachedToken = null;
     try { await _storage.delete(key: AppConstants.tokenKey); } catch (_) {}
+    _disposeClient();
   }
 
   static Future<void> setToken(String? token) async {
@@ -114,13 +137,11 @@ class ApiService {
 
   static Future<http.Response> _get(String path, {Map<String, String>? query, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path').replace(queryParameters: query);
-    final headers = await _headers(auth: auth);
-    final resp = await _withRetry(() async {
-      final client = _freshClient();
-      try {
-        return await client.get(uri, headers: headers).timeout(AppConstants.connectTimeout!);
-      } finally { client.close(); }
-    });
+    final h = await _headers(auth: auth);
+    final resp = await _request(() => _http.getUrl(uri).then((r) {
+      h.forEach((k, v) => r.headers.set(k, v));
+      return r.close();
+    })).timeout(AppConstants.connectTimeout!);
     AppLogger.api('GET', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
@@ -135,14 +156,13 @@ class ApiService {
 
   static Future<http.Response> _post(String path, {Map<String, dynamic>? data, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
-    final headers = await _headers(auth: auth, json: data != null);
+    final h = await _headers(auth: auth, json: data != null);
     final body = data != null ? jsonEncode(data) : null;
-    final resp = await _withRetry(() async {
-      final client = _freshClient();
-      try {
-        return await client.post(uri, headers: headers, body: body).timeout(AppConstants.connectTimeout!);
-      } finally { client.close(); }
-    });
+    final resp = await _request(() => _http.postUrl(uri).then((r) {
+      h.forEach((k, v) => r.headers.set(k, v));
+      if (body != null) r.write(body);
+      return r.close();
+    })).timeout(AppConstants.connectTimeout!);
     AppLogger.api('POST', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final bodyParsed = _parseBody(resp);
@@ -157,14 +177,13 @@ class ApiService {
 
   static Future<http.Response> _patch(String path, {Map<String, dynamic>? data, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
-    final headers = await _headers(auth: auth, json: data != null);
+    final h = await _headers(auth: auth, json: data != null);
     final body = data != null ? jsonEncode(data) : null;
-    final resp = await _withRetry(() async {
-      final client = _freshClient();
-      try {
-        return await client.patch(uri, headers: headers, body: body).timeout(AppConstants.connectTimeout!);
-      } finally { client.close(); }
-    });
+    final resp = await _request(() => _http.patchUrl(uri).then((r) {
+      h.forEach((k, v) => r.headers.set(k, v));
+      if (body != null) r.write(body);
+      return r.close();
+    })).timeout(AppConstants.connectTimeout!);
     AppLogger.api('PATCH', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final bodyParsed = _parseBody(resp);
@@ -179,13 +198,11 @@ class ApiService {
 
   static Future<http.Response> _delete(String path, {bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
-    final headers = await _headers(auth: auth);
-    final resp = await _withRetry(() async {
-      final client = _freshClient();
-      try {
-        return await client.delete(uri, headers: headers).timeout(AppConstants.connectTimeout!);
-      } finally { client.close(); }
-    });
+    final h = await _headers(auth: auth);
+    final resp = await _request(() => _http.deleteUrl(uri).then((r) {
+      h.forEach((k, v) => r.headers.set(k, v));
+      return r.close();
+    })).timeout(AppConstants.connectTimeout!);
     AppLogger.api('DELETE', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
@@ -554,14 +571,11 @@ class ApiService {
   static Future<List<int>> getAnalyticsReportPdf() async {
     final uri = Uri.parse('${AppConstants.baseUrl}/analytics/report');
     final h = await _headers();
-    final client = _freshClient();
-    try {
-      final resp = await client.get(uri, headers: h).timeout(AppConstants.connectTimeout!);
-      if (resp.statusCode >= 400) {
-        throw ApiException('Error ${resp.statusCode}', statusCode: resp.statusCode);
-      }
-      return resp.bodyBytes.toList();
-    } finally { client.close(); }
+    final resp = await _http.get(uri, headers: h).timeout(AppConstants.connectTimeout!);
+    if (resp.statusCode >= 400) {
+      throw ApiException('Error ${resp.statusCode}', statusCode: resp.statusCode);
+    }
+    return resp.bodyBytes.toList();
   }
 
   // ────────────────────────────────────────────────────────────────
@@ -848,17 +862,14 @@ class ApiService {
       'Accept': 'application/json',
       'Authorization': 'Bearer $resetToken',
     };
-    final client = _freshClient();
-    try {
-      final resp = await client.post(uri, headers: headers, body: jsonEncode({'password': password})).timeout(AppConstants.connectTimeout!);
-      if (resp.statusCode >= 400) {
-        final body = _parseBody(resp);
-        throw ApiException(
-          body['message']?.toString() ?? body['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
-          statusCode: resp.statusCode,
-          serverBody: body,
-        );
-      }
-    } finally { client.close(); }
+    final resp = await _http.post(uri, headers: headers, body: jsonEncode({'password': password})).timeout(AppConstants.connectTimeout!);
+    if (resp.statusCode >= 400) {
+      final body = _parseBody(resp);
+      throw ApiException(
+        body['message']?.toString() ?? body['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
+        statusCode: resp.statusCode,
+        serverBody: body,
+      );
+    }
   }
 }
