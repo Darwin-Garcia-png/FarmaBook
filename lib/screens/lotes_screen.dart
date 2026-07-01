@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../utils/price_formatter.dart';
+import '../utils/user_session.dart';
 import '../widgets/animations.dart';
 import '../widgets/error_display.dart';
 
@@ -557,16 +558,18 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    if (!isExpired) ...[
-                      _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showBatchEdit(b, lotesCtrl)),
+                    if (UserSession.isDueno) ...[
                       const SizedBox(width: 8),
+                      if (!isExpired) ...[
+                        _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showBatchEdit(b, lotesCtrl)),
+                        const SizedBox(width: 8),
+                      ],
+                      if (!isExpired)
+                        _actionIcon(
+                          Icons.replay_rounded, AppTheme.greenMetal,
+                          () => _confirmReactivate(b, lotesCtrl, almacenCtrl),
+                        ),
                     ],
-                    if (!isExpired)
-                      _actionIcon(
-                        Icons.replay_rounded, AppTheme.greenMetal,
-                        () => _confirmReactivate(b, lotesCtrl, almacenCtrl),
-                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
