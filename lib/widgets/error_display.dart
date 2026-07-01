@@ -275,9 +275,23 @@ class ErrorDisplay {
     final trans = _translateSingleError(s);
     if (trans != s) return trans;
 
-    final containsCode = RegExp(r'[{}[\]()<>:;=_]|instance of', caseSensitive: false).hasMatch(s);
+    // Catch‑all: English validation‑like message → Spanish genérico
+    if (RegExp(r'\b(must|should|cannot|required|invalid|allowed|exists|failed|not found|forbidden|unauthorized|denied|rejected|internal server|error|exception)\b', caseSensitive: false).hasMatch(s) &&
+        !RegExp(r'[áéíóúñ]', caseSensitive: false).hasMatch(s)) {
+      return 'Error de validación de datos. Verifique la información ingresada.';
+    }
+
+    // Catch‑all: contenido técnico (código, stack trace, tipos, símbolos) → sanitizado
+    final containsCode = RegExp(r'[{}[\]()<>;=_]|instance\s+of|subtype\s+of|is\s+not\s+a', caseSensitive: false).hasMatch(s);
     if (containsCode) {
       return 'Error de procesamiento: Falló la petición interna.';
+    }
+
+    // Catch‑all: mensaje completamente en inglés sin caracteres acentuados → sanitizado
+    if (RegExp(r'^[a-zA-Z0-9\s.,:;!?\x27"-]+$').hasMatch(s) &&
+        !RegExp(r'[áéíóúñÁÉÍÓÚ]').hasMatch(s) &&
+        s.length > 20) {
+      return 'Error de procesamiento: Respuesta inesperada del servidor.';
     }
 
     return s;
