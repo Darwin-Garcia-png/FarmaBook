@@ -1513,10 +1513,7 @@ class InventoryDialogs {
             final pcParsed =
                 double.tryParse(precioCompra.text.replaceAll(',', '.')) ?? 0.0;
             final stockParsed = int.tryParse(stock.text.trim()) ?? 0;
-            // Send full ISO date with UTC timezone (NestJS/Sequelize standard)
-            final expStr =
-                DateTime.utc(expiryDate.year, expiryDate.month, expiryDate.day)
-                    .toIso8601String();
+            final expStr = expiryDate.toIso8601String().split('T')[0];
 
             try {
               String? finalProdId = prod?['productoId']?.toString();
@@ -1548,9 +1545,7 @@ class InventoryDialogs {
                 };
                 if (pcParsed > 0) batchData['costoDeCompra'] = pcParsed;
                 if (expiryDate != null) {
-                  batchData['fechaDeVencimiento'] =
-                      DateTime.utc(expiryDate.year, expiryDate.month, expiryDate.day)
-                          .toIso8601String();
+                  batchData['fechaDeVencimiento'] = expiryDate.toIso8601String().split('T')[0];
                 }
                 await lotesCtrl.updateBatch(batchId, batchData);
                 if (pParsed > 0 && batchProductId != null) {
