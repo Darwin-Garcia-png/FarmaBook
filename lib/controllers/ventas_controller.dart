@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/producto_model.dart';
 import '../utils/user_session.dart';
+import '../widgets/error_display.dart';
 
 enum VentasView { search, history, receipts }
 
@@ -494,7 +495,7 @@ class VentasController extends ChangeNotifier {
       cargarProductosMasVendidos();
       return result;
     } catch (e) {
-      error = 'Error al registrar venta';
+      error = ErrorDisplay.cleanMessage(e);
       notifyListeners();
       return null;
     } finally {
