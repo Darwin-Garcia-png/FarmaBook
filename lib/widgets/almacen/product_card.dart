@@ -7,7 +7,6 @@ import '../../utils/inventory_dialogs.dart';
 import '../../utils/price_formatter.dart';
 import '../animations.dart';
 import '../../utils/user_session.dart';
-import 'batch_details_modal.dart';
 
 class ProductCard extends StatefulWidget {
   final Map<String, dynamic> p;
