@@ -102,15 +102,6 @@ class ApiService {
     _cachedToken = null;
   }
 
-  /// Called when the server returns 401 — redirects to login.
-  static void Function()? onSessionExpired;
-
-  static void _handleUnauthorized() {
-    clearCachedToken();
-    try { _storage.delete(key: AppConstants.tokenKey); } catch (_) {}
-    onSessionExpired?.call();
-  }
-
   static Future<String?> getUserToken(String username) async {
     return await _storage.read(key: '${AppConstants.tokenKey}_$username');
   }
@@ -143,7 +134,6 @@ class ApiService {
     final headers = await _headers(auth: auth);
     final resp = await _withRetry(() => _http.get(uri, headers: headers).timeout(AppConstants.connectTimeout!));
     AppLogger.api('GET', path, resp.statusCode);
-    if (resp.statusCode == 401) _handleUnauthorized();
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -161,7 +151,6 @@ class ApiService {
     final body = data != null ? jsonEncode(data) : null;
     final resp = await _withRetry(() => _http.post(uri, headers: headers, body: body).timeout(AppConstants.connectTimeout!));
     AppLogger.api('POST', path, resp.statusCode);
-    if (resp.statusCode == 401) _handleUnauthorized();
     if (resp.statusCode >= 400) {
       final bodyParsed = _parseBody(resp);
       throw ApiException(
@@ -179,7 +168,6 @@ class ApiService {
     final body = data != null ? jsonEncode(data) : null;
     final resp = await _withRetry(() => _http.patch(uri, headers: headers, body: body).timeout(AppConstants.connectTimeout!));
     AppLogger.api('PATCH', path, resp.statusCode);
-    if (resp.statusCode == 401) _handleUnauthorized();
     if (resp.statusCode >= 400) {
       final bodyParsed = _parseBody(resp);
       throw ApiException(
@@ -196,7 +184,6 @@ class ApiService {
     final headers = await _headers(auth: auth);
     final resp = await _withRetry(() => _http.delete(uri, headers: headers).timeout(AppConstants.connectTimeout!));
     AppLogger.api('DELETE', path, resp.statusCode);
-    if (resp.statusCode == 401) _handleUnauthorized();
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
