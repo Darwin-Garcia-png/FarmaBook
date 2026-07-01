@@ -33,6 +33,8 @@ class ApiService {
   @visibleForTesting
   static set testCachedToken(String? t) => _cachedToken = t;
 
+  static dynamic testClient;
+
   static HttpClient get _http {
     final now = DateTime.now();
     
@@ -222,6 +224,11 @@ class ApiService {
   }
 
   static Future<http.Response> _get(String path, {Map<String, String>? query, bool auth = true}) async {
+    if (testClient != null) {
+      final uri = Uri.parse('${AppConstants.baseUrl}$path').replace(queryParameters: query);
+      final h = await _headers(auth: auth);
+      return await testClient.get(uri, headers: h);
+    }
     final uri = Uri.parse('${AppConstants.baseUrl}$path').replace(queryParameters: query);
     final h = await _headers(auth: auth);
     
@@ -244,6 +251,12 @@ class ApiService {
   }
 
   static Future<http.Response> _post(String path, {Map<String, dynamic>? data, bool auth = true}) async {
+    if (testClient != null) {
+      final uri = Uri.parse('${AppConstants.baseUrl}$path');
+      final h = await _headers(auth: auth, json: data != null);
+      final body = data != null ? jsonEncode(data) : null;
+      return await testClient.post(uri, headers: h, body: body);
+    }
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth, json: data != null);
     final body = data != null ? jsonEncode(data) : null;
@@ -268,6 +281,12 @@ class ApiService {
   }
 
   static Future<http.Response> _patch(String path, {Map<String, dynamic>? data, bool auth = true}) async {
+    if (testClient != null) {
+      final uri = Uri.parse('${AppConstants.baseUrl}$path');
+      final h = await _headers(auth: auth, json: data != null);
+      final body = data != null ? jsonEncode(data) : null;
+      return await testClient.patch(uri, headers: h, body: body);
+    }
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth, json: data != null);
     final body = data != null ? jsonEncode(data) : null;
@@ -292,6 +311,11 @@ class ApiService {
   }
 
   static Future<http.Response> _delete(String path, {bool auth = true}) async {
+    if (testClient != null) {
+      final uri = Uri.parse('${AppConstants.baseUrl}$path');
+      final h = await _headers(auth: auth);
+      return await testClient.delete(uri, headers: h);
+    }
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth);
     
@@ -558,14 +582,63 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> updateProductMultipart(String id, Map<String, dynamic> data, {dynamic imageFile}) async {
-    if (imageFile != null) {
-      final result = await _updateProductWithImage(id, data, imageFile);
-      if (result != null) return result;
+    final List? suppliersList = data['proveedores'] as List?;
+    final List? housesList = data['casas'] as List?;
+
+    final Map<String, dynamic> cleanData = {};
+    final modifiableFields = [
+      'codigoBarras', 'nombre', 'nombreGenerico', 'concentracion', 
+      'descripcion', 'precioPorUnidad', 'dosisRecomendada', 
+      'tempMin', 'tempMax', 'categoriaId', 'presentacionId'
+    ];
+    for (var f in modifiableFields) {
+      if (data.containsKey(f)) {
+        cleanData[f] = data[f];
+      }
     }
-    // Regular JSON PATCH avoids multipart parsing issues on server
-    final r = await _patch('/inventory/products/$id', data: data);
-    final parsed = _parseBody(r);
-    return parsed['data'] as Map<String, dynamic>? ?? parsed;
+
+    Map<String, dynamic> result;
+    if (imageFile != null) {
+      final res = await _updateProductWithImage(id, cleanData, imageFile);
+      if (res != null) {
+        result = res;
+      } else {
+        final r = await _patchMultipart('/inventory/products/$id', fields: cleanData, filePaths: null);
+        final parsed = _parseBody(r);
+        result = parsed['data'] as Map<String, dynamic>? ?? parsed;
+      }
+    } else {
+      final r = await _patchMultipart('/inventory/products/$id', fields: cleanData, filePaths: null);
+      final parsed = _parseBody(r);
+      result = parsed['data'] as Map<String, dynamic>? ?? parsed;
+    }
+
+    if (suppliersList != null && suppliersList.isNotEmpty) {
+      for (var s in suppliersList) {
+        if (s is Map) {
+          final provId = s['proveedorId']?.toString();
+          final costo = double.tryParse(s['costo']?.toString() ?? '0') ?? 0.0;
+          if (provId != null && provId.isNotEmpty) {
+            try {
+              await addSupplierToProduct(id, provId, cost: costo);
+            } catch (_) {}
+          }
+        }
+      }
+    }
+
+    if (housesList != null && housesList.isNotEmpty) {
+      for (var h in housesList) {
+        final houseId = h?.toString();
+        if (houseId != null && houseId.isNotEmpty) {
+          try {
+            await addHouseToProduct(id, houseId);
+          } catch (_) {}
+        }
+      }
+    }
+
+    return result;
   }
 
   static Future<Map<String, dynamic>?> _updateProductWithImage(String id, Map<String, dynamic> data, dynamic imageFile) async {
@@ -830,8 +903,12 @@ class ApiService {
     return _listFromBody(r);
   }
 
-  static Future<Map<String, dynamic>> addSupplierToProduct(String productId, String supplierId) async {
-    final r = await _post('/inventory/products/$productId/suppliers', data: {'proveedorId': supplierId});
+  static Future<Map<String, dynamic>> addSupplierToProduct(String productId, String supplierId, {double? cost}) async {
+    final Map<String, dynamic> body = {'proveedorId': supplierId};
+    if (cost != null && cost > 0) {
+      body['costo'] = cost;
+    }
+    final r = await _post('/inventory/products/$productId/suppliers', data: body);
     return _parseBody(r);
   }
 

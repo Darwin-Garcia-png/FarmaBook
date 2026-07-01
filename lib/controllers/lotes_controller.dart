@@ -184,7 +184,24 @@ class LotesController extends ChangeNotifier {
 
   Future<Map<String, dynamic>> createBatch(Map<String, dynamic> data) async {
     try {
-      final res = await ApiService.createBatch(data);
+      final Map<String, dynamic> cleanData = {};
+      final allowedFields = [
+        'nombreLote', 'fechaDeVencimiento', 'cantidadDisponible', 'costoDeCompra', 'productoId'
+      ];
+      for (var f in allowedFields) {
+        if (data.containsKey(f)) {
+          cleanData[f] = data[f];
+        }
+      }
+
+      final res = await ApiService.createBatch(cleanData);
+
+      final productId = data['productoId'];
+      final price = data['precioPorUnidad'];
+      if (price != null && productId != null && (double.tryParse(price.toString()) ?? 0.0) > 0) {
+        await ApiService.updateProduct(productId.toString(), {'precioPorUnidad': price});
+      }
+
       await fetchAllBatches(isRefresh: true);
       return res;
     } catch (e) {
