@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -69,6 +70,23 @@ class ApiService {
     catch (_) { return r.body; }
   }
 
+  /// Executes [fn] and retries once if a socket/connection error occurs
+  /// (stale connection pool after server-side idle timeout).
+  static Future<T> _withRetry<T>(Future<T> fn()) async {
+    try {
+      return await fn();
+    } on SocketException catch (_) {
+      _disposeClient();
+      return await fn();
+    } on HttpException catch (_) {
+      _disposeClient();
+      return await fn();
+    } on TimeoutException catch (_) {
+      _disposeClient();
+      return await fn();
+    }
+  }
+
   static void checkResponse(http.Response r) {
     if (r.statusCode >= 400) {
       final body = _parseBody(r);
@@ -82,6 +100,15 @@ class ApiService {
 
   static void clearCachedToken() {
     _cachedToken = null;
+  }
+
+  /// Called when the server returns 401 — redirects to login.
+  static void Function()? onSessionExpired;
+
+  static void _handleUnauthorized() {
+    clearCachedToken();
+    try { _storage.delete(key: AppConstants.tokenKey); } catch (_) {}
+    onSessionExpired?.call();
   }
 
   static Future<String?> getUserToken(String username) async {
@@ -113,8 +140,10 @@ class ApiService {
 
   static Future<http.Response> _get(String path, {Map<String, String>? query, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path').replace(queryParameters: query);
-    final resp = await _http.get(uri, headers: await _headers(auth: auth)).timeout(AppConstants.connectTimeout!);
+    final headers = await _headers(auth: auth);
+    final resp = await _withRetry(() => _http.get(uri, headers: headers).timeout(AppConstants.connectTimeout!));
     AppLogger.api('GET', path, resp.statusCode);
+    if (resp.statusCode == 401) _handleUnauthorized();
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -128,14 +157,17 @@ class ApiService {
 
   static Future<http.Response> _post(String path, {Map<String, dynamic>? data, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
-    final resp = await _http.post(uri, headers: await _headers(auth: auth, json: data != null), body: data != null ? jsonEncode(data) : null).timeout(AppConstants.connectTimeout!);
+    final headers = await _headers(auth: auth, json: data != null);
+    final body = data != null ? jsonEncode(data) : null;
+    final resp = await _withRetry(() => _http.post(uri, headers: headers, body: body).timeout(AppConstants.connectTimeout!));
     AppLogger.api('POST', path, resp.statusCode);
+    if (resp.statusCode == 401) _handleUnauthorized();
     if (resp.statusCode >= 400) {
-      final body = _parseBody(resp);
+      final bodyParsed = _parseBody(resp);
       throw ApiException(
-        body['message']?.toString() ?? body['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
+        bodyParsed['message']?.toString() ?? bodyParsed['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
         statusCode: resp.statusCode,
-        serverBody: body,
+        serverBody: bodyParsed,
       );
     }
     return resp;
@@ -143,14 +175,17 @@ class ApiService {
 
   static Future<http.Response> _patch(String path, {Map<String, dynamic>? data, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
-    final resp = await _http.patch(uri, headers: await _headers(auth: auth, json: data != null), body: data != null ? jsonEncode(data) : null).timeout(AppConstants.connectTimeout!);
+    final headers = await _headers(auth: auth, json: data != null);
+    final body = data != null ? jsonEncode(data) : null;
+    final resp = await _withRetry(() => _http.patch(uri, headers: headers, body: body).timeout(AppConstants.connectTimeout!));
     AppLogger.api('PATCH', path, resp.statusCode);
+    if (resp.statusCode == 401) _handleUnauthorized();
     if (resp.statusCode >= 400) {
-      final body = _parseBody(resp);
+      final bodyParsed = _parseBody(resp);
       throw ApiException(
-        body['message']?.toString() ?? body['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
+        bodyParsed['message']?.toString() ?? bodyParsed['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
         statusCode: resp.statusCode,
-        serverBody: body,
+        serverBody: bodyParsed,
       );
     }
     return resp;
@@ -158,8 +193,10 @@ class ApiService {
 
   static Future<http.Response> _delete(String path, {bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
-    final resp = await _http.delete(uri, headers: await _headers(auth: auth)).timeout(AppConstants.connectTimeout!);
+    final headers = await _headers(auth: auth);
+    final resp = await _withRetry(() => _http.delete(uri, headers: headers).timeout(AppConstants.connectTimeout!));
     AppLogger.api('DELETE', path, resp.statusCode);
+    if (resp.statusCode == 401) _handleUnauthorized();
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(

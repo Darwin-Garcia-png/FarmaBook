@@ -40,12 +40,18 @@ class AlmacenController extends ChangeNotifier {
   }
 
   Future<void> init() async {
-    // Carga de catálogos una sola vez
-    if (categorias.isEmpty) fetchCategorias();
-    if (presentaciones.isEmpty) fetchPresentaciones();
-    if (proveedores.isEmpty) fetchProveedores();
-    if (casas.isEmpty) fetchCasas();
+    await refreshCatalogos();
     await fetchProducts(isRefresh: true);
+  }
+
+  /// Always fetches fresh catalog data from the API.
+  Future<void> refreshCatalogos() async {
+    await Future.wait([
+      fetchCategorias(),
+      fetchPresentaciones(),
+      fetchProveedores(),
+      fetchCasas(),
+    ]);
   }
 
   Future<void> fetchCategorias() async {

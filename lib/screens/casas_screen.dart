@@ -535,6 +535,19 @@ class _CasasScreenState extends State<CasasScreen> {
         Text('No hay casas registradas', style: TextStyle(fontSize: 18, color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         Text('Agrega una nueva casa farmacéutica', style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label: const Text('Agregar nueva', style: TextStyle(fontWeight: FontWeight.w900)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: accent,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 0,
+          ),
+          onPressed: () => _showAddEditDialog(),
+        ),
       ]),
     );
   }

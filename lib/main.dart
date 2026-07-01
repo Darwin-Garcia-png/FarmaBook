@@ -26,6 +26,7 @@ void main() async {
   try {
     await ApiService.init();
     await AppLogger.init();
+    ApiService.onSessionExpired = () => appRouter.go('/login');
   } catch (e) {
     debugPrint('Init error: $e');
   }

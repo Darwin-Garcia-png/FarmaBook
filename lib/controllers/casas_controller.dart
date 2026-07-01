@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/error_display.dart';
 
 class CasasController extends ChangeNotifier {
 
@@ -56,7 +57,7 @@ class CasasController extends ChangeNotifier {
       await cargarCasas();
       return true;
     } catch (e) {
-      error = e is Exception ? e.toString().replaceAll('Exception: ', '') : 'Error al guardar la casa. Verifica los datos.';
+      error = ErrorDisplay.cleanMessage(e);
       notifyListeners();
       return false;
     }
@@ -75,7 +76,7 @@ class CasasController extends ChangeNotifier {
       await cargarCasas();
       return true;
     } catch (e) {
-      error = 'Error al actualizar la casa. Verifica los datos.';
+      error = ErrorDisplay.cleanMessage(e);
       notifyListeners();
       return false;
     }
@@ -87,7 +88,7 @@ class CasasController extends ChangeNotifier {
       await cargarCasas();
       return true;
     } catch (e) {
-      error = 'Error al eliminar la casa. Puede tener productos asociados.';
+      error = ErrorDisplay.cleanMessage(e);
       notifyListeners();
       return false;
     }

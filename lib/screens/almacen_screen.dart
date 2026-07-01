@@ -341,8 +341,13 @@ class _AlmacenScreenState extends State<AlmacenScreen> with SingleTickerProvider
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         elevation: 2,
       ),
-      onPressed: () => InventoryDialogs.showAddEditProduct(context, controller,
-          Provider.of<LotesController>(context, listen: false)),
+      onPressed: () async {
+        await controller.refreshCatalogos();
+        if (context.mounted) {
+          InventoryDialogs.showAddEditProduct(context, controller,
+              Provider.of<LotesController>(context, listen: false));
+        }
+      },
     );
   }
 
