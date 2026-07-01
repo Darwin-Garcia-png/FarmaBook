@@ -227,7 +227,16 @@ class ApiService {
     if (testClient != null) {
       final uri = Uri.parse('${AppConstants.baseUrl}$path').replace(queryParameters: query);
       final h = await _headers(auth: auth);
-      return await testClient.get(uri, headers: h);
+      final resp = await testClient.get(uri, headers: h) as http.Response;
+      if (resp.statusCode >= 400) {
+        final body = _parseBody(resp);
+        throw ApiException(
+          body['message']?.toString() ?? body['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
+          statusCode: resp.statusCode,
+          serverBody: body,
+        );
+      }
+      return resp;
     }
     final uri = Uri.parse('${AppConstants.baseUrl}$path').replace(queryParameters: query);
     final h = await _headers(auth: auth);
@@ -255,7 +264,16 @@ class ApiService {
       final uri = Uri.parse('${AppConstants.baseUrl}$path');
       final h = await _headers(auth: auth, json: data != null);
       final body = data != null ? jsonEncode(data) : null;
-      return await testClient.post(uri, headers: h, body: body);
+      final resp = await testClient.post(uri, headers: h, body: body) as http.Response;
+      if (resp.statusCode >= 400) {
+        final bodyParsed = _parseBody(resp);
+        throw ApiException(
+          bodyParsed['message']?.toString() ?? bodyParsed['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
+          statusCode: resp.statusCode,
+          serverBody: bodyParsed,
+        );
+      }
+      return resp;
     }
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth, json: data != null);
@@ -285,7 +303,16 @@ class ApiService {
       final uri = Uri.parse('${AppConstants.baseUrl}$path');
       final h = await _headers(auth: auth, json: data != null);
       final body = data != null ? jsonEncode(data) : null;
-      return await testClient.patch(uri, headers: h, body: body);
+      final resp = await testClient.patch(uri, headers: h, body: body) as http.Response;
+      if (resp.statusCode >= 400) {
+        final bodyParsed = _parseBody(resp);
+        throw ApiException(
+          bodyParsed['message']?.toString() ?? bodyParsed['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
+          statusCode: resp.statusCode,
+          serverBody: bodyParsed,
+        );
+      }
+      return resp;
     }
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth, json: data != null);
@@ -314,7 +341,16 @@ class ApiService {
     if (testClient != null) {
       final uri = Uri.parse('${AppConstants.baseUrl}$path');
       final h = await _headers(auth: auth);
-      return await testClient.delete(uri, headers: h);
+      final resp = await testClient.delete(uri, headers: h) as http.Response;
+      if (resp.statusCode >= 400) {
+        final body = _parseBody(resp);
+        throw ApiException(
+          body['message']?.toString() ?? body['error']?['message']?.toString() ?? 'Error ${resp.statusCode}',
+          statusCode: resp.statusCode,
+          serverBody: body,
+        );
+      }
+      return resp;
     }
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth);
