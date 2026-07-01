@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/error_display.dart';
 
 class InicioController extends ChangeNotifier {
   Timer? _autoClearTimer;
@@ -131,7 +132,7 @@ class InicioController extends ChangeNotifier {
       }
 
     } catch (e) {
-      error = 'Error al cargar datos del inicio';
+      error = ErrorDisplay.cleanMessage(e);
     } finally {
       isLoading = false;
       notifyListeners();
