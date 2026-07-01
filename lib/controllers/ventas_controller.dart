@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/producto_model.dart';
-import '../utils/user_session.dart';
 
 enum VentasView { search, history, receipts }
 
@@ -447,15 +446,12 @@ class VentasController extends ChangeNotifier {
 
         final presName =
             (prod != null) ? (presentacionMap[prod.presentacionId] ?? '') : '';
-        final unitPrice = prod?.precioPorUnidad ?? 0;
-        final qty = item['cantidad'] as int;
         return {
           'productoId': prod?.productoId ?? 'N/A',
           'nombre': prod?.nombre ?? 'Producto',
           'presentacion': presName.isNotEmpty ? presName : null,
-          'cantidadDeUnidades': qty,
-          'precioUnitario': unitPrice,
-          'subTotal': unitPrice * qty,
+          'cantidadDeUnidades': item['cantidad'],
+          'subTotal': (prod?.precioPorUnidad ?? 0) * item['cantidad'],
         };
       }).toList();
 
@@ -477,7 +473,6 @@ class VentasController extends ChangeNotifier {
                     : localDetalles,
         'clienteNombre': clienteNombre,
         'clienteIdentificacion': clienteIdentificacion,
-        'cajero': UserSession.email ?? 'Cajero',
       };
 
       carrito.clear();

@@ -1,14 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../theme/app_theme.dart';
 import '../../utils/price_formatter.dart';
 import '../error_display.dart';
-
-const _nit = 'NIT: 900.123.456-7';
 
 class ReceiptDialog extends StatelessWidget {
   final Map<String, dynamic> sale;
@@ -17,11 +13,10 @@ class ReceiptDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final productos = _getProductos();
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        width: 420,
+        width: 400,
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
@@ -32,55 +27,102 @@ class ReceiptDialog extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_outline, color: Colors.black, size: 60),
+              const Icon(Icons.check_circle_outline,
+                  color: Colors.black, size: 60),
               const SizedBox(height: 16),
-              const Text('FarmaBook', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black)),
-              const Text(_nit, style: TextStyle(fontSize: 11, color: Colors.black54)),
-              const SizedBox(height: 4),
-              const Text('RECIBO DE VENTA', style: TextStyle(letterSpacing: 2, fontSize: 12, color: Colors.black)),
-              const Divider(height: 32, thickness: 1, color: Colors.black),
+              const Text('FarmaBook',
+                  style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black)),
+              const Text('RECIBO DE VENTA',
+                  style: TextStyle(
+                      letterSpacing: 2, fontSize: 12, color: Colors.black)),
+              const Divider(
+                  height: 40,
+                  thickness: 1,
+                  color: Colors.black),
               _receiptRow(context, 'Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
-              _receiptRow(context, 'Cajero:', _cajero()),
               _receiptRow(context, 'Cliente:', _clienteName()),
-              const Divider(height: 32, thickness: 1, color: Colors.black),
-              ...productos.map((det) {
-                final String nombre = det['nombre'] ?? 'Producto';
-                final String pres = det['presentacion']?.toString() ?? '';
-                final int qty = det['cantidadDeUnidades'] ?? det['cantidad'] ?? 1;
-                final double unitPrice = double.tryParse(det['precioUnitario']?.toString() ?? '0') ?? 0;
-                final double total = double.tryParse(det['subTotal']?.toString() ?? det['precioTotal']?.toString() ?? '0') ?? 0;
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('PRODUCTOS',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.black)),
+              ),
+              const SizedBox(height: 12),
+              ...((sale['productosVendidos'] as List<dynamic>?) ??
+                      (sale['detalles'] as List<dynamic>?) ??
+                      (sale['items'] as List<dynamic>?) ??
+                      [])
+                  .map((det) {
+                final Map<String, dynamic> d = det as Map<String, dynamic>;
+                final String nombre = d['nombre'] ??
+                    d['producto']?['nombre'] ??
+                    d['nombreProducto'] ??
+                    d['productoNombre'] ??
+                    'Producto';
+                final String pres =
+                    d['presentacion'] ?? d['producto']?['presentacion'] ?? '';
+                final int qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
+                final double price = double.tryParse(
+                        d['subTotal']?.toString() ??
+                            d['precioTotal']?.toString() ??
+                            d['subtotal']?.toString() ??
+                            '0') ??
+                    0.0;
+
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-                      if (pres.isNotEmpty)
-                        Text(pres, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Cant: $qty  x  ${formatCop(unitPrice)}', style: const TextStyle(fontSize: 12, color: Colors.black87)),
-                          Text(formatCop(total), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-                        ],
+                      Expanded(
+                        child: Text(
+                          '${qty}x $nombre ${pres.isNotEmpty ? "($pres)" : ""}',
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      Text(formatCop(price),
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black)),
                     ],
                   ),
                 );
               }),
-              const Divider(height: 32, thickness: 2, color: Colors.black),
+              const Divider(
+                  height: 40,
+                  thickness: 2,
+                  color: Colors.black),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.black)),
-                  Text(formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0),
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.black)),
+                  const Text('TOTAL',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          color: Colors.black)),
+                  Text(
+                      formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          color: Colors.black)),
                 ],
               ),
-              const SizedBox(height: 32),
-              const Text('Gracias por su compra!', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black)),
+              const SizedBox(height: 40),
+              const Text('Gracias por su compra!',
+                  style: TextStyle(
+                      fontStyle: FontStyle.italic, color: Colors.black)),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -93,7 +135,8 @@ class ReceiptDialog extends StatelessWidget {
                         backgroundColor: AppTheme.ayanamiBlue,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 50),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                     ),
                   ),
@@ -105,7 +148,8 @@ class ReceiptDialog extends StatelessWidget {
                         backgroundColor: Colors.grey.shade200,
                         foregroundColor: Colors.grey.shade800,
                         minimumSize: const Size(0, 50),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       child: const Text('CERRAR'),
                     ),
@@ -119,17 +163,8 @@ class ReceiptDialog extends StatelessWidget {
     );
   }
 
-  List<dynamic> _getProductos() {
-    return (sale['productosVendidos'] as List<dynamic>?) ??
-        (sale['detalles'] as List<dynamic>?) ??
-        (sale['items'] as List<dynamic>?) ??
-        [];
-  }
-
-  String _cajero() => sale['cajero']?.toString() ?? '\u2014';
-
   String _getClienteNombre() {
-    return (sale['clienteNombre']?.toString() ??
+    final v = sale['clienteNombre']?.toString() ??
         sale['nombreCliente']?.toString() ??
         sale['cliente']?['nombre']?.toString() ??
         sale['cliente']?['nombreCompleto']?.toString() ??
@@ -137,11 +172,12 @@ class ReceiptDialog extends StatelessWidget {
         sale['cliente_nombre']?.toString() ??
         sale['nombre']?.toString() ??
         sale['clienteName']?.toString() ??
-        '').trim();
+        '';
+    return v.trim();
   }
 
   String _getClienteIdentificacion() {
-    return (sale['clienteIdentificacion']?.toString() ??
+    final v = sale['clienteIdentificacion']?.toString() ??
         sale['identificacionCliente']?.toString() ??
         sale['cliente']?['identificacion']?.toString() ??
         sale['cliente']?['cedula']?.toString() ??
@@ -151,7 +187,8 @@ class ReceiptDialog extends StatelessWidget {
         sale['cedulaCliente']?.toString() ??
         sale['clienteCedula']?.toString() ??
         sale['idCliente']?.toString() ??
-        '').trim();
+        '';
+    return v.trim();
   }
 
   String _clienteName() {
@@ -163,94 +200,106 @@ class ReceiptDialog extends StatelessWidget {
     return '\u2014';
   }
 
+  String _clienteId() {
+    return '';
+  }
+
   Future<void> _printTicket(BuildContext context) async {
-    final productos = _getProductos();
+    final productos = (sale['productosVendidos'] as List<dynamic>?) ??
+        (sale['detalles'] as List<dynamic>?) ??
+        (sale['items'] as List<dynamic>?) ??
+        [];
 
     try {
       final pdf = pw.Document();
 
-      Uint8List? logoBytes;
-      try {
-        final data = await rootBundle.load('assets/images/logo_base.png');
-        logoBytes = data.buffer.asUint8List();
-      } catch (_) {
-        try {
-          final file = File('assets/images/logo_base.png');
-          if (file.existsSync()) logoBytes = await file.readAsBytes();
-        } catch (_) {}
-      }
-
       pdf.addPage(
         pw.Page(
-          pageFormat: PdfPageFormat.roll57.copyWith(marginBottom: 0, marginLeft: 2, marginRight: 2, marginTop: 0),
+          pageFormat: PdfPageFormat.roll57.copyWith(marginBottom: 0, marginLeft: 3, marginRight: 3, marginTop: 0),
           build: (ctx) {
             return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               mainAxisSize: pw.MainAxisSize.min,
               children: [
-                if (logoBytes != null)
-                  pw.Image(pw.MemoryImage(logoBytes), width: 50, height: 50),
+                pw.Center(
+                  child: pw.Text('FarmaBook',
+                      style: pw.TextStyle(
+                          fontSize: 15, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                ),
                 pw.SizedBox(height: 4),
-                pw.Text('FarmaBook', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
-                pw.Text(_nit, style: pw.TextStyle(fontSize: 7, color: PdfColors.black)),
-                pw.SizedBox(height: 2),
-                pw.Text('RECIBO DE VENTA', style: pw.TextStyle(fontSize: 9, color: PdfColors.black)),
-                pw.SizedBox(height: 6),
+                pw.Center(
+                  child: pw.Text('RECIBO DE VENTA',
+                      style: pw.TextStyle(fontSize: 9, color: PdfColors.black)),
+                ),
+                pw.SizedBox(height: 8),
                 pw.Divider(thickness: 1, color: PdfColors.black),
-                pw.SizedBox(height: 6),
+                pw.SizedBox(height: 8),
                 _receiptPdfRow('Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
                 _receiptPdfRow('Fecha:', _formatDate(_getSafeDate(sale))),
                 _receiptPdfRow('Hora:', _formatTime(_getSafeDate(sale))),
-                _receiptPdfRow('Cajero:', _cajero()),
                 _receiptPdfRow('Cliente:', _clienteName()),
-                pw.SizedBox(height: 6),
+                pw.SizedBox(height: 8),
                 pw.Divider(thickness: 1, color: PdfColors.black),
                 pw.SizedBox(height: 6),
-                pw.Text('PRODUCTOS', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
-                pw.SizedBox(height: 4),
+                pw.Text('PRODUCTOS',
+                    style: pw.TextStyle(
+                        fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                pw.SizedBox(height: 6),
                 ...productos.map((det) {
                   final d = det as Map<String, dynamic>;
-                  final nombre = d['nombre'] ?? 'Producto';
-                  final pres = d['presentacion']?.toString() ?? '';
+                  final nombre = d['nombre'] ??
+                      d['producto']?['nombre'] ??
+                      d['nombreProducto'] ??
+                      'Producto';
                   final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
-                  final unitPrice = double.tryParse(d['precioUnitario']?.toString() ?? '0') ?? 0;
-                  final total = double.tryParse(d['subTotal']?.toString() ?? d['precioTotal']?.toString() ?? '0') ?? 0;
-                  return pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(nombre, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
-                      if (pres.isNotEmpty)
-                        pw.Text(pres, style: pw.TextStyle(fontSize: 7, color: PdfColors.grey)),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text('Cant: $qty  x  ${formatCop(unitPrice)}',
-                              style: pw.TextStyle(fontSize: 7, color: PdfColors.black)),
-                          pw.Text(formatCop(total),
-                              style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
-                        ],
-                      ),
-                      pw.SizedBox(height: 2),
-                    ],
+                  final price = double.tryParse(
+                          d['subTotal']?.toString() ??
+                              d['precioTotal']?.toString() ??
+                              '0') ??
+                      0.0;
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 3),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Expanded(
+                          child: pw.Text('$qty $nombre',
+                              style: pw.TextStyle(fontSize: 8, color: PdfColors.black),
+                              maxLines: 2),
+                        ),
+                        pw.SizedBox(width: 4),
+                        pw.Text(formatCop(price),
+                            style: pw.TextStyle(fontSize: 8, color: PdfColors.black)),
+                      ],
+                    ),
                   );
                 }),
-                pw.SizedBox(height: 6),
+                pw.SizedBox(height: 8),
                 pw.Divider(thickness: 2, color: PdfColors.black),
                 pw.SizedBox(height: 4),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('TOTAL', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
-                    pw.Text(formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0),
-                        style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                    pw.Text('TOTAL',
+                        style: pw.TextStyle(
+                            fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                    pw.Text(
+                        formatCop(double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0),
+                        style: pw.TextStyle(
+                            fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                   ],
                 ),
                 pw.SizedBox(height: 16),
-                pw.Text('Gracias por su compra!',
-                    style: pw.TextStyle(fontSize: 8, fontStyle: pw.FontStyle.italic, color: PdfColors.black)),
+                pw.Center(
+                  child: pw.Text('Gracias por su compra!',
+                      style: pw.TextStyle(fontSize: 8, fontStyle: pw.FontStyle.italic, color: PdfColors.black)),
+                ),
                 pw.SizedBox(height: 24),
-                pw.Text('Generado: ${DateTime.now().toString().substring(0, 16)}',
-                    style: pw.TextStyle(fontSize: 6, color: PdfColors.black)),
+                pw.Center(
+                  child: pw.Text(
+                      'Generado: ${DateTime.now().toString().substring(0, 16)}',
+                      style: pw.TextStyle(fontSize: 6, color: PdfColors.black)),
+                ),
               ],
             );
           },
@@ -274,8 +323,10 @@ class ReceiptDialog extends StatelessWidget {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(label, style: pw.TextStyle(fontSize: 8, color: PdfColors.black)),
-          pw.Text(value, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+          pw.Text(label,
+              style: pw.TextStyle(fontSize: 8, color: PdfColors.black)),
+          pw.Text(value,
+              style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
         ],
       ),
     );
@@ -317,7 +368,11 @@ class ReceiptDialog extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.black, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black)),
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Colors.black)),
         ],
       ),
     );
@@ -327,7 +382,9 @@ class ReceiptDialog extends StatelessWidget {
     if (json.isEmpty) return DateTime.now().toIso8601String();
     final fields = ['fechaDeVenta', 'fechaVenta', 'fecha_venta', 'fecha', 'createdAt', 'created_at', 'date', 'updatedAt'];
     for(var f in fields) {
-       if(json[f] != null && json[f].toString().isNotEmpty) return json[f].toString();
+       if(json[f] != null && json[f].toString().isNotEmpty) {
+           return json[f].toString();
+       }
     }
     return DateTime.now().toIso8601String();
   }
