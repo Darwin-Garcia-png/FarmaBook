@@ -181,6 +181,25 @@ class ErrorDisplay {
       return '${_fieldName(lm.group(1)!)} debe tener al menos ${lm.group(2)} caracteres';
     }
 
+    // Pattern 4: "is not allowed", "cannot be", "does not exist", "already exists", "is invalid"
+    final validationMatch = RegExp(r'^(\w+)\s+(?:is\s+not\s+allowed|cannot\s+be\s+\w+|does\s+not\s+exist|already\s+exists|is\s+invalid)', caseSensitive: false);
+    final vm = validationMatch.firstMatch(msg);
+    if (vm != null) {
+      final field = _fieldName(vm.group(1)!);
+      if (msg.contains('not allowed')) return '$field: valor no permitido';
+      if (msg.contains('cannot be')) return '$field: valor no válido';
+      if (msg.contains('does not exist')) return '$field: no existe';
+      if (msg.contains('already exists')) return '$field: ya existe';
+      if (msg.contains('is invalid')) return '$field: inválido';
+      return '$field: error de validación';
+    }
+
+    // Pattern 5: catch-all for English validation errors not handled above
+    if (RegExp(r'\b(must|should|cannot|required|invalid|allowed|exists|failed|not found)\b', caseSensitive: false).hasMatch(msg) &&
+        !RegExp(r'[áéíóúñ]', caseSensitive: false).hasMatch(msg)) {
+      return 'Error de validación de datos. Verifique la información ingresada.';
+    }
+
     return msg;
   }
 
@@ -251,6 +270,12 @@ class ErrorDisplay {
     final containsCode = RegExp(r'[{}[\]()<>:;=_]|instance of', caseSensitive: false).hasMatch(s);
     if (containsCode) {
       return 'Error de procesamiento: Falló la petición interna.';
+    }
+
+    // Catch-all: if still English validation-like (not a user-friendly Spanish message), sanitize it
+    final stillTechnical = RegExp(r'\b(must|should|cannot|required|invalid|allowed|exists|failed|typeerror|formatexception|nosuchmethod|null|undefined)\b', caseSensitive: false).hasMatch(s);
+    if (stillTechnical && !RegExp(r'[áéíóúñ]', caseSensitive: false).hasMatch(s)) {
+      return 'Error de procesamiento: Respuesta inesperada del servidor.';
     }
 
     return s;

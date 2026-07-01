@@ -7,7 +7,9 @@ import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../utils/inventory_dialogs.dart';
 import '../utils/price_formatter.dart';
+import '../utils/user_session.dart';
 import '../widgets/animations.dart';
+import '../widgets/error_display.dart';
 
 class LotesScreen extends StatefulWidget {
   const LotesScreen({super.key});
@@ -120,7 +122,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                                 _buildBatchList(lotesCtrl.porVencer, almacenCtrl, lotesCtrl),
                                 _buildBatchList(lotesCtrl.vencidos, almacenCtrl, lotesCtrl),
                                 _buildBatchList(lotesCtrl.bajoStock, almacenCtrl, lotesCtrl),
-                                _buildArchivedList(lotesCtrl.archivedBatches),
+                                _buildArchivedList(lotesCtrl.archivedBatches, lotesCtrl, almacenCtrl),
                               ],
                             ),
                           ),
@@ -408,7 +410,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildArchivedList(List<Map<String, dynamic>> batches) {
+  Widget _buildArchivedList(List<Map<String, dynamic>> batches, LotesController lotesCtrl, AlmacenController almacenCtrl) {
     final query = _searchQuery.toLowerCase();
     final filtered = batches.where((b) {
       final name = b['nombreLote']?.toString().toLowerCase() ?? '';
@@ -436,23 +438,24 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       itemCount: filtered.length,
       itemBuilder: (ctx, i) => AnimatedEntry(
         index: i,
-        child: _buildArchivedCard(filtered[i]),
+        child: _buildArchivedCard(filtered[i], lotesCtrl, almacenCtrl),
       ),
     );
   }
 
-  Widget _buildArchivedCard(Map<String, dynamic> b) {
+  Widget _buildArchivedCard(Map<String, dynamic> b, LotesController lotesCtrl, AlmacenController almacenCtrl) {
     final expDate = DateTime.tryParse(b['fechaDeVencimiento']?.toString() ?? b['fechaVencimiento']?.toString() ?? '');
     final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
     final precio = _batchPrice(b);
     final codigoBarras = _batchBarcode(b);
+    final isExpired = expDate != null && expDate.isBefore(DateTime.now());
 
     String archiveReason = 'ARCHIVADO';
     Color archiveColor = Colors.grey;
     if (stock <= 0) {
       archiveReason = 'SIN STOCK';
       archiveColor = AppTheme.reiPurple;
-    } else if (expDate != null && expDate.isBefore(DateTime.now())) {
+    } else if (isExpired) {
       archiveReason = 'VENCIDO';
       archiveColor = AppTheme.reiOrangeRed;
     }
@@ -521,6 +524,13 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                         ],
                       ),
                     ),
+                    if (UserSession.isDueno && !isExpired) ...[
+                      const SizedBox(width: 8),
+                      _actionIcon(
+                        Icons.replay_rounded, AppTheme.greenMetal,
+                        () => _confirmReactivate(b, lotesCtrl, almacenCtrl),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -716,8 +726,46 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
       ),
     );
     if (confirm == true) {
-      await lotesCtrl.updateBatch(b['loteId'] ?? b['batchId'] ?? b['id'], {'cantidadDisponible': 0});
+      await lotesCtrl.deactivateBatch(b['loteId'] ?? b['batchId'] ?? b['id']);
       almacenCtrl.init();
+    }
+  }
+
+  Future<void> _confirmReactivate(Map<String, dynamic> b, LotesController lotesCtrl, AlmacenController almacenCtrl) async {
+    final id = b['loteId'] ?? b['batchId'] ?? b['id'] ?? '';
+    final originalStock = lotesCtrl.getOriginalStock(id) ?? 0;
+    if (originalStock <= 0) {
+      ErrorDisplay.snackBar(context: context, message: 'Stock original desconocido. Use editar lote para asignar stock manualmente.');
+      return;
+    }
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Reactivar Lote'),
+        content: Text('¿Reactivar este lote con $originalStock unidades?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.greenMetal, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reactivar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      try {
+        await lotesCtrl.reactivateBatch(id);
+        almacenCtrl.init();
+        if (context.mounted) {
+          ErrorDisplay.successSnackBar(context: context, message: 'Lote reactivado exitosamente.');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ErrorDisplay.snackBar(context: context, message: ErrorDisplay.cleanMessage(e));
+        }
+      }
     }
   }
 

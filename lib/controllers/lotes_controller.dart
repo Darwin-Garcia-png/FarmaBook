@@ -218,4 +218,48 @@ class LotesController extends ChangeNotifier {
       }
     }
   }
+
+  // ─── Batch Deactivation/Reactivation ──────────────────────────────
+  final Map<String, int> _originalStocks = {};
+
+  Future<void> deactivateBatch(String batchId) async {
+    final id = batchId;
+    final batch = allBatches.where((b) =>
+        b['loteId'] == id || b['batchId'] == id || b['id'] == id).firstOrNull;
+    if (batch != null) {
+      final stock = int.tryParse(batch['cantidadDisponible'].toString()) ?? 0;
+      _originalStocks[id] = stock;
+    }
+    await updateBatch(id, {'cantidadDisponible': 0});
+  }
+
+  bool canReactivateBatch(Map<String, dynamic> batch) {
+    final d = DateTime.tryParse(
+        batch['fechaDeVencimiento'] ?? batch['fechaVencimiento'] ?? '');
+    final isExpired = d != null && d.isBefore(DateTime.now());
+    return !isExpired;
+  }
+
+  int? getOriginalStock(String batchId) {
+    return _originalStocks[batchId];
+  }
+
+  Future<void> reactivateBatch(String batchId) async {
+    final id = batchId;
+    final originalStock = _originalStocks[id];
+    if (originalStock == null || originalStock <= 0) {
+      throw Exception('Stock original desconocido (sesión expirada). Use editar lote para asignar stock manualmente.');
+    }
+    final batch = allBatches.where((b) =>
+        b['loteId'] == id || b['batchId'] == id || b['id'] == id).firstOrNull;
+    if (batch != null) {
+      final d = DateTime.tryParse(
+          batch['fechaDeVencimiento'] ?? batch['fechaVencimiento'] ?? '');
+      if (d != null && d.isBefore(DateTime.now())) {
+        throw Exception('No se puede reactivar un lote vencido.');
+      }
+    }
+    await updateBatch(id, {'cantidadDisponible': originalStock});
+    _originalStocks.remove(id);
+  }
 }

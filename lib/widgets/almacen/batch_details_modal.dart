@@ -264,7 +264,7 @@ class BatchDetailsModal extends StatelessWidget {
     );
     if (confirm == true) {
       final id = (batch['loteId'] ?? batch['batchId'] ?? batch['id']).toString();
-      await lotesCtrl.updateBatch(id, {'cantidadDisponible': 0});
+      await lotesCtrl.deactivateBatch(id);
       controller.fetchProducts(isRefresh: true);
       if (context.mounted) Navigator.pop(context);
     }

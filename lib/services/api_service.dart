@@ -567,6 +567,16 @@ class ApiService {
     await _delete('/inventory/products/$id');
   }
 
+  static Future<List<dynamic>> getDeletedProducts() async {
+    final r = await _get('/inventory/products/deleted');
+    return _listFromBody(r);
+  }
+
+  static Future<Map<String, dynamic>> restoreProduct(String id) async {
+    final r = await _patch('/inventory/products/$id/restore');
+    return _parseBody(r);
+  }
+
   static Future<Map<String, dynamic>> createCategory(Map<String, dynamic> data) async {
     final r = await _post('/inventory/categories', data: data);
     return _parseBody(r);
