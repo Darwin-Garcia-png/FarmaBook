@@ -10,23 +10,6 @@ import '../error_display.dart';
 
 const _nit = 'NIT: 900.123.456-7';
 
-Map<String, dynamic> _parseProducto(Map<String, dynamic> d) {
-  final nombre = d['nombre']?.toString() ??
-      d['producto']?['nombre']?.toString() ??
-      d['nombreProducto']?.toString() ??
-      'Producto';
-  final pres = d['presentacion']?.toString() ?? d['producto']?['presentacion']?.toString() ?? '';
-  final qty = (d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1);
-  final qtyInt = (qty is num) ? qty.toInt() : int.tryParse(qty.toString()) ?? 1;
-  final total = (d['subTotal'] ?? d['precioTotal'] ?? d['subtotal'] ?? 0);
-  final totalVal = (total is num) ? total.toDouble() : double.tryParse(total.toString()) ?? 0.0;
-  final rawUnit = d['precioUnitario']?.toString() ?? d['precio_unidad']?.toString() ?? d['precio']?.toString() ?? '';
-  final unitPrice = rawUnit.isNotEmpty
-      ? double.tryParse(rawUnit) ?? 0.0
-      : (qtyInt > 0 ? totalVal / qtyInt : 0.0);
-  return {'nombre': nombre, 'pres': pres, 'qty': qtyInt, 'unitPrice': unitPrice, 'total': totalVal};
-}
-
 class ReceiptDialog extends StatelessWidget {
   final Map<String, dynamic> sale;
 
@@ -34,7 +17,7 @@ class ReceiptDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final productos = _getProductos().map((e) => _parseProducto(e as Map<String, dynamic>)).toList();
+    final productos = _getProductos();
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
@@ -62,29 +45,31 @@ class ReceiptDialog extends StatelessWidget {
               _receiptRow(context, 'Cajero:', _cajero()),
               _receiptRow(context, 'Cliente:', _clienteName()),
               const Divider(height: 32, thickness: 1, color: Colors.black),
-              ...productos.map((p) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(p['nombre'] as String, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-                    if ((p['pres'] as String).isNotEmpty)
-                      Text(p['pres'] as String, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16),
-                      child: Row(
+              ...productos.map((det) {
+                final String nombre = det['nombre'] ?? 'Producto';
+                final String pres = det['presentacion']?.toString() ?? '';
+                final int qty = det['cantidadDeUnidades'] ?? det['cantidad'] ?? 1;
+                final double unitPrice = double.tryParse(det['precioUnitario']?.toString() ?? '0') ?? 0;
+                final double total = double.tryParse(det['subTotal']?.toString() ?? det['precioTotal']?.toString() ?? '0') ?? 0;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                      if (pres.isNotEmpty)
+                        Text(pres, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('${p['qty']} x ${formatCop(p['unitPrice'] as double)}',
-                              style: const TextStyle(fontSize: 12, color: Colors.black87)),
-                          Text(formatCop(p['total'] as double),
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                          Text('Cant: $qty  x  ${formatCop(unitPrice)}', style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                          Text(formatCop(total), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              )),
+                    ],
+                  ),
+                );
+              }),
               const Divider(height: 32, thickness: 2, color: Colors.black),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -179,7 +164,7 @@ class ReceiptDialog extends StatelessWidget {
   }
 
   Future<void> _printTicket(BuildContext context) async {
-    final productos = _getProductos().map((e) => _parseProducto(e as Map<String, dynamic>)).toList();
+    final productos = _getProductos();
 
     try {
       final pdf = pw.Document();
@@ -223,27 +208,32 @@ class ReceiptDialog extends StatelessWidget {
                 pw.SizedBox(height: 6),
                 pw.Text('PRODUCTOS', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                 pw.SizedBox(height: 4),
-                ...productos.map((p) => pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(p['nombre'] as String, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
-                    if ((p['pres'] as String).isNotEmpty)
-                      pw.Text(p['pres'] as String, style: pw.TextStyle(fontSize: 7, color: PdfColors.grey)),
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.only(left: 12),
-                      child: pw.Row(
+                ...productos.map((det) {
+                  final d = det as Map<String, dynamic>;
+                  final nombre = d['nombre'] ?? 'Producto';
+                  final pres = d['presentacion']?.toString() ?? '';
+                  final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
+                  final unitPrice = double.tryParse(d['precioUnitario']?.toString() ?? '0') ?? 0;
+                  final total = double.tryParse(d['subTotal']?.toString() ?? d['precioTotal']?.toString() ?? '0') ?? 0;
+                  return pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(nombre, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+                      if (pres.isNotEmpty)
+                        pw.Text(pres, style: pw.TextStyle(fontSize: 7, color: PdfColors.grey)),
+                      pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
-                          pw.Text('${p['qty']} x ${formatCop(p['unitPrice'] as double)}',
+                          pw.Text('Cant: $qty  x  ${formatCop(unitPrice)}',
                               style: pw.TextStyle(fontSize: 7, color: PdfColors.black)),
-                          pw.Text(formatCop(p['total'] as double),
+                          pw.Text(formatCop(total),
                               style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
                         ],
                       ),
-                    ),
-                    pw.SizedBox(height: 2),
-                  ],
-                )),
+                      pw.SizedBox(height: 2),
+                    ],
+                  );
+                }),
                 pw.SizedBox(height: 6),
                 pw.Divider(thickness: 2, color: PdfColors.black),
                 pw.SizedBox(height: 4),
