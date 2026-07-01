@@ -6,7 +6,6 @@ import '../theme/app_theme.dart';
 import '../widgets/premium_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../utils/price_formatter.dart';
-import '../utils/user_session.dart';
 import '../widgets/animations.dart';
 import '../widgets/error_display.dart';
 
@@ -558,18 +557,16 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
                         ],
                       ),
                     ),
-                    if (UserSession.isDueno) ...[
+                    const SizedBox(width: 8),
+                    if (!isExpired) ...[
+                      _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showBatchEdit(b, lotesCtrl)),
                       const SizedBox(width: 8),
-                      if (!isExpired) ...[
-                        _actionIcon(Icons.edit_rounded, AppTheme.ayanamiBlue, () => _showBatchEdit(b, lotesCtrl)),
-                        const SizedBox(width: 8),
-                      ],
-                      if (!isExpired)
-                        _actionIcon(
-                          Icons.replay_rounded, AppTheme.greenMetal,
-                          () => _confirmReactivate(b, lotesCtrl, almacenCtrl),
-                        ),
                     ],
+                    if (!isExpired)
+                      _actionIcon(
+                        Icons.replay_rounded, AppTheme.greenMetal,
+                        () => _confirmReactivate(b, lotesCtrl, almacenCtrl),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -836,7 +833,7 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
   }
 
   Future<void> _showBatchEdit(Map<String, dynamic> batch, LotesController lotesCtrl) async {
-    final id = batch['loteId'] ?? batch['batchId'] ?? batch['id'];
+    final id = batch['loteId'] ?? batch['batchId'] ?? batch['id'] ?? '';
     final nameCtrl = TextEditingController(text: batch['nombreLote']?.toString() ?? '');
     final stockCtrl = TextEditingController(text: batch['cantidadDisponible']?.toString() ?? '0');
     final priceCtrl = TextEditingController(text: _batchPrice(batch) > 0 ? _batchPrice(batch).toStringAsFixed(2) : '');
@@ -969,7 +966,16 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     fnStock.dispose();
 
     if (result != null) {
-      await lotesCtrl.updateBatch(id, result);
+      try {
+        await lotesCtrl.updateBatch(id, result);
+        if (context.mounted) {
+          ErrorDisplay.successSnackBar(context: context, message: 'Lote actualizado correctamente.');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ErrorDisplay.snackBar(context: context, message: ErrorDisplay.cleanMessage(e));
+        }
+      }
     }
   }
 
@@ -1129,7 +1135,16 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
     fnStock.dispose();
 
     if (result != null) {
-      await lotesCtrl.createBatch(result);
+      try {
+        await lotesCtrl.createBatch(result);
+        if (context.mounted) {
+          ErrorDisplay.successSnackBar(context: context, message: 'Lote creado correctamente.');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ErrorDisplay.snackBar(context: context, message: ErrorDisplay.cleanMessage(e));
+        }
+      }
     }
   }
 

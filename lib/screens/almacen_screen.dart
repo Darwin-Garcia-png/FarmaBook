@@ -102,7 +102,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> with SingleTickerProvider
         labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
         tabs: [
           const Tab(text: 'PRODUCTOS'),
-          Tab(text: 'DESACTIVADOS (${lotesCtrl.archivedBatches.length})'),
+          Tab(text: 'PRECIOS HISTÓRICOS (${lotesCtrl.archivedBatches.length})'),
         ],
       ),
     );
@@ -421,7 +421,7 @@ class _AlmacenScreenState extends State<AlmacenScreen> with SingleTickerProvider
           children: [
             Icon(Icons.archive_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
-            const Text('No hay lotes desactivados', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            const Text('No hay precios históricos', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
         ],
       ),
     );

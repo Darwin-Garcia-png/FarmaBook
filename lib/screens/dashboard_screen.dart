@@ -19,7 +19,6 @@ import 'categorias_screen.dart';
 import 'presentaciones_screen.dart';
 import 'usuarios_screen.dart';
 import 'manual_screen.dart';
-import 'historial_almacen_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -70,7 +69,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     AnimatedEntry(index: 1, child: _buildDrawerItem(Icons.inventory_2_rounded, 'Inventario', 1)),
                     AnimatedEntry(index: 2, child: _buildDrawerItem(Icons.point_of_sale_rounded, 'Punto de Venta', 2)),
                     if (UserSession.isDueno) AnimatedEntry(index: 3, child: _buildDrawerItem(Icons.analytics_rounded, 'Estadísticas', 3)),
-                    if (UserSession.isDueno) AnimatedEntry(index: 12, child: _buildDrawerItem(Icons.history_rounded, 'Historial Almacén', 12)),
                     AnimatedEntry(index: 4, child: _buildDrawerItem(Icons.menu_book_rounded, 'Manual de Ayuda', 11)),
                     
                     if (UserSession.isDueno) const SizedBox(height: 12),
@@ -120,8 +118,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return UserSession.isDueno ? const UsuariosScreen() : const InicioScreen();
       case 11:
         return const ManualScreen();
-      case 12:
-        return UserSession.isDueno ? const HistorialAlmacenScreen() : const InicioScreen();
       default:
         return const SizedBox.shrink();
     }

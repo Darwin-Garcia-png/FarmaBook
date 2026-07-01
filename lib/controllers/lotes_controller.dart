@@ -190,7 +190,7 @@ class LotesController extends ChangeNotifier {
       await fetchAllBatches(isRefresh: true);
       return res;
     } catch (e) {
-      GlobalErrorHandler.showError('No se pudo crear el lote.');
+      GlobalErrorHandler.showError(e.toString());
       rethrow;
     }
   }
@@ -201,7 +201,7 @@ class LotesController extends ChangeNotifier {
       await fetchAllBatches(isRefresh: true);
       return res;
     } catch (e) {
-      GlobalErrorHandler.showError('No se pudo actualizar el lote.');
+      GlobalErrorHandler.showError(e.toString());
       rethrow;
     }
   }

@@ -13,7 +13,6 @@ import '../screens/estadisticas_screen.dart';
 import '../screens/configuracion_screen.dart';
 import '../screens/usuarios_screen.dart';
 import '../screens/manual_screen.dart';
-import '../screens/historial_almacen_screen.dart';
 import '../screens/forgot_password_screen.dart';
 import '../screens/verify_pin_screen.dart';
 import '../screens/reset_password_screen.dart';
@@ -50,7 +49,7 @@ final GoRouter appRouter = GoRouter(
   initialLocation: '/login',
   redirect: (context, state) {
     if (!UserSession.isDueno) {
-      final restricted = ['/configuracion', '/usuarios', '/estadisticas', '/historial-almacen'];
+      final restricted = ['/configuracion', '/usuarios', '/estadisticas'];
       if (restricted.contains(state.uri.path)) return '/inicio';
     }
     return null;
@@ -119,10 +118,6 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/usuarios',
       pageBuilder: (context, state) => _slidePage(const UsuariosScreen()),
-    ),
-    GoRoute(
-      path: '/historial-almacen',
-      pageBuilder: (context, state) => _slidePage(const HistorialAlmacenScreen()),
     ),
     GoRoute(
       path: '/manual',
