@@ -45,15 +45,18 @@ class ReceiptDialog extends StatelessWidget {
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
               _receiptRow(context, 'Cliente:', _clienteName()),
+              const Divider(height: 16, thickness: 1, color: Colors.black),
+              const Text('FARMACIA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black54, letterSpacing: 2)),
+              const SizedBox(height: 4),
               _receiptRow(context, 'Dirección:', direccion),
               _receiptRow(context, 'Teléfono:', telefono),
-              const Divider(height: 32, thickness: 1, color: Colors.black),
+              const Divider(height: 16, thickness: 1, color: Colors.black),
               ...productos.map((det) {
                 final d = det as Map<String, dynamic>;
                 final String nombre = d['nombre'] ?? 'Producto';
                 final String pres = d['presentacion']?.toString() ?? '';
                 final int qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
-                final double unitPrice = double.tryParse(d['precioUnitario']?.toString() ?? '0') ?? 0;
+                final double unitPrice = _getUnitPrice(d);
                 final double total = double.tryParse(d['subTotal']?.toString() ?? d['precioTotal']?.toString() ?? '0') ?? 0;
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
@@ -217,9 +220,14 @@ class ReceiptDialog extends StatelessWidget {
                 _receiptPdfRow('Fecha:', _formatDate(_getSafeDate(sale))),
                 _receiptPdfRow('Hora:', _formatTime(_getSafeDate(sale))),
                 _receiptPdfRow('Cliente:', _clienteName(maskId: true)),
+                pw.SizedBox(height: 4),
+                pw.Divider(thickness: 1, color: PdfColors.black),
+                pw.SizedBox(height: 4),
+                pw.Text('FARMACIA', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.grey, letterSpacing: 2)),
+                pw.SizedBox(height: 2),
                 _receiptPdfRow('Dirección:', direccion),
                 _receiptPdfRow('Teléfono:', telefono),
-                pw.SizedBox(height: 6),
+                pw.SizedBox(height: 4),
                 pw.Divider(thickness: 1, color: PdfColors.black),
                 pw.SizedBox(height: 6),
                 pw.Text('PRODUCTOS', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
@@ -229,7 +237,7 @@ class ReceiptDialog extends StatelessWidget {
                   final nombre = d['nombre'] ?? 'Producto';
                   final pres = d['presentacion']?.toString() ?? '';
                   final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
-                  final unitPrice = double.tryParse(d['precioUnitario']?.toString() ?? '0') ?? 0;
+                  final unitPrice = _getUnitPrice(d);
                   final total = double.tryParse(d['subTotal']?.toString() ?? d['precioTotal']?.toString() ?? '0') ?? 0;
                   return pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -307,6 +315,17 @@ class ReceiptDialog extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  double _getUnitPrice(Map<String, dynamic> d) {
+    for (final f in ['precioVenta', 'precioPorUnidad', 'precioUnitario', 'precio', 'precio_unitario', 'pvp']) {
+      final v = double.tryParse((d[f] ?? '').toString());
+      if (v != null && v > 0) return v;
+    }
+    final qty = d['cantidadDeUnidades'] ?? d['cantidad'] ?? 1;
+    final total = double.tryParse(d['subTotal']?.toString() ?? d['precioTotal']?.toString() ?? '0') ?? 0;
+    if (qty > 0 && total > 0) return total / qty;
+    return 0;
   }
 
   String _formatDate(dynamic dateStr) {
