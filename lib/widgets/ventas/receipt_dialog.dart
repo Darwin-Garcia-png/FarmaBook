@@ -82,6 +82,10 @@ class ReceiptDialog extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               const Text('Gracias por su compra!', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black)),
+              const SizedBox(height: 12),
+              Text('Los medicamentos no tienen cambio ni devolución\npor disposición sanitaria.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 9, color: Colors.grey[600])),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -249,6 +253,11 @@ class ReceiptDialog extends StatelessWidget {
                 pw.SizedBox(height: 16),
                 pw.Text('Gracias por su compra!',
                     style: pw.TextStyle(fontSize: 8, fontStyle: pw.FontStyle.italic, color: PdfColors.black)),
+                pw.SizedBox(height: 8),
+                pw.Center(child: pw.Text('Los medicamentos no tienen cambio ni devolucion',
+                    style: pw.TextStyle(fontSize: 6, color: PdfColors.grey))),
+                pw.Center(child: pw.Text('por disposicion sanitaria.',
+                    style: pw.TextStyle(fontSize: 6, color: PdfColors.grey))),
                 pw.SizedBox(height: 24),
                 pw.Text('Generado: ${DateTime.now().toString().substring(0, 16)}',
                     style: pw.TextStyle(fontSize: 6, color: PdfColors.black)),
