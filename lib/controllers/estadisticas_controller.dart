@@ -111,8 +111,12 @@ class EstadisticasController extends ChangeNotifier {
     error = null;
 
     try {
-  
-      // Peticiones paralelas a la API de analytics
+      final nowBogota = _toBogota(DateTime.now());
+      final firstOfMonthBogota = DateTime(nowBogota.year, nowBogota.month, 1);
+      final firstOfMonthUtc = firstOfMonthBogota.add(const Duration(hours: 5));
+      final fechaInicioStr = firstOfMonthUtc.toIso8601String();
+
+      // Peticiones paralelas a la API de analytics y a la lista de ventas del mes
       final results = await Future.wait([
         ApiService.getRevenueToday(),
         ApiService.getRevenueMonth(),
@@ -123,30 +127,32 @@ class EstadisticasController extends ChangeNotifier {
         ApiService.getTopProducts(),
         ApiService.getTopProducts(),
         ApiService.getTopProducts(),
+        ApiService.getSales(limit: 1000, queryParams: {'fechaInicio': fechaInicioStr}),
       ]);
 
-      ingresosHoy = double.tryParse(results[0]['data']?['ingresosDiarios']?.toString() ?? '0') ?? 0;
-      ingresosMes = double.tryParse(results[1]['data']?['ingresosMensuales']?.toString() ?? '0') ?? 0;
-      ventasHoy   = (results[2]['data']?['ventasDelDia'] as num? ?? 0).toInt();
-      ventasMes   = (results[3]['data']?['ventasMensuales'] as num? ?? 0).toInt();
-      egresosMes  = double.tryParse(results[4]['data']?['egresosMensuales']?.toString() ?? '0') ?? 0;
-      balanceMes  = double.tryParse(results[5]['data']?['balanceMensual']?.toString() ?? '0') ?? 0;
+      ingresosHoy = double.tryParse((results[0] as Map)['data']?['ingresosDiarios']?.toString() ?? '0') ?? 0;
+      ingresosMes = double.tryParse((results[1] as Map)['data']?['ingresosMensuales']?.toString() ?? '0') ?? 0;
+      ventasHoy   = ((results[2] as Map)['data']?['ventasDelDia'] as num? ?? 0).toInt();
+      ventasMes   = ((results[3] as Map)['data']?['ventasMensuales'] as num? ?? 0).toInt();
+      egresosMes  = double.tryParse((results[4] as Map)['data']?['egresosMensuales']?.toString() ?? '0') ?? 0;
+      balanceMes  = double.tryParse((results[5] as Map)['data']?['balanceMensual']?.toString() ?? '0') ?? 0;
 
-      topProductosHoy    = results[6]['data'] as List? ?? [];
-      topProductosMes    = results[7]['data'] as List? ?? [];
-      topProductosGlobal = results[8]['data'] as List? ?? [];
+      topProductosHoy    = (results[6] as Map)['data'] as List? ?? [];
+      topProductosMes    = (results[7] as Map)['data'] as List? ?? [];
+      topProductosGlobal = (results[8] as Map)['data'] as List? ?? [];
 
-      averageTicket = ventasHoy > 0 ? ingresosHoy / ventasHoy : 0;
+      final List salesList = results[9] as List? ?? [];
 
       try {
         supplierRanking = await ApiService.getSupplierAvgCost(order: 'asc', limit: 10);
       } catch (_) {}
 
       // Análisis profundo a partir de las ventas reales
-      await Future.wait([
-        _processTodaysSales(),
-        _processMonthlyTrend(),
-      ]);
+      await _processTodaysSales(salesList);
+      await _processMonthlyTrend(salesList);
+
+      // Recalcular averageTicket con los valores corregidos (activos y filtrados por día)
+      averageTicket = ventasHoy > 0 ? ingresosHoy / ventasHoy : 0;
 
       _buildDailySummary();
 
@@ -160,12 +166,9 @@ class EstadisticasController extends ChangeNotifier {
   }
 
   // ── Ventas de HOY — cálculo de métricas detalladas ───────────────
-  Future<void> _processTodaysSales() async {
+  Future<void> _processTodaysSales(List salesList) async {
     try {
-      final now = DateTime.now();
-      final todayStr = DateFormat('yyyy-MM-dd').format(now);
-
-      final List salesList = await ApiService.getSales(limit: 200);
+      final nowBogota = _toBogota(DateTime.now());
 
       double maxTicket = 0;
       double minTicket = double.infinity;
@@ -176,28 +179,47 @@ class EstadisticasController extends ChangeNotifier {
       final Map<int, int>    hourlyCount = {};
       final Map<String, int> prodMap    = {};
 
+      double calcIngresosHoy = 0;
+      int calcVentasHoy = 0;
+
       for (var sale in salesList) {
+        // Ignorar ventas inactivas/anuladas
+        final activo = sale['activo'];
+        final isInactive = activo == false || activo.toString() == 'false' || activo == 0 || activo.toString() == '0';
+        if (isInactive) continue;
+
         final total = double.tryParse(sale['total']?.toString() ?? '0') ?? 0;
-        if (total > maxTicket) maxTicket = total;
-        if (total > 0 && total < minTicket) minTicket = total;
 
         final dateStr = (sale['fechaDeVenta'] ?? '').toString().replaceAll(' ', 'T');
         final date = DateTime.tryParse(dateStr);
         final bogota = date != null ? _toBogota(date) : null;
+        
         if (bogota != null) {
-          final h = bogota.hour;
-          hourlyRev[h]   = (hourlyRev[h] ?? 0) + total;
-          hourlyCount[h] = (hourlyCount[h] ?? 0) + 1;
-          if (firstSale == null || bogota.isBefore(firstSale)) firstSale = bogota;
-          if (lastSale  == null || bogota.isAfter(lastSale))  lastSale  = bogota;
-        }
+          final isToday = bogota.year == nowBogota.year &&
+              bogota.month == nowBogota.month &&
+              bogota.day == nowBogota.day;
+              
+          if (isToday) {
+            calcIngresosHoy += total;
+            calcVentasHoy++;
 
-        final items = sale['productosVendidos'] as List? ?? [];
-        for (var item in items) {
-          final nombre = item['nombre']?.toString() ?? 'Desconocido';
-          final qty = (item['cantidadDeUnidades'] as num? ?? 0).toInt();
-          totalUnidades += qty;
-          prodMap[nombre] = (prodMap[nombre] ?? 0) + qty;
+            if (total > maxTicket) maxTicket = total;
+            if (total > 0 && total < minTicket) minTicket = total;
+
+            final h = bogota.hour;
+            hourlyRev[h]   = (hourlyRev[h] ?? 0) + total;
+            hourlyCount[h] = (hourlyCount[h] ?? 0) + 1;
+            if (firstSale == null || bogota.isBefore(firstSale)) firstSale = bogota;
+            if (lastSale  == null || bogota.isAfter(lastSale))  lastSale  = bogota;
+
+            final items = sale['productosVendidos'] as List? ?? [];
+            for (var item in items) {
+              final nombre = item['nombre']?.toString() ?? 'Desconocido';
+              final qty = (item['cantidadDeUnidades'] as num? ?? 0).toInt();
+              totalUnidades += qty;
+              prodMap[nombre] = (prodMap[nombre] ?? 0) + qty;
+            }
+          }
         }
       }
 
@@ -205,6 +227,10 @@ class EstadisticasController extends ChangeNotifier {
       ticketMinimo    = minTicket == double.infinity ? 0 : minTicket;
       totalUnidadesHoy = totalUnidades;
       ingresosPorHora = hourlyRev;
+
+      // Sobrescribir KPI diario del API con los valores activos reales
+      ingresosHoy = calcIngresosHoy;
+      ventasHoy = calcVentasHoy;
 
       // Hora pico por conteo de ventas
       int maxCount = 0;
@@ -231,17 +257,15 @@ class EstadisticasController extends ChangeNotifier {
   }
 
   // ── Tendencia mensual + distribución de categorías ────────────────
-  Future<void> _processMonthlyTrend() async {
+  Future<void> _processMonthlyTrend(List salesList) async {
     try {
-      final now = DateTime.now();
-      final firstDay = DateTime(now.year, now.month, 1);
-      final lastDay  = DateTime(now.year, now.month + 1, 0);
-      final fmt      = DateFormat('yyyy-MM-dd');
-
-      final List salesList = await ApiService.getSales(limit: 200);
+      final nowBogota = _toBogota(DateTime.now());
 
       // Categorías — mapa producto → categoría
       final Map<String, double> catMap = {};
+      double calcIngresosMes = 0;
+      int calcVentasMes = 0;
+      
       try {
         final rawProds = await ApiService.getProductos(page: 1, limit: 100);
         final rawCats  = await ApiService.getCategories();
@@ -259,6 +283,17 @@ class EstadisticasController extends ChangeNotifier {
           if (cid.isNotEmpty) catIdToName[cid] = name;
         }
         for (var s in salesList) {
+          // Ignorar ventas inactivas/anuladas
+          final activo = s['activo'];
+          final isInactive = activo == false || activo.toString() == 'false' || activo == 0 || activo.toString() == '0';
+          if (isInactive) continue;
+
+          final dateStr = (s['fechaDeVenta'] ?? '').toString().replaceAll(' ', 'T');
+          final raw = DateTime.tryParse(dateStr);
+          if (raw == null) continue;
+          final date = _toBogota(raw);
+          if (date.month != nowBogota.month || date.year != nowBogota.year) continue;
+
           for (var item in (s['productosVendidos'] as List? ?? [])) {
             final pid     = (item['productoId'] ?? '').toString();
             final subTotal = double.tryParse(item['subTotal']?.toString() ?? '0') ?? 0;
@@ -275,17 +310,31 @@ class EstadisticasController extends ChangeNotifier {
       // Tendencia diaria
       final Map<int, double> trendMap = {};
       for (var s in salesList) {
+        // Ignorar ventas inactivas/anuladas
+        final activo = s['activo'];
+        final isInactive = activo == false || activo.toString() == 'false' || activo == 0 || activo.toString() == '0';
+        if (isInactive) continue;
+
         try {
           final dateStr = (s['fechaDeVenta'] ?? '').toString().replaceAll(' ', 'T');
           final raw = DateTime.tryParse(dateStr);
           if (raw == null) continue;
           final date = _toBogota(raw);
-          if (date.month != now.month) continue;
+          if (date.month != nowBogota.month || date.year != nowBogota.year) continue;
+          
           final total = double.tryParse(s['total']?.toString() ?? '0') ?? 0;
           trendMap[date.day] = (trendMap[date.day] ?? 0) + total;
+          
+          calcIngresosMes += total;
+          calcVentasMes++;
         } catch (_) {}
       }
       dailyTrend = List.generate(31, (i) => {'day': i + 1, 'total': trendMap[i + 1] ?? 0.0});
+
+      // Sobrescribir KPIs mensuales del API con los valores activos reales
+      ingresosMes = calcIngresosMes;
+      ventasMes = calcVentasMes;
+      balanceMes = ingresosMes - egresosMes;
 
       // Análisis mensual
       double maxDayTotal = 0;
@@ -299,7 +348,7 @@ class EstadisticasController extends ChangeNotifier {
         if (total > maxDayTotal) { maxDayTotal = total; maxDay = day; }
       });
 
-      promedioVentaDiaria = now.day > 0 ? sumaMes / now.day : 0;
+      promedioVentaDiaria = nowBogota.day > 0 ? sumaMes / nowBogota.day : 0;
       mejorDiaMes         = maxDay;
       mejorDiaIngresos    = maxDayTotal;
       diasConVentas       = diasConVentasCount;

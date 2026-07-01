@@ -858,7 +858,11 @@ class InventoryDialogs {
         inputFormatters: [
           if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true))
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-          if (label.toLowerCase().contains('nombre') && !label.toLowerCase().contains('lote'))
+          if (label.toLowerCase().contains('nombre') &&
+              !label.toLowerCase().contains('lote') &&
+              !label.toLowerCase().contains('comercial') &&
+              !label.toLowerCase().contains('genérico') &&
+              !label.toLowerCase().contains('generico'))
             FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
         ],
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
@@ -920,7 +924,13 @@ class InventoryDialogs {
     if (keyboard == TextInputType.number || keyboard == const TextInputType.numberWithOptions(decimal: true)) {
       formatters.add(FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')));
     }
-    if (label.toLowerCase().contains('nombre') || label.toLowerCase().contains('categoría') || label.toLowerCase().contains('presentación')) {
+    if ((label.toLowerCase().contains('nombre') ||
+         label.toLowerCase().contains('categoría') ||
+         label.toLowerCase().contains('presentación')) &&
+        !label.toLowerCase().contains('comercial') &&
+        !label.toLowerCase().contains('genérico') &&
+        !label.toLowerCase().contains('generico') &&
+        !label.toLowerCase().contains('lote')) {
       formatters.add(FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')));
     }
 

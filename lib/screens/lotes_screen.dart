@@ -970,6 +970,8 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
 
     if (result != null) {
       try {
+        final productId = batch['productoId'] ?? '';
+        result['productoId'] = productId;
         await lotesCtrl.updateBatch(id, result);
         if (context.mounted) {
           ErrorDisplay.successSnackBar(context: context, message: 'Lote actualizado correctamente.');

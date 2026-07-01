@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -20,23 +21,50 @@ class ApiService {
   static String? _cachedToken;
   static const _storage = FlutterSecureStorage();
   static HttpClient? _httpClient;
+  static DateTime? _lastClientRecreation;
+  
+  // Configuración de reintentos y timeouts
+  static const int _maxRetries = 3;
+  static const Duration _connectionTimeout = Duration(seconds: 15);
+  static const Duration _idleTimeout = Duration(minutes: 5);
+  static const Duration _requestTimeout = Duration(seconds: 30);
+  static const Duration _clientRecreationInterval = Duration(minutes: 10);
 
   @visibleForTesting
   static set testCachedToken(String? t) => _cachedToken = t;
 
   static HttpClient get _http {
-    if (_httpClient == null) {
+    final now = DateTime.now();
+    
+    // Recrea el cliente cada 10 minutos o si está nulo
+    if (_httpClient == null || 
+        _lastClientRecreation == null ||
+        now.difference(_lastClientRecreation!).inMinutes >= 10) {
+      AppLogger.i('[ApiService] Recreando HttpClient (limpieza periódica)');
+      _disposeClient();
+      
       _httpClient = HttpClient()
-        ..connectionTimeout = const Duration(seconds: 30)
-        ..idleTimeout = const Duration(minutes: 10);
+        ..connectionTimeout = _connectionTimeout
+        ..idleTimeout = _idleTimeout
+        ..maxConnectionsPerHost = 10
+        ..userAgent = 'FarmaBook/1.0.0';
+      
+      _lastClientRecreation = now;
     }
+    
     return _httpClient!;
   }
 
   /// Cierra y elimina el cliente HTTP actual para que se recree fresco.
   static void _disposeClient() {
-    try { _httpClient?.close(force: true); } catch (_) {}
+    try { 
+      _httpClient?.close(force: true); 
+      AppLogger.i('[ApiService] HttpClient cerrado');
+    } catch (e) { 
+      AppLogger.e('[ApiService] Error cerrando HttpClient', e);
+    }
     _httpClient = null;
+    _lastClientRecreation = null;
   }
 
   static Future<void> init() async {
@@ -71,27 +99,74 @@ class ApiService {
     catch (_) { return r.body; }
   }
 
-  /// Executes [fn] with a fresh HttpClient connection and returns http.Response.
-  /// Si la conexión subyacente está muerta, recrea el cliente y reintenta una vez.
-  static Future<http.Response> _request(Future<HttpClientResponse> Function() fn, {bool retried = false}) async {
+  /// Executes [fn] with retry logic (exponential backoff)
+  /// Reintenta hasta 3 veces con backoff exponencial (100ms, 300ms, 900ms)
+  static Future<http.Response> _request(
+    Future<HttpClientResponse> Function() fn, {
+    int attemptNumber = 0,
+  }) async {
     try {
-      final resp = await fn();
+      final resp = await fn().timeout(_requestTimeout);
       final body = await resp.transform(utf8.decoder).join();
       // Convierte HttpHeaders → Map<String,String> para http.Response
       final hdrs = <String, String>{};
       resp.headers.forEach((name, values) => hdrs[name] = values.join(','));
+      
+      if (attemptNumber > 0) {
+        AppLogger.i('[ApiService] Reconexión exitosa en intento $attemptNumber');
+      }
+      
       return http.Response(body, resp.statusCode, headers: hdrs);
-    } on SocketException catch (_) {
-      if (!retried) {
-        _disposeClient();
-        return _request(fn, retried: true);
+    } on TimeoutException catch (e) {
+      AppLogger.w('[ApiService] Timeout en intento ${attemptNumber + 1}/$_maxRetries');
+      
+      if (attemptNumber < _maxRetries) {
+        final backoffMs = (100 * (1 << attemptNumber)).toInt(); // 100ms, 200ms, 400ms...
+        AppLogger.i('[ApiService] Reintentando en ${backoffMs}ms...');
+        await Future.delayed(Duration(milliseconds: backoffMs));
+        _disposeClient(); // Recrea cliente antes de reintentar
+        return _request(fn, attemptNumber: attemptNumber + 1);
       }
+      
+      AppLogger.e('[ApiService] Timeout permanente después de $_maxRetries intentos', e);
       rethrow;
-    } on HttpException catch (_) {
-      if (!retried) {
+    } on SocketException catch (e) {
+      AppLogger.w('[ApiService] SocketException en intento ${attemptNumber + 1}/$_maxRetries: ${e.message}');
+      
+      if (attemptNumber < _maxRetries) {
+        final backoffMs = (100 * (1 << attemptNumber)).toInt();
+        AppLogger.i('[ApiService] Reintentando en ${backoffMs}ms...');
+        await Future.delayed(Duration(milliseconds: backoffMs));
         _disposeClient();
-        return _request(fn, retried: true);
+        return _request(fn, attemptNumber: attemptNumber + 1);
       }
+      
+      AppLogger.e('[ApiService] SocketException permanente después de $_maxRetries intentos', e);
+      rethrow;
+    } on HttpException catch (e) {
+      AppLogger.w('[ApiService] HttpException en intento ${attemptNumber + 1}/$_maxRetries: ${e.message}');
+      
+      if (attemptNumber < _maxRetries) {
+        final backoffMs = (100 * (1 << attemptNumber)).toInt();
+        AppLogger.i('[ApiService] Reintentando en ${backoffMs}ms...');
+        await Future.delayed(Duration(milliseconds: backoffMs));
+        _disposeClient();
+        return _request(fn, attemptNumber: attemptNumber + 1);
+      }
+      
+      AppLogger.e('[ApiService] HttpException permanente después de $_maxRetries intentos', e);
+      rethrow;
+    } catch (e) {
+      AppLogger.e('[ApiService] Error desconocido en intento ${attemptNumber + 1}', e);
+      
+      if (attemptNumber < _maxRetries && (e is! ApiException)) {
+        final backoffMs = (100 * (1 << attemptNumber)).toInt();
+        AppLogger.i('[ApiService] Reintentando en ${backoffMs}ms...');
+        await Future.delayed(Duration(milliseconds: backoffMs));
+        _disposeClient();
+        return _request(fn, attemptNumber: attemptNumber + 1);
+      }
+      
       rethrow;
     }
   }
@@ -99,6 +174,14 @@ class ApiService {
   static void checkResponse(http.Response r) {
     if (r.statusCode >= 400) {
       final body = _parseBody(r);
+      
+      // Si es 401 (Unauthorized), el token está inválido o la sesión expiró
+      if (r.statusCode == 401) {
+        AppLogger.w('[ApiService] 401 Unauthorized - Token inválido, borrando sesión');
+        clearCachedToken();
+        _disposeClient();
+      }
+      
       throw ApiException(
         body['message']?.toString() ?? body['error']?['message']?.toString() ?? 'Error ${r.statusCode}',
         statusCode: r.statusCode,
@@ -141,11 +224,14 @@ class ApiService {
   static Future<http.Response> _get(String path, {Map<String, String>? query, bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path').replace(queryParameters: query);
     final h = await _headers(auth: auth);
+    
     final resp = await _request(() => _http.getUrl(uri).then((r) {
       h.forEach((k, v) => r.headers.set(k, v));
       return r.close();
-    })).timeout(AppConstants.connectTimeout!);
+    }));
+    
     AppLogger.api('GET', path, resp.statusCode);
+    
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -161,12 +247,15 @@ class ApiService {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth, json: data != null);
     final body = data != null ? jsonEncode(data) : null;
+    
     final resp = await _request(() => _http.postUrl(uri).then((r) {
       h.forEach((k, v) => r.headers.set(k, v));
       if (body != null) r.write(body);
       return r.close();
-    })).timeout(AppConstants.connectTimeout!);
+    }));
+    
     AppLogger.api('POST', path, resp.statusCode);
+    
     if (resp.statusCode >= 400) {
       final bodyParsed = _parseBody(resp);
       throw ApiException(
@@ -182,12 +271,15 @@ class ApiService {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth, json: data != null);
     final body = data != null ? jsonEncode(data) : null;
+    
     final resp = await _request(() => _http.patchUrl(uri).then((r) {
       h.forEach((k, v) => r.headers.set(k, v));
       if (body != null) r.write(body);
       return r.close();
-    })).timeout(AppConstants.connectTimeout!);
+    }));
+    
     AppLogger.api('PATCH', path, resp.statusCode);
+    
     if (resp.statusCode >= 400) {
       final bodyParsed = _parseBody(resp);
       throw ApiException(
@@ -202,11 +294,14 @@ class ApiService {
   static Future<http.Response> _delete(String path, {bool auth = true}) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$path');
     final h = await _headers(auth: auth);
+    
     final resp = await _request(() => _http.deleteUrl(uri).then((r) {
       h.forEach((k, v) => r.headers.set(k, v));
       return r.close();
-    })).timeout(AppConstants.connectTimeout!);
+    }));
+    
     AppLogger.api('DELETE', path, resp.statusCode);
+    
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -247,8 +342,9 @@ class ApiService {
         request.files.add(http.MultipartFile.fromBytes(entry.key, bytes, filename: 'image.$ext', contentType: MediaType.parse(mime)));
       }
     }
-    final streamed = await request.send().timeout(AppConstants.connectTimeout!);
+    final streamed = await request.send().timeout(_requestTimeout);
     final resp = await http.Response.fromStream(streamed);
+    AppLogger.api('POST_MULTIPART', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -278,8 +374,9 @@ class ApiService {
         request.files.add(http.MultipartFile.fromBytes(entry.key, bytes, filename: 'image.$ext', contentType: MediaType.parse(mime)));
       }
     }
-    final streamed = await request.send().timeout(AppConstants.connectTimeout!);
+    final streamed = await request.send().timeout(_requestTimeout);
     final resp = await http.Response.fromStream(streamed);
+    AppLogger.api('PATCH_MULTIPART', path, resp.statusCode);
     if (resp.statusCode >= 400) {
       final body = _parseBody(resp);
       throw ApiException(
@@ -381,8 +478,12 @@ class ApiService {
   // ────────────────────────────────────────────────────────────────
   // SALES
   // ────────────────────────────────────────────────────────────────
-  static Future<List<dynamic>> getSales({int limit = 999999}) async {
-    final r = await _get('/sales', query: {'page': '1', 'limit': '$limit'});
+  static Future<List<dynamic>> getSales({int limit = 999999, Map<String, String>? queryParams}) async {
+    final Map<String, String> query = {'page': '1', 'limit': '$limit'};
+    if (queryParams != null) {
+      query.addAll(queryParams);
+    }
+    final r = await _get('/sales', query: query);
     return _listFromBody(r);
   }
 
@@ -574,7 +675,7 @@ class ApiService {
   static Future<List<int>> getAnalyticsReportPdf() async {
     final h = await _headers();
     final uri = Uri.parse('${AppConstants.baseUrl}/analytics/report');
-    final resp = await http.get(uri, headers: h).timeout(AppConstants.connectTimeout!);
+    final resp = await http.get(uri, headers: h).timeout(_requestTimeout);
     if (resp.statusCode >= 400) {
       throw ApiException('Error ${resp.statusCode}', statusCode: resp.statusCode);
     }
@@ -614,9 +715,11 @@ class ApiService {
     await _delete('/inventory/products/$id');
   }
 
+  // NOTA: GET /inventory/products/deleted no existe en el API
+  // Los productos eliminados son soft-deleted y no se pueden recuperar
   static Future<List<dynamic>> getDeletedProducts() async {
-    final r = await _get('/inventory/products/deleted');
-    return _listFromBody(r);
+    // Devolver lista vacía para evitar peticiones al endpoint inexistente
+    return [];
   }
 
   static Future<Map<String, dynamic>> restoreProduct(String id) async {

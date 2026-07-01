@@ -41,7 +41,7 @@ class ReceiptDialog extends StatelessWidget {
               const SizedBox(height: 4),
               const Text('RECIBO DE VENTA', style: TextStyle(letterSpacing: 2, fontSize: 12, color: Colors.black)),
               const Divider(height: 32, thickness: 1, color: Colors.black),
-              _receiptRow(context, 'Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
+              _receiptRow(context, 'Factura #:', '#${_fmtFact(sale['numeroFactura'], sale['ventaId'])}'),
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
               _receiptRow(context, 'Cliente:', _clienteName()),
@@ -216,7 +216,7 @@ class ReceiptDialog extends StatelessWidget {
                 pw.SizedBox(height: 6),
                 pw.Divider(thickness: 1, color: PdfColors.black),
                 pw.SizedBox(height: 6),
-                _receiptPdfRow('Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
+                _receiptPdfRow('Factura #:', '#${_fmtFact(sale['numeroFactura'], sale['ventaId'])}'),
                 _receiptPdfRow('Fecha:', _formatDate(_getSafeDate(sale))),
                 _receiptPdfRow('Hora:', _formatTime(_getSafeDate(sale))),
                 _receiptPdfRow('Cliente:', _clienteName(maskId: true)),
@@ -377,5 +377,14 @@ class ReceiptDialog extends StatelessWidget {
        if(json[f] != null && json[f].toString().isNotEmpty) return json[f].toString();
     }
     return DateTime.now().toIso8601String();
+  }
+
+  String _fmtFact(dynamic numFact, dynamic id) {
+    if (numFact == null) return id?.toString() ?? 'N/A';
+    final val = int.tryParse(numFact.toString());
+    if (val != null && val >= 41) {
+      return (val - 40).toString();
+    }
+    return numFact.toString();
   }
 }

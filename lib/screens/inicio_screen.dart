@@ -164,7 +164,7 @@ class _InicioScreenState extends State<InicioScreen> {
                           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text(shortId, style: TextStyle(color: text, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
                             const SizedBox(height: 2),
-                            Text('Factura #${s['numeroFactura'] ?? id}', style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w600)),
+                            Text('Factura #${_fmtFact(s['numeroFactura'], id)}', style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w600)),
                           ]),
                           const Spacer(),
                           Text(formatCop(total), style: const TextStyle(color: AppTheme.greenMetal, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.3)),
@@ -446,4 +446,13 @@ class _InicioScreenState extends State<InicioScreen> {
     message: _ctrl.error!,
     onRetry: _ctrl.cargarDatos,
   ));
+
+  String _fmtFact(dynamic numFact, dynamic id) {
+    if (numFact == null) return id?.toString() ?? 'N/A';
+    final val = int.tryParse(numFact.toString());
+    if (val != null && val >= 41) {
+      return (val - 40).toString();
+    }
+    return numFact.toString();
+  }
 }

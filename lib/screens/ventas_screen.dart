@@ -270,7 +270,7 @@ class _VentasScreenState extends State<VentasScreen> {
           leading: CircleAvatar(
               backgroundColor: AppTheme.ayanamiBlue.withValues(alpha: 0.1),
               child: const Icon(Icons.shopping_cart, color: AppTheme.ayanamiBlue)),
-          title: Text('Venta #${sale['numeroFactura'] ?? sale['ventaId']}',
+          title: Text('Venta #${_fmtFact(sale['numeroFactura'], sale['ventaId'])}',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).textTheme.bodyLarge?.color)),
@@ -341,7 +341,7 @@ class _VentasScreenState extends State<VentasScreen> {
     final total = double.tryParse(sale['total']?.toString() ?? '0') ?? 0.0;
     final fecha = _formatDate(_getSafeDate(sale));
     final hora = _formatTime(_getSafeDate(sale));
-    final numFactura = '#${sale['numeroFactura'] ?? sale['ventaId']}';
+    final numFactura = '#${_fmtFact(sale['numeroFactura'], sale['ventaId'])}';
 
     return HoverScale(
       scale: 1.015,
@@ -578,5 +578,14 @@ class _VentasScreenState extends State<VentasScreen> {
     if (n.isNotEmpty) return n;
     if (id.isNotEmpty) return id;
     return '\u2014';
+  }
+
+  String _fmtFact(dynamic numFact, dynamic id) {
+    if (numFact == null) return id?.toString() ?? 'N/A';
+    final val = int.tryParse(numFact.toString());
+    if (val != null && val >= 41) {
+      return (val - 40).toString();
+    }
+    return numFact.toString();
   }
 }

@@ -89,7 +89,10 @@ class InicioController extends ChangeNotifier {
           expensePercent = 0;
         }
 
-        final allSales = res[3] as List? ?? [];
+        final allSales = (res[3] as List? ?? []).where((s) {
+          final activo = s['activo'];
+          return activo == null || activo == true || activo.toString() == 'true';
+        }).toList();
         recentSales = allSales.take(10).toList();
 
         topProducts = (res[4] as Map)['data'] as List? ?? [];
@@ -106,12 +109,30 @@ class InicioController extends ChangeNotifier {
         final rawProds = res[0] as List? ?? [];
         final rawBatches = res[1] as List? ?? [];
 
+        final Map<String, String> prodNames = {};
+        for (var p in rawProds) {
+          final pid = p['productoId'] ?? p['id'];
+          final name = p['nombre'] ?? '';
+          if (pid != null) {
+            prodNames[pid.toString()] = name.toString();
+          }
+        }
+
         final now = DateTime.now();
         final threshold = now.add(const Duration(days: 60));
-        alertsVencimiento = rawBatches.where((b) {
+        final filteredVencimiento = rawBatches.where((b) {
           if (b['fechaDeVencimiento'] == null) return false;
           final exp = DateTime.tryParse(b['fechaDeVencimiento'].toString());
           return exp != null && exp.isBefore(threshold);
+        }).toList();
+
+        alertsVencimiento = filteredVencimiento.map((b) {
+          final copy = Map<String, dynamic>.from(b as Map);
+          final pid = copy['productoId'] ?? '';
+          final prodName = prodNames[pid.toString()] ?? 'Producto';
+          final batchName = copy['nombreLote'] ?? copy['loteId'] ?? 'Lote';
+          copy['productoNombre'] = '$prodName (Lote: $batchName)';
+          return copy;
         }).toList();
 
         alertsStock = rawProds.where((p) {

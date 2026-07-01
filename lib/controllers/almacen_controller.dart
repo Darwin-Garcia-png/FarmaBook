@@ -182,29 +182,7 @@ class AlmacenController extends ChangeNotifier {
     await fetchProducts(isRefresh: true);
   }
 
-  List<Map<String, dynamic>> deletedProducts = [];
-  bool isLoadingDeleted = false;
 
-  Future<void> fetchDeletedProducts() async {
-    isLoadingDeleted = true;
-    notifyListeners();
-    try {
-      final raw = await ApiService.getDeletedProducts();
-      deletedProducts = raw.cast<Map<String, dynamic>>().toList();
-    } catch (_) {
-      deletedProducts = [];
-    } finally {
-      isLoadingDeleted = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> restoreProduct(String productId) async {
-    await ApiService.restoreProduct(productId);
-    deletedProducts.removeWhere((p) =>
-        p['productoId'] == productId || p['id'] == productId);
-    notifyListeners();
-  }
 
   @override
   void dispose() {

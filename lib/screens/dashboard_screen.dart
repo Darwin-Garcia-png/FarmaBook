@@ -181,12 +181,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 4,
         onTap: () {
           _controller.onItemTapped(index);
-          if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+          try {
+            if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+              Navigator.pop(context);
+            }
+          } catch (_) {}
         },
         child: InkWell(
         onTap: () {
           _controller.onItemTapped(index);
-          if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+          try {
+            if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+              Navigator.pop(context);
+            }
+          } catch (_) {}
         },
         borderRadius: BorderRadius.circular(20),
         child: AnimatedContainer(

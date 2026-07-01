@@ -410,16 +410,10 @@ class _AlmacenScreenState extends State<AlmacenScreen> with SingleTickerProvider
   }
 
   Widget _buildArchivedContent(LotesController lotesCtrl, AlmacenController almacenCtrl) {
-    // Load deleted products lazily (only for dueño)
-    if (UserSession.isDueno && almacenCtrl.deletedProducts.isEmpty && !almacenCtrl.isLoadingDeleted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => almacenCtrl.fetchDeletedProducts());
-    }
-
     final batches = lotesCtrl.archivedBatches;
-    final showDeleted = UserSession.isDueno && almacenCtrl.deletedProducts.isNotEmpty;
     final hasBatches = batches.isNotEmpty;
 
-    if (!showDeleted && !hasBatches) {
+    if (!hasBatches) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -427,37 +421,16 @@ class _AlmacenScreenState extends State<AlmacenScreen> with SingleTickerProvider
             Icon(Icons.archive_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             const Text('No hay precios históricos', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-    // Combine deleted products and archived batches
-    final totalItems = (showDeleted ? almacenCtrl.deletedProducts.length + 1 : 0) + (hasBatches ? batches.length : 0);
+          ],
+        ),
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(32),
-      itemCount: totalItems,
+      itemCount: batches.length,
       itemBuilder: (ctx, i) {
-        // Deleted products section header
-        if (showDeleted && i == 0) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Text('PRODUCTOS ELIMINADOS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.reiOrangeRed, letterSpacing: 1)),
-          );
-        }
-
-        int deletedIdx;
-        if (showDeleted) {
-          deletedIdx = i - 1;
-          if (deletedIdx < almacenCtrl.deletedProducts.length) {
-            return _buildDeletedProductCard(almacenCtrl.deletedProducts[deletedIdx], almacenCtrl);
-          }
-        }
-
-        // Archived batches
-        final batchIdx = showDeleted ? i - almacenCtrl.deletedProducts.length - 1 : i;
-        final b = batches[batchIdx];
+        final b = batches[i];
         final expDate = DateTime.tryParse(b['fechaDeVencimiento']?.toString() ?? b['fechaVencimiento']?.toString() ?? '');
         final stock = int.tryParse(b['cantidadDisponible'].toString()) ?? 0;
         final precio = _batchPrice(b);
@@ -546,67 +519,6 @@ class _AlmacenScreenState extends State<AlmacenScreen> with SingleTickerProvider
           ),
         );
       },
-    );
-  }
-
-  Widget _buildDeletedProductCard(Map<String, dynamic> p, AlmacenController almacenCtrl) {
-    final prodId = p['productoId'] ?? p['id'] ?? '';
-    return AnimatedEntry(
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.reiOrangeRed.withValues(alpha: 0.3)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.reiOrangeRed.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.delete_forever_rounded, color: AppTheme.reiOrangeRed, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(p['nombre'] ?? p['productoNombre'] ?? 'Producto',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
-                    Text('Código: ${p['codigoBarras'] ?? p['codigo'] ?? 'N/A'}',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    const SizedBox(height: 6),
-                    _archivedBadge('ELIMINADO', AppTheme.reiOrangeRed),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.restore_from_trash_rounded, color: AppTheme.greenMetal),
-                tooltip: 'Restaurar producto',
-                onPressed: () async {
-                  try {
-                    await almacenCtrl.restoreProduct(prodId);
-                    if (context.mounted) {
-                      ErrorDisplay.successSnackBar(context: context, message: 'Producto restaurado exitosamente.');
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ErrorDisplay.snackBar(context: context, message: ErrorDisplay.cleanMessage(e));
-                    }
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
