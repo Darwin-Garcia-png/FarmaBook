@@ -12,8 +12,10 @@ const _nit = 'NIT: 900.123.456-7';
 
 class ReceiptDialog extends StatelessWidget {
   final Map<String, dynamic> sale;
+  final String direccion;
+  final String telefono;
 
-  const ReceiptDialog({super.key, required this.sale});
+  const ReceiptDialog({super.key, required this.sale, this.direccion = 'SENA', this.telefono = '3101234567'});
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +46,8 @@ class ReceiptDialog extends StatelessWidget {
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
               _receiptRow(context, 'Cajero:', _cajero()),
               _receiptRow(context, 'Cliente:', _clienteName()),
+              _receiptRow(context, 'Dirección:', direccion),
+              _receiptRow(context, 'Teléfono:', telefono),
               const Divider(height: 32, thickness: 1, color: Colors.black),
               ...productos.map((det) {
                 final d = det as Map<String, dynamic>;
@@ -58,12 +62,10 @@ class ReceiptDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-                      if (pres.isNotEmpty)
-                        Text(pres, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Cant: $qty  x  ${formatCop(unitPrice)}', style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                          Text('Cant: $qty', style: const TextStyle(fontSize: 12, color: Colors.black87)),
                           Text(formatCop(total), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
                         ],
                       ),
@@ -208,6 +210,8 @@ class ReceiptDialog extends StatelessWidget {
                 _receiptPdfRow('Hora:', _formatTime(_getSafeDate(sale))),
                 _receiptPdfRow('Cajero:', _cajero()),
                 _receiptPdfRow('Cliente:', _clienteName()),
+                _receiptPdfRow('Dirección:', direccion),
+                _receiptPdfRow('Teléfono:', telefono),
                 pw.SizedBox(height: 6),
                 pw.Divider(thickness: 1, color: PdfColors.black),
                 pw.SizedBox(height: 6),
@@ -224,12 +228,10 @@ class ReceiptDialog extends StatelessWidget {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(nombre, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
-                      if (pres.isNotEmpty)
-                        pw.Text(pres, style: pw.TextStyle(fontSize: 7, color: PdfColors.grey)),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
-                          pw.Text('Cant: $qty  x  ${formatCop(unitPrice)}',
+                          pw.Text('Cant: $qty',
                               style: pw.TextStyle(fontSize: 7, color: PdfColors.black)),
                           pw.Text(formatCop(total),
                               style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
