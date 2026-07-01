@@ -44,7 +44,6 @@ class ReceiptDialog extends StatelessWidget {
               _receiptRow(context, 'Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
               _receiptRow(context, 'Fecha:', _formatDate(_getSafeDate(sale))),
               _receiptRow(context, 'Hora:', _formatTime(_getSafeDate(sale))),
-              _receiptRow(context, 'Cajero:', _cajero()),
               _receiptRow(context, 'Cliente:', _clienteName()),
               _receiptRow(context, 'Dirección:', direccion),
               _receiptRow(context, 'Teléfono:', telefono),
@@ -161,9 +160,12 @@ class ReceiptDialog extends StatelessWidget {
         '').trim();
   }
 
-  String _clienteName() {
+  String _clienteName({bool maskId = false}) {
     final n = _getClienteNombre();
-    final id = _getClienteIdentificacion();
+    String id = _getClienteIdentificacion();
+    if (maskId && id.length > 4) {
+      id = '${'*' * 4}${id.substring(4)}';
+    }
     if (n.isNotEmpty && id.isNotEmpty) return '$n ($id)';
     if (n.isNotEmpty) return n;
     if (id.isNotEmpty) return id;
@@ -189,7 +191,7 @@ class ReceiptDialog extends StatelessWidget {
 
       pdf.addPage(
         pw.Page(
-          pageFormat: PdfPageFormat.roll57.copyWith(marginBottom: 0, marginLeft: 2, marginRight: 2, marginTop: 0),
+          pageFormat: PdfPageFormat.roll80.copyWith(marginBottom: 0, marginLeft: 4, marginRight: 4, marginTop: 0),
           build: (ctx) {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -208,8 +210,7 @@ class ReceiptDialog extends StatelessWidget {
                 _receiptPdfRow('Factura #:', '#${sale['numeroFactura'] ?? sale['ventaId']}'),
                 _receiptPdfRow('Fecha:', _formatDate(_getSafeDate(sale))),
                 _receiptPdfRow('Hora:', _formatTime(_getSafeDate(sale))),
-                _receiptPdfRow('Cajero:', _cajero()),
-                _receiptPdfRow('Cliente:', _clienteName()),
+                _receiptPdfRow('Cliente:', _clienteName(maskId: true)),
                 _receiptPdfRow('Dirección:', direccion),
                 _receiptPdfRow('Teléfono:', telefono),
                 pw.SizedBox(height: 6),
@@ -287,7 +288,10 @@ class ReceiptDialog extends StatelessWidget {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(label, style: pw.TextStyle(fontSize: 8, color: PdfColors.black)),
-          pw.Text(value, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+          pw.Container(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(value, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+          ),
         ],
       ),
     );
