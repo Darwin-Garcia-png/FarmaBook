@@ -103,10 +103,32 @@ class AppTheme {
           overlayColor: WidgetStateProperty.all(ayanamiBlue.withValues(alpha: 0.08)),
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        labelStyle: const TextStyle(
+          color: Color(0xFF2D3748),
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+        floatingLabelStyle: const TextStyle(
+          color: ayanamiBlue,
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+        ),
+        hintStyle: const TextStyle(
+          color: Color(0xFF718096),
+          fontSize: 14.5,
+        ),
+        errorStyle: const TextStyle(
+          color: reiOrangeRed,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
       textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: darkSlate),
-        bodyMedium: TextStyle(color: darkSlate),
-        titleLarge: TextStyle(color: darkSlate, fontWeight: FontWeight.bold),
+        bodyLarge: TextStyle(color: Color(0xFF1A202C), fontSize: 15.5, fontWeight: FontWeight.w500),
+        bodyMedium: TextStyle(color: Color(0xFF1A202C), fontSize: 14.5),
+        titleLarge: TextStyle(color: Color(0xFF1A202C), fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(color: Color(0xFF1A202C), fontSize: 15.5, fontWeight: FontWeight.w500),
       ),
     );
   }

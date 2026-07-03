@@ -1162,9 +1162,10 @@ class _LotesScreenState extends State<LotesScreen> with SingleTickerProviderStat
         textInputAction: action,
         keyboardType: keyboard,
         onFieldSubmitted: (_) => onNext?.call(),
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: Color(0xFF1A202C)),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: const TextStyle(color: Color(0xFF2D3748), fontSize: 14.5, fontWeight: FontWeight.w500),
           prefixIcon: Icon(icon, color: AppTheme.ayanamiBlue, size: 18),
           filled: true,
           fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),

@@ -154,7 +154,7 @@ class _VerifyPinScreenState extends State<VerifyPinScreen> {
       decoration: InputDecoration(
         counterText: '',
         labelText: 'PIN',
-        labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+        labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
         prefixIcon: Icon(Icons.pin_outlined, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 20),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.05),

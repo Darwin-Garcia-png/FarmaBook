@@ -142,11 +142,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget _buildUsernameField() {
     return TextFormField(
       controller: _c.usernameController,
-      style: const TextStyle(color: Colors.white, fontSize: 15),
+      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         labelText: 'Usuario',
-        labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-        prefixIcon: Icon(Icons.person_outline, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 20),
+        labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
+        prefixIcon: Icon(Icons.person_outline, color: AppTheme.ayanamiBlue, size: 20),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.05),
         enabledBorder: OutlineInputBorder(

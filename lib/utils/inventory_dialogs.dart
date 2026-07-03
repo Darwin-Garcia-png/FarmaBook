@@ -865,11 +865,12 @@ class InventoryDialogs {
               !label.toLowerCase().contains('generico'))
             FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
         ],
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: Color(0xFF1A202C)),
         decoration: InputDecoration(
           labelText: label, isDense: true,
+          labelStyle: const TextStyle(color: Color(0xFF2D3748), fontSize: 14.5, fontWeight: FontWeight.w500),
           prefixIcon: Padding(padding: const EdgeInsets.only(right: 8),
-            child: Icon(icon, color: AppTheme.ayanamiBlue.withValues(alpha: 0.6), size: 18)),
+            child: Icon(icon, color: AppTheme.ayanamiBlue, size: 18)),
           prefixIconConstraints: const BoxConstraints(minWidth: 36),
           filled: true,
           fillColor: readOnly ? Colors.grey.withValues(alpha: 0.04) : AppTheme.ayanamiBlue.withValues(alpha: 0.03),
@@ -880,7 +881,7 @@ class InventoryDialogs {
           errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700, fontSize: 12),
+          floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.w700, fontSize: 13),
         ),
         validator: (v) {
           if (req && (v == null || v.trim().isEmpty)) return 'Requerido';
@@ -946,11 +947,12 @@ class InventoryDialogs {
         onFieldSubmitted: onFieldSubmitted,
         inputFormatters: formatters,
         autovalidateMode: AutovalidateMode.onUserInteraction, // Validación inmediata
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: Color(0xFF1A202C)),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: const TextStyle(color: Color(0xFF2D3748), fontSize: 14.5, fontWeight: FontWeight.w500),
           prefixIcon: Icon(icon,
-              color: AppTheme.ayanamiBlue.withValues(alpha: 0.7), size: 20),
+              color: AppTheme.ayanamiBlue, size: 20),
           filled: true,
           fillColor: readOnly
               ? Colors.grey.withValues(alpha: 0.05)
@@ -969,7 +971,7 @@ class InventoryDialogs {
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppTheme.reiOrangeRed, width: 1)),
           floatingLabelStyle: const TextStyle(
-              color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold),
+              color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold, fontSize: 13),
         ),
         validator: (v) {
           if (req && (v == null || v.trim().isEmpty)) return 'Este campo es requerido';
@@ -1226,9 +1228,11 @@ class InventoryDialogs {
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]')),
                         ],
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: Color(0xFF1A202C)),
                         decoration: InputDecoration(
                           labelText: 'Nombre *',
+                          labelStyle: const TextStyle(color: Color(0xFF2D3748), fontSize: 14.5, fontWeight: FontWeight.w500),
+                          floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold, fontSize: 13),
                           prefixIcon: const Icon(Icons.label_rounded, color: AppTheme.ayanamiBlue, size: 20),
                           filled: true,
                           fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
@@ -1251,10 +1255,12 @@ class InventoryDialogs {
                             ? (_) => fnTel.requestFocus()
                             : (_) => doQuickSave(setSt, ctx2),
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: Color(0xFF1A202C)),
                         inputFormatters: tipo == 'casa' ? [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]'))] : [],
                         decoration: InputDecoration(
                           labelText: tipo == 'proveedor' ? 'Dirección *' : tipo == 'casa' ? 'País de Origen *' : 'Descripción *',
+                          labelStyle: const TextStyle(color: Color(0xFF2D3748), fontSize: 14.5, fontWeight: FontWeight.w500),
+                          floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold, fontSize: 13),
                           prefixIcon: Icon(
                               tipo == 'proveedor' ? Icons.location_on_rounded : Icons.description_rounded,
                               color: AppTheme.ayanamiBlue,
@@ -1281,9 +1287,11 @@ class InventoryDialogs {
                           onFieldSubmitted: (_) => fnEmail.requestFocus(),
                           autovalidateMode: AutovalidateMode.onUserInteraction,
                           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: Color(0xFF1A202C)),
                           decoration: InputDecoration(
                             labelText: 'Teléfono *',
+                            labelStyle: const TextStyle(color: Color(0xFF2D3748), fontSize: 14.5, fontWeight: FontWeight.w500),
+                            floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold, fontSize: 13),
                             prefixIcon: const Icon(Icons.phone_rounded, color: AppTheme.ayanamiBlue, size: 20),
                             filled: true,
                             fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),
@@ -1307,9 +1315,11 @@ class InventoryDialogs {
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => doQuickSave(setSt, ctx2),
                           autovalidateMode: AutovalidateMode.onUserInteraction,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: Color(0xFF1A202C)),
                           decoration: InputDecoration(
                             labelText: 'Email *',
+                            labelStyle: const TextStyle(color: Color(0xFF2D3748), fontSize: 14.5, fontWeight: FontWeight.w500),
+                            floatingLabelStyle: const TextStyle(color: AppTheme.ayanamiBlue, fontWeight: FontWeight.bold, fontSize: 13),
                             prefixIcon: const Icon(Icons.email_rounded, color: AppTheme.ayanamiBlue, size: 20),
                             filled: true,
                             fillColor: AppTheme.ayanamiBlue.withValues(alpha: 0.03),

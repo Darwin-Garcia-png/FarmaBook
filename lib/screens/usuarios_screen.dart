@@ -576,7 +576,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF4A5568))),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF2D3748))),
           const SizedBox(height: 6),
           TextFormField(
             controller: ctrl,
@@ -587,7 +587,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             autovalidateMode: AutovalidateMode.onUserInteraction,
             decoration: InputDecoration(
               hintText: hint.isNotEmpty ? hint : 'Ingresa $label',
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
+              hintStyle: const TextStyle(color: Color(0xFF718096), fontSize: 14),
               prefixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Icon(icon, size: 20, color: _accent.withValues(alpha: 0.6)),
@@ -625,7 +625,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF4A5568))),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF2D3748))),
           const SizedBox(height: 6),
           TextFormField(
             controller: ctrl,
@@ -636,7 +636,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             autovalidateMode: AutovalidateMode.onUserInteraction,
             decoration: InputDecoration(
               hintText: isEdit ? 'Dejar en blanco para no cambiar' : hint,
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
+              hintStyle: const TextStyle(color: Color(0xFF718096), fontSize: 14),
               prefixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Icon(Icons.lock_outline_rounded, size: 20, color: _accent.withValues(alpha: 0.6)),

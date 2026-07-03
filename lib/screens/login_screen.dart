@@ -488,19 +488,20 @@ class _FieldState extends State<_Field> {
           obscureText: widget.obscureText,
           textInputAction: widget.textInputAction,
           onFieldSubmitted: widget.onFieldSubmitted,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             labelText: widget.label,
             labelStyle: TextStyle(
               color: _focused
-                  ? AppTheme.ayanamiBlue.withValues(alpha: 0.7)
-                  : Colors.white38,
-              fontSize: 12,
+                  ? AppTheme.ayanamiBlue
+                  : Colors.white60,
+              fontSize: 14,
             ),
             floatingLabelStyle: TextStyle(
-              color: _focused ? AppTheme.ayanamiBlue : Colors.white38,
+              color: _focused ? AppTheme.ayanamiBlue : Colors.white60,
+              fontSize: 12,
             ),
-            prefixIcon: Icon(widget.icon, color: _focused ? AppTheme.ayanamiBlue : Colors.white38, size: 20),
+            prefixIcon: Icon(widget.icon, color: _focused ? AppTheme.ayanamiBlue : Colors.white60, size: 20),
             suffixIcon: widget.suffix != null
                 ? Padding(padding: const EdgeInsets.only(right: 8), child: widget.suffix)
                 : null,
